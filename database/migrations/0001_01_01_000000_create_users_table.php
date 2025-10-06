@@ -11,32 +11,35 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // ตารางผู้ใช้ - เก็บข้อมูลผู้ใช้งานระบบ
         Schema::create('laravel_users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->string('role')->default('user');
-            $table->string('avatar')->nullable();
-            $table->timestamp('last_login_at')->nullable();
-            $table->rememberToken();
-            $table->timestamps();
+            $table->id(); // ID หลักของผู้ใช้
+            $table->string('name'); // ชื่อ-นามสกุล
+            $table->string('email')->unique(); // อีเมล (ไม่ซ้ำกัน)
+            $table->timestamp('email_verified_at')->nullable(); // เวลาที่ยืนยันอีเมล
+            $table->string('password'); // รหัสผ่าน (เข้ารหัสแล้ว)
+            $table->string('role')->default('user'); // บทบาท (user, admin, etc.)
+            $table->string('avatar')->nullable(); // รูปโปรไฟล์
+            $table->timestamp('last_login_at')->nullable(); // เวลาเข้าสู่ระบบครั้งล่าสุด
+            $table->rememberToken(); // Token สำหรับจำการล็อกอิน
+            $table->timestamps(); // เวลาสร้างและแก้ไข
         });
 
+        // ตารางรีเซ็ตรหัสผ่าน - เก็บ token สำหรับรีเซ็ตรหัสผ่าน
         Schema::create('laravel_password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
+            $table->string('email')->primary(); // อีเมลของผู้ใช้
+            $table->string('token'); // Token สำหรับรีเซ็ต
+            $table->timestamp('created_at')->nullable(); // เวลาสร้าง token
         });
 
+        // ตารางเซสชัน - เก็บข้อมูลเซสชันของผู้ใช้
         Schema::create('laravel_sessions', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
-            $table->string('ip_address', 45)->nullable();
-            $table->text('user_agent')->nullable();
-            $table->longText('payload');
-            $table->integer('last_activity')->index();
+            $table->string('id')->primary(); // ID ของเซสชัน
+            $table->foreignId('user_id')->nullable()->index(); // ID ผู้ใช้ (ถ้าล็อกอินแล้ว)
+            $table->string('ip_address', 45)->nullable(); // IP Address
+            $table->text('user_agent')->nullable(); // User Agent ของเบราว์เซอร์
+            $table->longText('payload'); // ข้อมูลเซสชัน
+            $table->integer('last_activity')->index(); // เวลากิจกรรมล่าสุด
         });
     }
 

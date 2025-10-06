@@ -11,16 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // ตารางแคชหลัก - เก็บข้อมูลแคชของระบบ
         Schema::create('laravel_cache', function (Blueprint $table) {
-            $table->string('key')->primary();
-            $table->mediumText('value');
-            $table->integer('expiration');
+            $table->string('key')->primary(); // คีย์ของข้อมูลแคช
+            $table->mediumText('value'); // ค่าของข้อมูลแคช
+            $table->integer('expiration'); // เวลาหมดอายุ (timestamp)
         });
 
+        // ตารางแคชล็อค - เก็บข้อมูลล็อคสำหรับป้องกันการทำงานซ้ำ
         Schema::create('laravel_cache_locks', function (Blueprint $table) {
-            $table->string('key')->primary();
-            $table->string('owner');
-            $table->integer('expiration');
+            $table->string('key')->primary(); // คีย์ของล็อค
+            $table->string('owner'); // เจ้าของล็อค
+            $table->integer('expiration'); // เวลาหมดอายุของล็อค
         });
     }
 

@@ -11,13 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // ตารางการตั้งค่าระบบ - เก็บการตั้งค่าต่าง ๆ ของระบบ
         Schema::create('laravel_settings', function (Blueprint $table) {
-            $table->id();
-            $table->string('key')->unique();
-            $table->text('value')->nullable();
-            $table->string('type')->default('string'); // string, boolean, integer, json
-            $table->text('description')->nullable();
-            $table->timestamps();
+            $table->id(); // ID หลักของการตั้งค่า
+            $table->string('key')->unique(); // คีย์ของการตั้งค่า (ไม่ซ้ำกัน)
+            $table->text('value')->nullable(); // ค่าของการตั้งค่า
+            $table->string('type')->default('string'); // ประเภทข้อมูล (string, boolean, integer, json)
+            $table->text('description')->nullable(); // คำอธิบายการตั้งค่า
+            $table->timestamps(); // เวลาสร้างและแก้ไข
         });
     }
 
