@@ -139,6 +139,12 @@
                         <span class="notification-badge">3</span>
                     </div>
                     
+                    <!-- Frontend App Link -->
+                    <a href="{{ route('home') }}" class="frontend-link" title="เปิดหน้าแอพ" target="_blank">
+                        <i class="fas fa-external-link-alt"></i>
+                        <span class="link-text">หน้าแอพ</span>
+                    </a>
+                    
                     <!-- User Menu -->
                     <div class="user-menu">
                         <div class="user-avatar-small">

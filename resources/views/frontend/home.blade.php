@@ -24,7 +24,7 @@
 @endif
 
 <!-- Hero Section -->
-<section class="hero-section">
+<section class="frontend-hero">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-6">
@@ -38,17 +38,17 @@
                 </p>
                 <div class="d-flex gap-3">
                     @auth
-                        <a href="{{ route('admin.dashboard') }}" class="btn btn-warning btn-lg">
-                            <i class="fas fa-tachometer-alt me-2"></i>
+                        <a href="{{ route('admin.dashboard') }}" class="frontend-btn-primary btn-lg">
+                            <i class="fas fa-tachometer-alt"></i>
                             เข้าสู่แดชบอร์ด
                         </a>
                     @else
-                        <a href="/admin" class="btn btn-warning btn-lg">
-                            <i class="fas fa-user-plus me-2"></i>
+                        <a href="/admin" class="frontend-btn-primary btn-lg">
+                            <i class="fas fa-user-plus"></i>
                             เริ่มต้นใช้งาน
                         </a>
-                        <a href="/admin" class="btn btn-outline-light btn-lg">
-                            <i class="fas fa-sign-in-alt me-2"></i>
+                        <a href="/admin" class="frontend-btn-secondary btn-lg">
+                            <i class="fas fa-sign-in-alt"></i>
                             เข้าสู่ระบบ
                         </a>
                     @endauth
@@ -63,7 +63,7 @@
 </section>
 
 <!-- Features Section -->
-<section class="py-5">
+<section class="frontend-section">
     <div class="container">
         <div class="row text-center mb-5">
             <div class="col-12">
@@ -74,8 +74,8 @@
         
         <div class="row g-4">
             <div class="col-md-4">
-                <div class="card h-100 text-center p-4">
-                    <div class="feature-icon">
+                <div class="card h-100 text-center p-4 frontend-card">
+                    <div class="frontend-icon">
                         <i class="fas fa-shield-alt"></i>
                     </div>
                     <h5 class="card-title">ความปลอดภัยสูง</h5>
@@ -87,8 +87,8 @@
             </div>
             
             <div class="col-md-4">
-                <div class="card h-100 text-center p-4">
-                    <div class="feature-icon">
+                <div class="card h-100 text-center p-4 frontend-card">
+                    <div class="frontend-icon">
                         <i class="fas fa-mobile-alt"></i>
                     </div>
                     <h5 class="card-title">รองรับทุกอุปกรณ์</h5>
@@ -100,8 +100,8 @@
             </div>
             
             <div class="col-md-4">
-                <div class="card h-100 text-center p-4">
-                    <div class="feature-icon">
+                <div class="card h-100 text-center p-4 frontend-card">
+                    <div class="frontend-icon">
                         <i class="fas fa-chart-line"></i>
                     </div>
                     <h5 class="card-title">รายงานแบบเรียลไทม์</h5>
@@ -113,8 +113,8 @@
             </div>
             
             <div class="col-md-4">
-                <div class="card h-100 text-center p-4">
-                    <div class="feature-icon">
+                <div class="card h-100 text-center p-4 frontend-card">
+                    <div class="frontend-icon">
                         <i class="fas fa-users-cog"></i>
                     </div>
                     <h5 class="card-title">จัดการผู้ใช้</h5>
@@ -126,8 +126,8 @@
             </div>
             
             <div class="col-md-4">
-                <div class="card h-100 text-center p-4">
-                    <div class="feature-icon">
+                <div class="card h-100 text-center p-4 frontend-card">
+                    <div class="frontend-icon">
                         <i class="fas fa-database"></i>
                     </div>
                     <h5 class="card-title">ฐานข้อมูลที่เสถียร</h5>
@@ -139,8 +139,8 @@
             </div>
             
             <div class="col-md-4">
-                <div class="card h-100 text-center p-4">
-                    <div class="feature-icon">
+                <div class="card h-100 text-center p-4 frontend-card">
+                    <div class="frontend-icon">
                         <i class="fas fa-headset"></i>
                     </div>
                     <h5 class="card-title">บริการลูกค้า 24/7</h5>

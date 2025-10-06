@@ -482,4 +482,290 @@ class PerformanceController extends Controller
             return 0;
         }
     }
+
+    /**
+     * Save performance settings
+     */
+    public function savePerformanceSettings(Request $request)
+    {
+        try {
+            $request->validate([
+                'cache_enabled' => 'boolean',
+                'cache_driver' => 'string|in:file,redis,memcached',
+                'cache_ttl' => 'integer|min:1|max:1440',
+                'query_logging' => 'boolean',
+                'slow_query_threshold' => 'integer|min:100|max:10000',
+                'memory_limit' => 'integer|min:128|max:2048',
+                'max_execution_time' => 'integer|min:10|max:300',
+                'compression_enabled' => 'boolean'
+            ]);
+
+            $settings = [
+                'cache_enabled' => $request->boolean('cache_enabled'),
+                'cache_driver' => $request->input('cache_driver', 'file'),
+                'cache_ttl' => $request->input('cache_ttl', 60),
+                'query_logging' => $request->boolean('query_logging'),
+                'slow_query_threshold' => $request->input('slow_query_threshold', 1000),
+                'memory_limit' => $request->input('memory_limit', 256),
+                'max_execution_time' => $request->input('max_execution_time', 30),
+                'compression_enabled' => $request->boolean('compression_enabled')
+            ];
+
+            // Save to database or config file
+            $this->updateConfigFile($settings);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'บันทึกการตั้งค่า Performance เรียบร้อยแล้ว',
+                'data' => $settings
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในการบันทึกการตั้งค่า: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update configuration file with new settings
+     */
+    private function updateConfigFile($settings)
+    {
+        try {
+            // Update cache.php config
+            $cacheConfigPath = config_path('cache.php');
+            if (file_exists($cacheConfigPath)) {
+                $cacheConfig = file_get_contents($cacheConfigPath);
+                
+                // Update default cache driver
+                $cacheConfig = preg_replace(
+                    "/'default'\s*=>\s*env\('CACHE_DRIVER',\s*'[^']*'\)/",
+                    "'default' => env('CACHE_DRIVER', '{$settings['cache_driver']}')",
+                    $cacheConfig
+                );
+                
+                file_put_contents($cacheConfigPath, $cacheConfig);
+            }
+
+            // Update database.php config for query logging
+            $dbConfigPath = config_path('database.php');
+            if (file_exists($dbConfigPath)) {
+                $dbConfig = file_get_contents($dbConfigPath);
+                
+                // Find MySQL connection config
+                if (preg_match('/mysql\s*=>\s*\[([\s\S]*?)\]/', $dbConfig, $matches)) {
+                    $mysqlConfig = $matches[1];
+                    
+                    if ($settings['query_logging']) {
+                        // Enable query logging
+                        if (preg_match("/'logging'\s*=>\s*false/", $mysqlConfig)) {
+                            $mysqlConfig = preg_replace(
+                                "/'logging'\s*=>\s*false/",
+                                "'logging' => true",
+                                $mysqlConfig
+                            );
+                        } elseif (!preg_match("/'logging'\s*=>/", $mysqlConfig)) {
+                            // Add logging if it doesn't exist
+                            $mysqlConfig = rtrim($mysqlConfig, ",\s") . ",\n            'logging' => true";
+                        }
+                    } else {
+                        // Disable query logging
+                        if (preg_match("/'logging'\s*=>\s*true/", $mysqlConfig)) {
+                            $mysqlConfig = preg_replace(
+                                "/'logging'\s*=>\s*true/",
+                                "'logging' => false",
+                                $mysqlConfig
+                            );
+                        } elseif (!preg_match("/'logging'\s*=>/", $mysqlConfig)) {
+                            // Add logging if it doesn't exist
+                            $mysqlConfig = rtrim($mysqlConfig, ",\s") . ",\n            'logging' => false";
+                        }
+                    }
+                    
+                    // Replace the MySQL config section
+                    $dbConfig = preg_replace(
+                        '/mysql\s*=>\s*\[([\s\S]*?)\]/',
+                        "mysql => [{$mysqlConfig}]",
+                        $dbConfig
+                    );
+                }
+                
+                file_put_contents($dbConfigPath, $dbConfig);
+            }
+
+            // Update .env file
+            $envPath = base_path('.env');
+            if (file_exists($envPath)) {
+                $envContent = file_get_contents($envPath);
+                
+                // Update cache settings
+                $envContent = preg_replace(
+                    "/CACHE_DRIVER=.*/",
+                    "CACHE_DRIVER={$settings['cache_driver']}",
+                    $envContent
+                );
+                
+                // Add or update performance settings
+                $performanceSettings = [
+                    "CACHE_TTL={$settings['cache_ttl']}",
+                    "SLOW_QUERY_THRESHOLD={$settings['slow_query_threshold']}",
+                    "MEMORY_LIMIT={$settings['memory_limit']}",
+                    "MAX_EXECUTION_TIME={$settings['max_execution_time']}",
+                    "COMPRESSION_ENABLED=" . ($settings['compression_enabled'] ? 'true' : 'false')
+                ];
+                
+                foreach ($performanceSettings as $setting) {
+                    $key = explode('=', $setting)[0];
+                    if (preg_match("/^{$key}=.*/m", $envContent)) {
+                        $envContent = preg_replace("/^{$key}=.*/m", $setting, $envContent);
+                    } else {
+                        $envContent .= "\n{$setting}";
+                    }
+                }
+                
+                file_put_contents($envPath, $envContent);
+            }
+
+            // Clear config cache
+            \Artisan::call('config:clear');
+            \Artisan::call('cache:clear');
+
+        } catch (\Exception $e) {
+            throw new \Exception('ไม่สามารถอัพเดตไฟล์ config ได้: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get current performance settings
+     */
+    public function getPerformanceSettings()
+    {
+        try {
+            // Read from .env file
+            $envPath = base_path('.env');
+            $envSettings = [];
+            
+            if (file_exists($envPath)) {
+                $envContent = file_get_contents($envPath);
+                $lines = explode("\n", $envContent);
+                
+                foreach ($lines as $line) {
+                    $line = trim($line);
+                    if (strpos($line, '=') !== false && !str_starts_with($line, '#')) {
+                        [$key, $value] = explode('=', $line, 2);
+                        $envSettings[trim($key)] = trim($value);
+                    }
+                }
+            }
+            
+            // Get current settings with fallbacks
+            $settings = [
+                'cache_enabled' => config('cache.default') !== 'array',
+                'cache_driver' => config('cache.default'),
+                'cache_ttl' => (int) ($envSettings['CACHE_TTL'] ?? 60),
+                'query_logging' => $this->getQueryLoggingStatus(),
+                'slow_query_threshold' => (int) ($envSettings['SLOW_QUERY_THRESHOLD'] ?? 1000),
+                'memory_limit' => (int) ($envSettings['MEMORY_LIMIT'] ?? 256),
+                'max_execution_time' => (int) ($envSettings['MAX_EXECUTION_TIME'] ?? 30),
+                'compression_enabled' => filter_var($envSettings['COMPRESSION_ENABLED'] ?? 'true', FILTER_VALIDATE_BOOLEAN)
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $settings
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ไม่สามารถโหลดการตั้งค่าได้: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get query logging status from database config
+     */
+    private function getQueryLoggingStatus()
+    {
+        try {
+            // Read from database.php file directly
+            $dbConfigPath = config_path('database.php');
+            if (file_exists($dbConfigPath)) {
+                $dbConfig = file_get_contents($dbConfigPath);
+                
+                // Look for MySQL connection config section
+                if (preg_match('/mysql\s*=>\s*\[([\s\S]*?)\]/', $dbConfig, $matches)) {
+                    $mysqlConfig = $matches[1];
+                    
+                    // Check if logging is enabled
+                    if (preg_match("/'logging'\s*=>\s*true/", $mysqlConfig)) {
+                        return true;
+                    }
+                }
+            }
+            
+            return false;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Test query logging functionality
+     */
+    public function testQueryLogging()
+    {
+        try {
+            // Check if query logging is enabled
+            $isEnabled = $this->getQueryLoggingStatus();
+            
+            // Debug information
+            $debugInfo = [
+                'file_exists' => file_exists(config_path('database.php')),
+                'is_enabled' => $isEnabled,
+                'db_config_content' => 'N/A'
+            ];
+            
+            // Read database config content for debugging
+            $dbConfigPath = config_path('database.php');
+            if (file_exists($dbConfigPath)) {
+                $dbConfig = file_get_contents($dbConfigPath);
+                $debugInfo['db_config_content'] = substr($dbConfig, 0, 500) . '...';
+            }
+            
+            // Execute a test query
+            $testQuery = "SELECT 1 as test_value";
+            $result = DB::select($testQuery);
+            
+            // Check if query was logged
+            $logPath = storage_path('logs/laravel.log');
+            $queryLogged = false;
+            
+            if (file_exists($logPath)) {
+                $logContent = file_get_contents($logPath);
+                $queryLogged = strpos($logContent, $testQuery) !== false;
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'ทดสอบ Query Logging สำเร็จ',
+                'data' => [
+                    'query_logging_enabled' => $isEnabled,
+                    'test_query_executed' => !empty($result),
+                    'query_logged' => $queryLogged,
+                    'log_file_exists' => file_exists($logPath),
+                    'debug_info' => $debugInfo
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในการทดสอบ Query Logging: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

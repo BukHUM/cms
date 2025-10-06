@@ -10,32 +10,32 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <ul class="nav nav-tabs" id="settingsTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button">
+                <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" onclick="switchTab('general', 'fas fa-cog', 'ทั่วไป')">
                     <i class="fas fa-cog"></i>ทั่วไป
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="email-tab" data-bs-toggle="tab" data-bs-target="#email" type="button">
+                <button class="nav-link" id="email-tab" data-bs-toggle="tab" data-bs-target="#email" type="button" onclick="switchTab('email', 'fas fa-envelope', 'อีเมล')">
                     <i class="fas fa-envelope"></i>อีเมล
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button">
+                <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" onclick="switchTab('security', 'fas fa-shield-alt', 'ความปลอดภัย')">
                     <i class="fas fa-shield-alt"></i>ความปลอดภัย
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="backup-tab" data-bs-toggle="tab" data-bs-target="#backup" type="button">
+                <button class="nav-link" id="backup-tab" data-bs-toggle="tab" data-bs-target="#backup" type="button" onclick="switchTab('backup', 'fas fa-database', 'สำรองข้อมูล')">
                     <i class="fas fa-database"></i>สำรองข้อมูล
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="audit-tab" data-bs-toggle="tab" data-bs-target="#audit" type="button">
+                <button class="nav-link" id="audit-tab" data-bs-toggle="tab" data-bs-target="#audit" type="button" onclick="switchTab('audit', 'fas fa-clipboard-list', 'Audit Log')">
                     <i class="fas fa-clipboard-list"></i>Audit Log
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="performance-tab" data-bs-toggle="tab" data-bs-target="#performance" type="button">
+                <button class="nav-link" id="performance-tab" data-bs-toggle="tab" data-bs-target="#performance" type="button" onclick="switchTab('performance', 'fas fa-tachometer-alt', 'Performance')">
                     <i class="fas fa-tachometer-alt"></i>Performance
                 </button>
             </li>
@@ -123,10 +123,19 @@
                             </select>
                         </div>
                         <div class="col-md-6">
+                            <label for="siteEnabled" class="form-label">เปิดใช้งานเว็บไซต์</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="siteEnabled" checked>
+                                <label class="form-check-label" for="siteEnabled" id="siteEnabledLabel">
+                                    เปิดใช้งาน
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
                             <label for="maintenanceMode" class="form-label">โหมดบำรุงรักษา</label>
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="maintenanceMode">
-                                <label class="form-check-label" for="maintenanceMode">
+                                <label class="form-check-label" for="maintenanceMode" id="maintenanceModeLabel">
                                     เปิดใช้งานโหมดบำรุงรักษา
                                 </label>
                             </div>
@@ -135,8 +144,62 @@
                             <label for="debugMode" class="form-label">โหมด Debug</label>
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="debugMode" checked>
-                                <label class="form-check-label" for="debugMode">
+                                <label class="form-check-label" for="debugMode" id="debugModeLabel">
                                     เปิดใช้งานโหมด Debug
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="autoSave" class="form-label">เปิดใช้งานการบันทึกอัตโนมัติ</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="autoSave" checked>
+                                <label class="form-check-label" for="autoSave" id="autoSaveLabel">
+                                    เปิดใช้งาน
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="notifications" class="form-label">เปิดใช้งานการแจ้งเตือน</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="notifications" checked>
+                                <label class="form-check-label" for="notifications" id="notificationsLabel">
+                                    เปิดใช้งาน
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="analytics" class="form-label">เปิดใช้งานการวิเคราะห์ข้อมูล</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="analytics" checked>
+                                <label class="form-check-label" for="analytics" id="analyticsLabel">
+                                    เปิดใช้งาน
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="logging" class="form-label">เปิดใช้งานการบันทึก Log</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="logging" checked>
+                                <label class="form-check-label" for="logging" id="loggingLabel">
+                                    เปิดใช้งาน
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="maintenance" class="form-label">เปิดใช้งานโหมดบำรุงรักษา</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="maintenance">
+                                <label class="form-check-label" for="maintenance" id="maintenanceLabel">
+                                    เปิดใช้งาน
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="updates" class="form-label">เปิดใช้งานการอัปเดตอัตโนมัติ</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="updates" checked>
+                                <label class="form-check-label" for="updates" id="updatesLabel">
+                                    เปิดใช้งาน
                                 </label>
                             </div>
                         </div>
@@ -201,6 +264,15 @@
                             <label for="mailFromName" class="form-label">From Name</label>
                             <input type="text" class="form-control" id="mailFromName" value="{{ config('app.name') }}">
                         </div>
+                        <div class="col-md-6">
+                            <label for="mailEnabled" class="form-label">เปิดใช้งานการส่งอีเมล</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="mailEnabled" checked>
+                                <label class="form-check-label" for="mailEnabled" id="mailEnabledLabel">
+                                    เปิดใช้งาน
+                                </label>
+                            </div>
+                        </div>
                     </div>
                     <!-- Desktop Actions -->
                     <div class="mt-4 d-none d-md-block">
@@ -262,7 +334,7 @@
                             <label for="requireSpecialChars" class="form-label">ต้องมีอักขระพิเศษ</label>
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="requireSpecialChars" checked>
-                                <label class="form-check-label" for="requireSpecialChars">
+                                <label class="form-check-label" for="requireSpecialChars" id="requireSpecialCharsLabel">
                                     เปิดใช้งาน
                                 </label>
                             </div>
@@ -271,7 +343,7 @@
                             <label for="twoFactorAuth" class="form-label">Two-Factor Authentication</label>
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="twoFactorAuth">
-                                <label class="form-check-label" for="twoFactorAuth">
+                                <label class="form-check-label" for="twoFactorAuth" id="twoFactorAuthLabel">
                                     เปิดใช้งาน
                                 </label>
                             </div>
@@ -280,7 +352,7 @@
                             <label for="ipWhitelist" class="form-label">IP Whitelist</label>
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="ipWhitelist">
-                                <label class="form-check-label" for="ipWhitelist">
+                                <label class="form-check-label" for="ipWhitelist" id="ipWhitelistLabel">
                                     เปิดใช้งาน
                                 </label>
                             </div>
@@ -329,6 +401,15 @@
                                 <option value="s3">Amazon S3</option>
                                 <option value="google">Google Drive</option>
                             </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="backupEnabled" class="form-label">เปิดใช้งานการสำรองข้อมูลอัตโนมัติ</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="backupEnabled" checked>
+                                <label class="form-check-label" for="backupEnabled" id="backupEnabledLabel">
+                                    เปิดใช้งาน
+                                </label>
+                            </div>
                         </div>
                     </div>
                     <!-- Desktop Actions -->
@@ -416,7 +497,7 @@
                             <label for="auditEnabled" class="form-label">เปิดใช้งาน Audit Log</label>
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="auditEnabled" checked>
-                                <label class="form-check-label" for="auditEnabled">
+                                <label class="form-check-label" for="auditEnabled" id="auditEnabledLabel">
                                     บันทึกการใช้งานระบบ
                                 </label>
                             </div>
@@ -437,7 +518,7 @@
                             <label for="auditRealTime" class="form-label">แสดงผลแบบ Real-time</label>
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="auditRealTime">
-                                <label class="form-check-label" for="auditRealTime">
+                                <label class="form-check-label" for="auditRealTime" id="auditRealTimeLabel">
                                     เปิดใช้งาน
                                 </label>
                             </div>
@@ -446,7 +527,7 @@
                             <label for="auditEmailAlerts" class="form-label">แจ้งเตือนทางอีเมล</label>
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="auditEmailAlerts">
-                                <label class="form-check-label" for="auditEmailAlerts">
+                                <label class="form-check-label" for="auditEmailAlerts" id="auditEmailAlertsLabel">
                                     เปิดใช้งาน
                                 </label>
                             </div>
@@ -455,7 +536,7 @@
                             <label for="auditSensitiveActions" class="form-label">บันทึกการกระทำที่สำคัญ</label>
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="auditSensitiveActions" checked>
-                                <label class="form-check-label" for="auditSensitiveActions">
+                                <label class="form-check-label" for="auditSensitiveActions" id="auditSensitiveActionsLabel">
                                     เปิดใช้งาน
                                 </label>
                             </div>
@@ -463,13 +544,13 @@
                     </div>
                     <!-- Desktop Actions -->
                     <div class="mt-4 d-none d-md-block">
-                        <button type="button" class="btn btn-info me-2" onclick="viewAuditLogs()">
-                            <i class="fas fa-eye me-2"></i>
-                            ดู Audit Log
-                        </button>
                         <button type="button" class="btn btn-warning me-2" onclick="exportAuditLogs()">
                             <i class="fas fa-download me-2"></i>
                             ส่งออก Log
+                        </button>
+                        <button type="button" class="btn btn-danger me-2" onclick="clearAuditLogs()">
+                            <i class="fas fa-trash me-2"></i>
+                            ล้าง Log
                         </button>
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save me-2"></i>
@@ -489,17 +570,17 @@
                             <div class="mobile-secondary-actions">
                                 <div class="row g-2">
                                     <div class="col-6">
-                                        <button type="button" class="btn btn-info w-100" onclick="viewAuditLogs()">
-                                            <i class="fas fa-eye me-1"></i>
-                                            <span class="d-none d-sm-inline">ดู Audit Log</span>
-                                            <span class="d-sm-none">ดู Log</span>
-                                        </button>
-                                    </div>
-                                    <div class="col-6">
                                         <button type="button" class="btn btn-warning w-100" onclick="exportAuditLogs()">
                                             <i class="fas fa-download me-1"></i>
                                             <span class="d-none d-sm-inline">ส่งออก Log</span>
                                             <span class="d-sm-none">ส่งออก</span>
+                                        </button>
+                                    </div>
+                                    <div class="col-6">
+                                        <button type="button" class="btn btn-danger w-100" onclick="clearAuditLogs()">
+                                            <i class="fas fa-trash me-1"></i>
+                                            <span class="d-none d-sm-inline">ล้าง Log</span>
+                                            <span class="d-sm-none">ล้าง</span>
                                         </button>
                                     </div>
                                 </div>
@@ -522,27 +603,12 @@
                                     <th>สถานะ</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="auditLogsTable">
                                 <tr>
-                                    <td>2024-01-25 14:30:15</td>
-                                    <td>admin@example.com</td>
-                                    <td>เข้าสู่ระบบ</td>
-                                    <td>192.168.1.100</td>
-                                    <td><span class="badge bg-success">สำเร็จ</span></td>
-                                </tr>
-                                <tr>
-                                    <td>2024-01-25 14:25:42</td>
-                                    <td>admin@example.com</td>
-                                    <td>แก้ไขการตั้งค่าทั่วไป</td>
-                                    <td>192.168.1.100</td>
-                                    <td><span class="badge bg-success">สำเร็จ</span></td>
-                                </tr>
-                                <tr>
-                                    <td>2024-01-25 14:20:18</td>
-                                    <td>admin@example.com</td>
-                                    <td>ดูรายการผู้ใช้</td>
-                                    <td>192.168.1.100</td>
-                                    <td><span class="badge bg-info">ดูข้อมูล</span></td>
+                                    <td colspan="5" class="text-center text-muted">
+                                        <i class="fas fa-spinner fa-spin me-2"></i>
+                                        กำลังโหลดข้อมูล...
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -565,7 +631,7 @@
                             <label for="cacheEnabled" class="form-label">เปิดใช้งาน Cache</label>
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="cacheEnabled" checked>
-                                <label class="form-check-label" for="cacheEnabled">
+                                <label class="form-check-label" for="cacheEnabled" id="cacheEnabledLabel">
                                     เปิดใช้งาน
                                 </label>
                             </div>
@@ -584,11 +650,15 @@
                         </div>
                         <div class="col-md-6">
                             <label for="queryLogging" class="form-label">บันทึก Query Log</label>
-                            <div class="form-check form-switch">
+                            <div class="form-check form-switch d-flex align-items-center">
                                 <input class="form-check-input" type="checkbox" id="queryLogging">
-                                <label class="form-check-label" for="queryLogging">
+                                <label class="form-check-label me-3" for="queryLogging" id="queryLoggingLabel">
                                     เปิดใช้งาน
                                 </label>
+                                <button type="button" class="btn btn-sm btn-outline-info" onclick="testQueryLogging()">
+                                    <i class="fas fa-vial me-1"></i>
+                                    ทดสอบ
+                                </button>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -607,7 +677,7 @@
                             <label for="compressionEnabled" class="form-label">เปิดใช้งาน Compression</label>
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="compressionEnabled" checked>
-                                <label class="form-check-label" for="compressionEnabled">
+                                <label class="form-check-label" for="compressionEnabled" id="compressionEnabledLabel">
                                     เปิดใช้งาน
                                 </label>
                             </div>
@@ -905,12 +975,12 @@ function switchTab(tabId, iconClass, tabText) {
         document.getElementById(tabId + '-tab').classList.add('active');
     }
     
-    // Load performance data if switching to performance tab
-    if (tabId === 'performance') {
-        updatePerformanceMetrics();
-        refreshTableStatistics();
-        refreshIndexStatistics();
-    }
+    // Save current tab to localStorage
+    localStorage.setItem('lastActiveSettingsTab', tabId);
+    localStorage.setItem('lastActiveSettingsTabIcon', iconClass);
+    localStorage.setItem('lastActiveSettingsTabText', tabText);
+    
+    // Note: Performance data will be loaded manually when user clicks refresh buttons
 }
 
 // ========================================
@@ -1082,15 +1152,52 @@ document.getElementById('auditSettingsForm').addEventListener('submit', function
     }, 1500);
 });
 
-// View Audit Logs Function
-function viewAuditLogs() {
-    console.log('Opening audit logs viewer...');
-    SwalHelper.loading('กำลังโหลด Audit Logs...');
+// Load Audit Logs from API
+function loadAuditLogs() {
+    fetch('/api/audit/recent?limit=10')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateAuditLogsTable(data.data);
+            } else {
+                console.error('Error loading audit logs:', data.message);
+                showAuditLogsError();
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching audit logs:', error);
+            showAuditLogsError();
+        });
+}
+
+// Update Audit Logs Table
+function updateAuditLogsTable(logs) {
+    const tbody = document.getElementById('auditLogsTable');
+    tbody.innerHTML = '';
     
-    setTimeout(() => {
-        SwalHelper.close();
-        SwalHelper.info('เปิดหน้า Audit Logs Viewer เรียบร้อยแล้ว');
-    }, 1500);
+    if (logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted"><i class="fas fa-info-circle me-2"></i>ไม่มีข้อมูล Audit Log</td></tr>';
+        return;
+    }
+    
+     logs.forEach(log => {
+         const row = `
+             <tr>
+                 <td>${log.created_at}</td>
+                 <td>${log.user_name || 'N/A'}</td>
+                 <td>${log.formatted_action}</td>
+                 <td>${log.ip_address || 'N/A'}</td>
+                 <td><span class="badge ${log.status_badge}">${log.formatted_status}</span></td>
+             </tr>
+         `;
+         tbody.insertAdjacentHTML('beforeend', row);
+     });
+}
+
+// Show Audit Logs Error
+function showAuditLogsError() {
+    const tbody = document.getElementById('auditLogsTable');
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger"><i class="fas fa-exclamation-triangle me-2"></i>ไม่สามารถโหลดข้อมูลได้</td></tr>';
 }
 
 // Export Audit Logs Function
@@ -1098,10 +1205,69 @@ function exportAuditLogs() {
     SwalHelper.confirm('คุณแน่ใจหรือไม่ที่จะส่งออก Audit Logs?', 'ยืนยันการส่งออก', function() {
         SwalHelper.loading('กำลังส่งออก Audit Logs...');
         
-        setTimeout(() => {
+        // Export audit logs from API
+        fetch('/api/audit/export?format=csv')
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                }
+                throw new Error('ไม่สามารถส่งออกข้อมูลได้');
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'audit_logs_' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.csv';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                SwalHelper.close();
+                SwalHelper.success('ส่งออก Audit Logs สำเร็จ!');
+            })
+            .catch(error => {
+                SwalHelper.close();
+                console.error('Error exporting audit logs:', error);
+                SwalHelper.error('ไม่สามารถส่งออก Audit Logs ได้: ' + error.message);
+            });
+    });
+}
+
+// Clear Audit Logs Function
+function clearAuditLogs() {
+    SwalHelper.confirm('คุณแน่ใจหรือไม่ที่จะลบ Audit Logs ทั้งหมด?\n\nการกระทำนี้ไม่สามารถย้อนกลับได้', 'ยืนยันการลบ Audit Logs', function() {
+        SwalHelper.loading('กำลังลบ Audit Logs...');
+        
+        // Clear audit logs from API
+        fetch('/api/audit/cleanup', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                days: 0 // ลบทั้งหมด
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
             SwalHelper.close();
-            SwalHelper.success('ส่งออก Audit Logs สำเร็จ!');
-        }, 2000);
+            
+            if (data.success) {
+                SwalHelper.success('ลบ Audit Logs สำเร็จ!\n\nลบทั้งหมด ' + data.deleted_count + ' รายการ');
+                
+                // Refresh audit logs table
+                loadAuditLogs();
+            } else {
+                SwalHelper.error(data.message || 'ไม่สามารถลบ Audit Logs ได้');
+            }
+        })
+        .catch(error => {
+            SwalHelper.close();
+            console.error('Error clearing audit logs:', error);
+            SwalHelper.error('เกิดข้อผิดพลาดในการลบ Audit Logs');
+        });
     });
 }
 
@@ -1115,23 +1281,23 @@ document.getElementById('performanceSettingsForm').addEventListener('submit', fu
     
     // Get form data
     const formData = {
-        cacheEnabled: document.getElementById('cacheEnabled').checked,
-        cacheDriver: document.getElementById('cacheDriver').value,
-        cacheTTL: document.getElementById('cacheTTL').value,
-        queryLogging: document.getElementById('queryLogging').checked,
-        slowQueryThreshold: document.getElementById('slowQueryThreshold').value,
-        memoryLimit: document.getElementById('memoryLimit').value,
-        maxExecutionTime: document.getElementById('maxExecutionTime').value,
-        compressionEnabled: document.getElementById('compressionEnabled').checked
+        cache_enabled: document.getElementById('cacheEnabled').checked,
+        cache_driver: document.getElementById('cacheDriver').value,
+        cache_ttl: document.getElementById('cacheTTL').value,
+        query_logging: document.getElementById('queryLogging').checked,
+        slow_query_threshold: document.getElementById('slowQueryThreshold').value,
+        memory_limit: document.getElementById('memoryLimit').value,
+        max_execution_time: document.getElementById('maxExecutionTime').value,
+        compression_enabled: document.getElementById('compressionEnabled').checked
     };
     
     // Validate performance settings
-    if (formData.cacheTTL < 1) {
+    if (formData.cache_ttl < 1) {
         SwalHelper.error('Cache TTL ต้องไม่น้อยกว่า 1 นาที');
         return;
     }
     
-    if (formData.memoryLimit < 128) {
+    if (formData.memory_limit < 128) {
         SwalHelper.error('Memory Limit ต้องไม่น้อยกว่า 128 MB');
         return;
     }
@@ -1139,14 +1305,51 @@ document.getElementById('performanceSettingsForm').addEventListener('submit', fu
     console.log('Saving performance settings:', formData);
     SwalHelper.loading('กำลังบันทึกการตั้งค่า Performance...');
     
-    // Save to localStorage
-    localStorage.setItem('performanceSettings', JSON.stringify(formData));
-    
-    // Simulate API call
-    setTimeout(() => {
+    // Send to API
+    fetch('/api/performance/settings', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
         SwalHelper.close();
-        SwalHelper.success('บันทึกการตั้งค่า Performance เรียบร้อยแล้ว');
-    }, 1500);
+        
+        if (data.success) {
+            SwalHelper.success(data.message || 'บันทึกการตั้งค่า Performance เรียบร้อยแล้ว');
+            
+            // Save to localStorage for persistence (convert API format to localStorage format)
+            const localStorageData = {
+                cacheEnabled: formData.cache_enabled,
+                cacheDriver: formData.cache_driver,
+                cacheTTL: formData.cache_ttl,
+                queryLogging: formData.query_logging,
+                slowQueryThreshold: formData.slow_query_threshold,
+                memoryLimit: formData.memory_limit,
+                maxExecutionTime: formData.max_execution_time,
+                compressionEnabled: formData.compression_enabled
+            };
+            localStorage.setItem('performanceSettings', JSON.stringify(localStorageData));
+            
+            // Update switch styling after saving
+            updateSwitchStyle('cacheEnabled', 'cacheEnabledLabel');
+            updateSwitchStyle('queryLogging', 'queryLoggingLabel');
+            updateSwitchStyle('compressionEnabled', 'compressionEnabledLabel');
+            
+            // Update performance metrics after saving settings
+            updatePerformanceMetrics();
+        } else {
+            SwalHelper.error(data.message || 'ไม่สามารถบันทึกการตั้งค่าได้');
+        }
+    })
+    .catch(error => {
+        SwalHelper.close();
+        console.error('Error saving performance settings:', error);
+        SwalHelper.error('เกิดข้อผิดพลาดในการบันทึกการตั้งค่า');
+    });
 });
 
 // Clear Cache Function
@@ -1175,6 +1378,48 @@ function runPerformanceTest() {
         // Update performance metrics
         updatePerformanceMetrics();
     }, 3000);
+}
+
+// Test Query Logging Function
+function testQueryLogging() {
+    SwalHelper.loading('กำลังทดสอบ Query Logging...');
+    
+    fetch('/api/performance/test-query-logging', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        SwalHelper.close();
+        
+        if (data.success) {
+            const testData = data.data;
+            let message = 'ทดสอบ Query Logging สำเร็จ!\n\n';
+            message += `• Query Logging เปิดใช้งาน: ${testData.query_logging_enabled ? 'ใช่' : 'ไม่'}\n`;
+            message += `• ทดสอบ Query ทำงาน: ${testData.test_query_executed ? 'ใช่' : 'ไม่'}\n`;
+            message += `• Query ถูกบันทึกใน Log: ${testData.query_logged ? 'ใช่' : 'ไม่'}\n`;
+            message += `• ไฟล์ Log มีอยู่: ${testData.log_file_exists ? 'ใช่' : 'ไม่'}\n\n`;
+            
+            if (testData.debug_info) {
+                message += 'ข้อมูล Debug:\n';
+                message += `• File Exists: ${testData.debug_info.file_exists ? 'ใช่' : 'ไม่'}\n`;
+                message += `• Is Enabled: ${testData.debug_info.is_enabled ? 'ใช่' : 'ไม่'}\n`;
+                message += `• DB Config Content: ${testData.debug_info.db_config_content}`;
+            }
+            
+            SwalHelper.info(message, 'ผลการทดสอบ Query Logging');
+        } else {
+            SwalHelper.error(data.message || 'ไม่สามารถทดสอบ Query Logging ได้');
+        }
+    })
+    .catch(error => {
+        SwalHelper.close();
+        console.error('Error testing query logging:', error);
+        SwalHelper.error('เกิดข้อผิดพลาดในการทดสอบ Query Logging');
+    });
 }
 
 // Update Performance Metrics
@@ -1730,10 +1975,60 @@ function loadSavedSettings() {
         document.getElementById('maxExecutionTime').value = data.maxExecutionTime || '30';
         document.getElementById('compressionEnabled').checked = data.compressionEnabled || false;
         
+        // Update switch styling after loading from localStorage
+        updateSwitchStyle('cacheEnabled', 'cacheEnabledLabel');
+        updateSwitchStyle('queryLogging', 'queryLoggingLabel');
+        updateSwitchStyle('compressionEnabled', 'compressionEnabledLabel');
+        
         console.log('Performance settings loaded');
+    } else {
+        // Load from API if no localStorage data
+        loadPerformanceSettingsFromAPI();
     }
     
     console.log('All settings loaded from localStorage');
+}
+
+// Load Performance Settings from API
+function loadPerformanceSettingsFromAPI() {
+    fetch('/api/performance/settings')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const settings = data.data;
+                document.getElementById('cacheEnabled').checked = settings.cache_enabled || false;
+                document.getElementById('cacheDriver').value = settings.cache_driver || 'file';
+                document.getElementById('cacheTTL').value = settings.cache_ttl || '60';
+                document.getElementById('queryLogging').checked = settings.query_logging || false;
+                document.getElementById('slowQueryThreshold').value = settings.slow_query_threshold || '1000';
+                document.getElementById('memoryLimit').value = settings.memory_limit || '256';
+                document.getElementById('maxExecutionTime').value = settings.max_execution_time || '30';
+                document.getElementById('compressionEnabled').checked = settings.compression_enabled || false;
+                
+                // Update switch styling after loading settings
+                updateSwitchStyle('cacheEnabled', 'cacheEnabledLabel');
+                updateSwitchStyle('queryLogging', 'queryLoggingLabel');
+                updateSwitchStyle('compressionEnabled', 'compressionEnabledLabel');
+                
+                // Also save to localStorage for consistency
+                const localStorageData = {
+                    cacheEnabled: settings.cache_enabled || false,
+                    cacheDriver: settings.cache_driver || 'file',
+                    cacheTTL: settings.cache_ttl || '60',
+                    queryLogging: settings.query_logging || false,
+                    slowQueryThreshold: settings.slow_query_threshold || '1000',
+                    memoryLimit: settings.memory_limit || '256',
+                    maxExecutionTime: settings.max_execution_time || '30',
+                    compressionEnabled: settings.compression_enabled || false
+                };
+                localStorage.setItem('performanceSettings', JSON.stringify(localStorageData));
+                
+                console.log('Performance settings loaded from API');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading performance settings:', error);
+        });
 }
 
 // ========================================
@@ -1748,13 +2043,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup form validation
     setupFormValidation();
     
-    // Load performance data if on performance tab
-    if (document.getElementById('performance-tab').classList.contains('active') || 
-        document.getElementById('currentTabText').textContent === 'Performance') {
-        updatePerformanceMetrics();
-        refreshTableStatistics();
-        refreshIndexStatistics();
-    }
+    // Load last active tab
+    loadLastActiveTab();
+    
+    // Load audit logs on page load
+    loadAuditLogs();
     
     // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {
@@ -1778,6 +2071,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Auto-save functionality (optional)
     setupAutoSave();
+    
+    // Setup Query Logging Switch Styling
+    setupQueryLoggingSwitch();
 });
 
 // Auto-save functionality
@@ -1796,6 +2092,137 @@ function setupAutoSave() {
             });
         });
     });
+}
+
+// ========================================
+// TAB PERSISTENCE FUNCTIONS
+// ========================================
+
+// Load last active tab from localStorage
+function loadLastActiveTab() {
+    const lastTab = localStorage.getItem('lastActiveSettingsTab');
+    const lastTabIcon = localStorage.getItem('lastActiveSettingsTabIcon');
+    const lastTabText = localStorage.getItem('lastActiveSettingsTabText');
+    
+    if (lastTab && lastTabIcon && lastTabText) {
+        // Hide all tab panes first
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.classList.remove('show', 'active');
+        });
+        
+        // Show selected tab pane
+        document.getElementById(lastTab).classList.add('show', 'active');
+        
+        // Update mobile navigation display
+        document.getElementById('currentTabIcon').className = lastTabIcon;
+        document.getElementById('currentTabText').textContent = lastTabText;
+        
+        // Update desktop tabs if visible
+        if (window.innerWidth >= 768) {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            const desktopTab = document.getElementById(lastTab + '-tab');
+            if (desktopTab) {
+                desktopTab.classList.add('active');
+            }
+        }
+        
+        // Also update the default active state in HTML
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+            if (pane.id === lastTab) {
+                pane.classList.add('show', 'active');
+            } else {
+                pane.classList.remove('show', 'active');
+            }
+        });
+        
+        // Note: Performance data will be loaded manually when user clicks on performance tab
+        
+        console.log('Loaded last active tab:', lastTab);
+    } else {
+        // Default to general tab if no saved tab
+        console.log('No saved tab found, using default general tab');
+    }
+}
+
+// ========================================
+// QUERY LOGGING SWITCH STYLING
+// ========================================
+
+// Setup Query Logging Switch Styling
+function setupQueryLoggingSwitch() {
+    // Setup all switches across all tabs
+    const switches = [
+        // General Settings
+        { id: 'siteEnabled', labelId: 'siteEnabledLabel' },
+        { id: 'maintenanceMode', labelId: 'maintenanceModeLabel' },
+        { id: 'debugMode', labelId: 'debugModeLabel' },
+        { id: 'autoSave', labelId: 'autoSaveLabel' },
+        { id: 'notifications', labelId: 'notificationsLabel' },
+        { id: 'analytics', labelId: 'analyticsLabel' },
+        { id: 'logging', labelId: 'loggingLabel' },
+        { id: 'maintenance', labelId: 'maintenanceLabel' },
+        { id: 'updates', labelId: 'updatesLabel' },
+        
+        // Email Settings
+        { id: 'mailEnabled', labelId: 'mailEnabledLabel' },
+        
+        // Security Settings
+        { id: 'requireSpecialChars', labelId: 'requireSpecialCharsLabel' },
+        { id: 'twoFactorAuth', labelId: 'twoFactorAuthLabel' },
+        { id: 'ipWhitelist', labelId: 'ipWhitelistLabel' },
+        
+        // Backup Settings
+        { id: 'backupEnabled', labelId: 'backupEnabledLabel' },
+        
+        // Audit Log Settings
+        { id: 'auditEnabled', labelId: 'auditEnabledLabel' },
+        { id: 'auditRealTime', labelId: 'auditRealTimeLabel' },
+        { id: 'auditEmailAlerts', labelId: 'auditEmailAlertsLabel' },
+        { id: 'auditSensitiveActions', labelId: 'auditSensitiveActionsLabel' },
+        
+        // Performance Settings
+        { id: 'cacheEnabled', labelId: 'cacheEnabledLabel' },
+        { id: 'queryLogging', labelId: 'queryLoggingLabel' },
+        { id: 'compressionEnabled', labelId: 'compressionEnabledLabel' }
+    ];
+    
+    switches.forEach(switchConfig => {
+        const switchElement = document.getElementById(switchConfig.id);
+        if (switchElement) {
+            // Update switch styling on change
+            switchElement.addEventListener('change', function() {
+                updateSwitchStyle(switchConfig.id, switchConfig.labelId);
+            });
+            
+            // Initial styling
+            updateSwitchStyle(switchConfig.id, switchConfig.labelId);
+        }
+    });
+}
+
+// Update Switch Style (Generic function for all switches)
+function updateSwitchStyle(switchId, labelId) {
+    const switchElement = document.getElementById(switchId);
+    const label = document.getElementById(labelId);
+    
+    if (switchElement && label) {
+        if (switchElement.checked) {
+            label.innerHTML = '<i class="fas fa-check-circle text-success me-1"></i>เปิดใช้งาน';
+            label.classList.add('text-success', 'fw-bold');
+            label.classList.remove('text-danger', 'text-muted');
+        } else {
+            label.innerHTML = '<i class="fas fa-times-circle text-danger me-1"></i>ปิดใช้งาน';
+            label.classList.add('text-danger');
+            label.classList.remove('text-success', 'fw-bold', 'text-muted');
+        }
+    }
+}
+
+// Update Query Logging Switch Style (Legacy function for compatibility)
+function updateQueryLoggingSwitchStyle() {
+    updateSwitchStyle('queryLogging', 'queryLoggingLabel');
 }
 
 // ========================================

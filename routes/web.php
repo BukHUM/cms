@@ -187,4 +187,18 @@ Route::prefix('api/performance')->group(function () {
     Route::get('/table-statistics', [App\Http\Controllers\PerformanceController::class, 'getTableStatistics']);
     Route::get('/index-statistics', [App\Http\Controllers\PerformanceController::class, 'getIndexStatistics']);
     Route::get('/connection-statistics', [App\Http\Controllers\PerformanceController::class, 'getConnectionStatistics']);
+    Route::get('/settings', [App\Http\Controllers\PerformanceController::class, 'getPerformanceSettings']);
+    Route::post('/settings', [App\Http\Controllers\PerformanceController::class, 'savePerformanceSettings']);
+    Route::post('/test-query-logging', [App\Http\Controllers\PerformanceController::class, 'testQueryLogging']);
+});
+
+// Audit API Routes
+Route::prefix('api/audit')->group(function () {
+    Route::get('/recent', [App\Http\Controllers\AuditController::class, 'getRecentLogs']);
+    Route::get('/logs', [App\Http\Controllers\AuditController::class, 'getLogs']);
+    Route::get('/statistics', [App\Http\Controllers\AuditController::class, 'getStatistics']);
+    Route::get('/export', [App\Http\Controllers\AuditController::class, 'exportLogs']);
+    Route::get('/{id}', [App\Http\Controllers\AuditController::class, 'getLogById']);
+    Route::post('/create', [App\Http\Controllers\AuditController::class, 'createLog']);
+    Route::delete('/cleanup', [App\Http\Controllers\AuditController::class, 'cleanupOldLogs']);
 });

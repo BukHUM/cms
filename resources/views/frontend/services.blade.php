@@ -5,7 +5,7 @@
 
 @section('content')
 <!-- Hero Section -->
-<section class="hero-section">
+<section class="frontend-hero">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-6">

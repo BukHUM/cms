@@ -7,7 +7,7 @@
 <!-- Success/Error Messages -->
 @if(session('success'))
     <div class="container mt-3">
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="frontend-alert frontend-alert-success alert-dismissible fade show" role="alert">
             <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
@@ -16,7 +16,7 @@
 
 @if(session('error'))
     <div class="container mt-3">
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <div class="frontend-alert frontend-alert-danger alert-dismissible fade show" role="alert">
             <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
@@ -24,7 +24,7 @@
 @endif
 
 <!-- Hero Section -->
-<section class="hero-section">
+<section class="frontend-hero">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-6">
@@ -43,17 +43,17 @@
 </section>
 
 <!-- Contact Form & Info -->
-<section class="py-5">
+<section class="frontend-section">
     <div class="container">
         <div class="row g-5">
             <!-- Contact Form -->
             <div class="col-lg-8">
-                <div class="card">
+                <div class="card frontend-card">
                     <div class="card-header bg-primary text-white">
                         <h4 class="mb-0"><i class="fas fa-envelope me-2"></i>ส่งข้อความถึงเรา</h4>
                     </div>
                     <div class="card-body p-4">
-                        <form action="{{ route('contact.send') }}" method="POST">
+                        <form action="{{ route('contact.send') }}" method="POST" class="frontend-contact-form">
                             @csrf
                             <div class="row g-3">
                                 <div class="col-md-6">
@@ -109,8 +109,8 @@
                                 </div>
                                 
                                 <div class="col-12">
-                                    <button type="submit" class="btn btn-primary btn-lg">
-                                        <i class="fas fa-paper-plane me-2"></i>
+                                    <button type="submit" class="frontend-btn-primary btn-lg">
+                                        <i class="fas fa-paper-plane"></i>
                                         ส่งข้อความ
                                     </button>
                                 </div>
@@ -122,11 +122,11 @@
             
             <!-- Contact Information -->
             <div class="col-lg-4">
-                <div class="card h-100">
+                <div class="card h-100 frontend-card">
                     <div class="card-header bg-success text-white">
                         <h4 class="mb-0"><i class="fas fa-info-circle me-2"></i>ข้อมูลติดต่อ</h4>
                     </div>
-                    <div class="card-body p-4">
+                    <div class="card-body p-4 frontend-contact-info">
                         <div class="mb-4">
                             <h6><i class="fas fa-map-marker-alt text-primary me-2"></i>ที่อยู่</h6>
                             <p class="text-muted mb-0">
@@ -164,16 +164,16 @@
                         <div class="mb-4">
                             <h6><i class="fas fa-share-alt text-primary me-2"></i>ติดตามเรา</h6>
                             <div class="social-links">
-                                <a href="#" class="btn btn-outline-primary btn-sm me-2 mb-2">
+                                <a href="#" class="frontend-social-btn facebook">
                                     <i class="fab fa-facebook-f"></i>
                                 </a>
-                                <a href="#" class="btn btn-outline-info btn-sm me-2 mb-2">
+                                <a href="#" class="frontend-social-btn twitter">
                                     <i class="fab fa-twitter"></i>
                                 </a>
-                                <a href="#" class="btn btn-outline-danger btn-sm me-2 mb-2">
+                                <a href="#" class="frontend-social-btn instagram">
                                     <i class="fab fa-instagram"></i>
                                 </a>
-                                <a href="#" class="btn btn-outline-primary btn-sm me-2 mb-2">
+                                <a href="#" class="frontend-social-btn linkedin">
                                     <i class="fab fa-linkedin-in"></i>
                                 </a>
                             </div>
@@ -186,7 +186,7 @@
 </section>
 
 <!-- FAQ Section -->
-<section class="py-5 bg-light">
+<section class="frontend-section-alt">
     <div class="container">
         <div class="row text-center mb-5">
             <div class="col-12">
@@ -197,7 +197,7 @@
         
         <div class="row">
             <div class="col-lg-8 mx-auto">
-                <div class="accordion" id="faqAccordion">
+                <div class="accordion frontend-accordion" id="faqAccordion">
                     <div class="accordion-item">
                         <h2 class="accordion-header">
                             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
