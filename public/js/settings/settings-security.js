@@ -30,7 +30,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            console.log('Saving security settings:', formData);
             SwalHelper.loading('กำลังบันทึกการตั้งค่าความปลอดภัย...');
             
             // Save to localStorage
@@ -57,6 +56,5 @@ function loadSecuritySettings() {
         document.getElementById('twoFactorAuth').checked = data.twoFactorAuth || false;
         document.getElementById('ipWhitelist').checked = data.ipWhitelist || false;
         
-        console.log('Security settings loaded');
     }
 }

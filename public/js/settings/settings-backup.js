@@ -23,7 +23,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            console.log('Saving backup settings:', formData);
             SwalHelper.loading('กำลังบันทึกการตั้งค่าสำรองข้อมูล...');
             
             // Save to localStorage
@@ -78,7 +77,6 @@ function addBackupToHistory() {
 
 // Download Backup Function
 function downloadBackup(dateStr) {
-    console.log('Downloading backup:', dateStr);
     SwalHelper.loading('กำลังดาวน์โหลดไฟล์สำรอง...');
     
     setTimeout(() => {
@@ -106,6 +104,5 @@ function loadBackupSettings() {
         document.getElementById('backupRetention').value = data.backupRetention || '30';
         document.getElementById('backupLocation').value = data.backupLocation || 'local';
         
-        console.log('Backup settings loaded');
     }
 }

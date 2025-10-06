@@ -21,7 +21,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 mailFromName: document.getElementById('mailFromName').value
             };
             
-            console.log('Saving email settings:', formData);
             SwalHelper.loading('กำลังบันทึกการตั้งค่าอีเมล...');
             
             // Save to localStorage
@@ -47,7 +46,6 @@ function testEmail() {
         return;
     }
     
-    console.log('Testing email configuration...');
     SwalHelper.loading('กำลังทดสอบการส่งอีเมล...');
     
     // Simulate email test
@@ -71,6 +69,5 @@ function loadEmailSettings() {
         document.getElementById('mailFromAddress').value = data.mailFromAddress || 'noreply@example.com';
         document.getElementById('mailFromName').value = data.mailFromName || '';
         
-        console.log('Email settings loaded');
     }
 }

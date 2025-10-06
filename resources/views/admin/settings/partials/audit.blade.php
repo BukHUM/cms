@@ -28,33 +28,6 @@
                             <option value="comprehensive">ครบถ้วน (รวมการดูข้อมูล)</option>
                         </select>
                     </div>
-                    <div class="col-md-6">
-                        <label for="auditRealTime" class="form-label">แสดงผลแบบ Real-time</label>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="auditRealTime">
-                            <label class="form-check-label" for="auditRealTime" id="auditRealTimeLabel">
-                                เปิดใช้งาน
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="auditEmailAlerts" class="form-label">แจ้งเตือนทางอีเมล</label>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="auditEmailAlerts">
-                            <label class="form-check-label" for="auditEmailAlerts" id="auditEmailAlertsLabel">
-                                เปิดใช้งาน
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="auditSensitiveActions" class="form-label">บันทึกการกระทำที่สำคัญ</label>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="auditSensitiveActions" checked>
-                            <label class="form-check-label" for="auditSensitiveActions" id="auditSensitiveActionsLabel">
-                                เปิดใช้งาน
-                            </label>
-                        </div>
-                    </div>
                 </div>
                 <!-- Desktop Actions -->
                 <div class="mt-4 d-none d-md-block">

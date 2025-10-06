@@ -32,7 +32,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            console.log('Saving performance settings:', formData);
             SwalHelper.loading('กำลังบันทึกการตั้งค่า Performance...');
             
             // Send to API
@@ -217,7 +216,6 @@ function updatePerformanceMetrics() {
 
 // Refresh Slow Queries
 function refreshSlowQueries() {
-    console.log('Refreshing slow queries...');
     SwalHelper.loading('กำลังโหลด Slow Queries...');
     
     fetch('/api/performance/slow-queries')
@@ -270,7 +268,6 @@ function updateSlowQueriesTable(queries) {
 
 // Refresh Duplicate Queries
 function refreshDuplicateQueries() {
-    console.log('Refreshing duplicate queries...');
     SwalHelper.loading('กำลังโหลด Duplicate Queries...');
     
     fetch('/api/performance/duplicate-queries')
@@ -324,7 +321,6 @@ function updateDuplicateQueriesTable(queries) {
 
 // Refresh Table Statistics
 function refreshTableStatistics() {
-    console.log('Refreshing table statistics...');
     SwalHelper.loading('กำลังโหลด Table Statistics...');
     
     fetch('/api/performance/table-statistics')
@@ -374,7 +370,6 @@ function updateTableStatisticsTable(tables) {
 
 // Refresh Index Statistics
 function refreshIndexStatistics() {
-    console.log('Refreshing index statistics...');
     SwalHelper.loading('กำลังโหลด Index Statistics...');
     
     fetch('/api/performance/index-statistics')
@@ -448,7 +443,6 @@ function loadPerformanceSettings() {
         updateSwitchStyle('queryLogging', 'queryLoggingLabel');
         updateSwitchStyle('compressionEnabled', 'compressionEnabledLabel');
         
-        console.log('Performance settings loaded');
     } else {
         // Load from API if no localStorage data
         loadPerformanceSettingsFromAPI();
@@ -489,7 +483,6 @@ function loadPerformanceSettingsFromAPI() {
                 };
                 localStorage.setItem('performanceSettings', JSON.stringify(localStorageData));
                 
-                console.log('Performance settings loaded from API');
             }
         })
         .catch(error => {

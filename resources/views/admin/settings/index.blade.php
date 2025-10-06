@@ -20,6 +20,7 @@
     @include('admin.settings.partials.backup')
     @include('admin.settings.partials.audit')
     @include('admin.settings.partials.performance')
+    @include('admin.settings.partials.system-info')
 </div>
 @endsection
 
@@ -45,6 +46,7 @@
 <script src="{{ asset('js/settings/settings-backup.js') }}"></script>
 <script src="{{ asset('js/settings/settings-audit.js') }}"></script>
 <script src="{{ asset('js/settings/settings-performance.js') }}"></script>
+<script src="{{ asset('js/settings/settings-system-info.js') }}"></script>
 <script src="{{ asset('js/settings/settings-utils.js') }}"></script>
 
 <!-- Force Settings Menu Active -->
@@ -57,7 +59,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const settingsNavLink = document.querySelector('a[href*="settings"]');
     if (settingsNavLink) {
         settingsNavLink.classList.add('active');
-        console.log('Settings menu forced to active state');
     }
 });
 </script>

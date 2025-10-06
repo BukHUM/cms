@@ -138,8 +138,8 @@
                     <i class="fas fa-user-circle"></i>
                 </div>
                 <div class="user-info">
-                    <span class="user-name">{{ Auth::user()->name ?? 'Admin' }}</span>
-                    <small class="user-role">Administrator</small>
+                    <span class="user-name">{{ getCurrentAdminUserName() }}</span>
+                    <small class="user-role">{{ getCurrentAdminUserRole() }}</small>
                 </div>
             </div>
             
@@ -190,8 +190,8 @@
                             <i class="fas fa-user-circle"></i>
                         </div>
                         <div class="user-details">
-                            <span class="user-name">{{ Auth::user()->name ?? 'Admin' }}</span>
-                            <small class="user-role">Administrator</small>
+                            <span class="user-name">{{ getCurrentAdminUserName() }}</span>
+                            <small class="user-role">{{ getCurrentAdminUserRole() }}</small>
                         </div>
                         <div class="dropdown-menu">
                             <a href="#" class="dropdown-item">
@@ -435,13 +435,10 @@
             
             // Enhanced logout confirmation
             const logoutLinks = document.querySelectorAll('a[href="{{ route('logout') }}"]');
-            console.log('Found logout links:', logoutLinks.length);
             
             logoutLinks.forEach((link, index) => {
-                console.log(`Setting up logout link ${index + 1}`);
                 link.addEventListener('click', async function(e) {
                     e.preventDefault();
-                    console.log('Logout link clicked, showing confirmation...');
                     
                     try {
                         // Show confirmation dialog and wait for user response
@@ -459,17 +456,12 @@
                             reverseButtons: true
                         });
                         
-                        console.log('SweetAlert result:', result);
-                        
                         // Only proceed if user clicks "ออกจากระบบ"
                         if (result.isConfirmed) {
-                            console.log('User confirmed logout');
-                            
                             // Close the confirmation dialog first
                             Swal.close();
                             
                             // Submit logout form immediately
-                            console.log('Creating logout form...');
                             
                             // Create and submit form immediately
                             const form = document.createElement('form');
@@ -483,11 +475,9 @@
                             
                             form.appendChild(csrfToken);
                             document.body.appendChild(form);
-                            console.log('Submitting logout form...');
                             form.submit();
                         } else {
                             // User clicked cancel or closed dialog
-                            console.log('Logout cancelled by user, result:', result);
                             // Close the dialog
                             Swal.close();
                         }

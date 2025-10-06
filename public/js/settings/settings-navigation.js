@@ -84,10 +84,8 @@ function loadLastActiveTab() {
             }
         }
         
-        console.log('Loaded last active tab:', lastTab);
     } else {
         // Default to general tab if no saved tab
-        console.log('No saved tab found, using default general tab');
         
         // Show general tab immediately
         document.getElementById('general').classList.add('show', 'active');

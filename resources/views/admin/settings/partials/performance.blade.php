@@ -30,15 +30,11 @@
                     </div>
                     <div class="col-md-6">
                         <label for="queryLogging" class="form-label">บันทึก Query Log</label>
-                        <div class="form-check form-switch d-flex align-items-center">
+                        <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="queryLogging">
-                            <label class="form-check-label me-3" for="queryLogging" id="queryLoggingLabel">
+                            <label class="form-check-label" for="queryLogging" id="queryLoggingLabel">
                                 เปิดใช้งาน
                             </label>
-                            <button type="button" class="btn btn-sm btn-outline-info" onclick="testQueryLogging()">
-                                <i class="fas fa-vial me-1"></i>
-                                ทดสอบ
-                            </button>
                         </div>
                     </div>
                     <div class="col-md-6">

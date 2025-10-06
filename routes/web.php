@@ -119,14 +119,24 @@ Route::get('/login', function () {
 })->name('login');
 
 Route::post('/admin/login', function () {
-    // Simple authentication logic (for demo purposes)
     $email = request('email');
     $password = request('password');
     
-    // Demo credentials
-    if ($email === 'admin@example.com' && $password === 'password') {
-        // Set session
-        session(['admin_logged_in' => true, 'admin_user' => $email]);
+    // Find user in database
+    $user = \App\Models\User::where('email', $email)->first();
+    
+    if ($user && \Illuminate\Support\Facades\Hash::check($password, $user->password)) {
+        // Update last login time
+        $user->update(['last_login_at' => now()]);
+        
+        // Set session with user data
+        session([
+            'admin_logged_in' => true, 
+            'admin_user_id' => $user->id,
+            'admin_user_email' => $user->email,
+            'admin_user_name' => $user->name,
+            'admin_user_role' => $user->role
+        ]);
         
         return redirect()->route('admin.dashboard')->with('success', 'เข้าสู่ระบบสำเร็จ!');
     }
@@ -201,4 +211,16 @@ Route::prefix('api/audit')->group(function () {
     Route::get('/{id}', [App\Http\Controllers\AuditController::class, 'getLogById']);
     Route::post('/create', [App\Http\Controllers\AuditController::class, 'createLog']);
     Route::delete('/cleanup', [App\Http\Controllers\AuditController::class, 'cleanupOldLogs']);
+});
+
+// Settings API Routes
+Route::prefix('api/settings')->group(function () {
+    Route::post('/audit', [App\Http\Controllers\SettingsController::class, 'saveAuditSettings']);
+    Route::get('/audit', [App\Http\Controllers\SettingsController::class, 'getAuditSettings']);
+});
+
+// System Info API Routes
+Route::prefix('api/system')->group(function () {
+    Route::get('/info', [App\Http\Controllers\SystemInfoController::class, 'getSystemInfo']);
+    Route::post('/timezone', [App\Http\Controllers\SystemInfoController::class, 'updateTimezone']);
 });

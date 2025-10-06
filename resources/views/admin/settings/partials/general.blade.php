@@ -85,24 +85,6 @@
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <label for="logging" class="form-label">เปิดใช้งานการบันทึก Log</label>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="logging" checked>
-                            <label class="form-check-label" for="logging" id="loggingLabel">
-                                เปิดใช้งาน
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="maintenance" class="form-label">เปิดใช้งานโหมดบำรุงรักษา</label>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="maintenance">
-                            <label class="form-check-label" for="maintenance" id="maintenanceLabel">
-                                เปิดใช้งาน
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
                         <label for="updates" class="form-label">เปิดใช้งานการอัปเดตอัตโนมัติ</label>
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="updates" checked>

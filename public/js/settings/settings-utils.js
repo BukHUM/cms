@@ -166,9 +166,6 @@ function updateSwitchStyle(switchId, labelId) {
 
 // Load saved settings from localStorage
 function loadSavedSettings() {
-    // Show loading indicator
-    console.log('Loading saved settings...');
-    
     // Load all settings
     loadGeneralSettings();
     loadEmailSettings();
@@ -176,8 +173,6 @@ function loadSavedSettings() {
     loadBackupSettings();
     loadAuditSettings();
     loadPerformanceSettings();
-    
-    console.log('All settings loaded from localStorage');
 }
 
 // Auto-save functionality
@@ -190,7 +185,6 @@ function setupAutoSave() {
                 // Debounce auto-save
                 clearTimeout(input.autoSaveTimeout);
                 input.autoSaveTimeout = setTimeout(() => {
-                    console.log('Auto-saving...');
                     // You can implement auto-save logic here
                 }, 2000);
             });

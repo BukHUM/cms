@@ -13,10 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = {
                 auditEnabled: document.getElementById('auditEnabled').checked,
                 auditRetention: document.getElementById('auditRetention').value,
-                auditLevel: document.getElementById('auditLevel').value,
-                auditRealTime: document.getElementById('auditRealTime').checked,
-                auditEmailAlerts: document.getElementById('auditEmailAlerts').checked,
-                auditSensitiveActions: document.getElementById('auditSensitiveActions').checked
+                auditLevel: document.getElementById('auditLevel').value
             };
             
             // Validate audit retention
@@ -25,24 +22,49 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            console.log('Saving audit settings:', formData);
             SwalHelper.loading('กำลังบันทึกการตั้งค่า Audit Log...');
             
-            // Save to localStorage
-            localStorage.setItem('auditSettings', JSON.stringify(formData));
-            
-            // Simulate API call
-            setTimeout(() => {
+            // Save to database via API
+            fetch('/api/settings/audit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
                 SwalHelper.close();
-                SwalHelper.success('บันทึกการตั้งค่า Audit Log เรียบร้อยแล้ว');
-            }, 1500);
+                
+                if (data.success) {
+                    // Also save to localStorage for immediate UI updates
+                    localStorage.setItem('auditSettings', JSON.stringify(formData));
+                    
+                    SwalHelper.success('บันทึกการตั้งค่า Audit Log เรียบร้อยแล้ว');
+                    
+                    // Reload audit logs with new settings
+                    loadAuditLogs();
+                } else {
+                    SwalHelper.error(data.message || 'ไม่สามารถบันทึกการตั้งค่าได้');
+                }
+            })
+            .catch(error => {
+                SwalHelper.close();
+                console.error('Error saving audit settings:', error);
+                SwalHelper.error('เกิดข้อผิดพลาดในการบันทึกการตั้งค่า');
+            });
         });
     }
 });
 
 // Load Audit Logs from API
 function loadAuditLogs() {
-    fetch('/api/audit/recent?limit=10')
+    // Load all audit logs without filtering by level
+    // The audit level setting only controls what gets logged, not what gets displayed
+    const apiUrl = `/api/audit/recent?limit=10`;
+    
+    fetch(apiUrl)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -58,6 +80,37 @@ function loadAuditLogs() {
         });
 }
 
+// Format date/time according to user's timezone setting
+function formatDateTime(dateString) {
+    try {
+        // Get timezone from general settings
+        const generalSettings = localStorage.getItem('generalSettings');
+        let timezone = 'Asia/Bangkok'; // default
+        
+        if (generalSettings) {
+            const data = JSON.parse(generalSettings);
+            timezone = data.timezone || 'Asia/Bangkok';
+        }
+        
+        const date = new Date(dateString);
+        
+        // Format according to Thai locale and selected timezone
+        return date.toLocaleString('th-TH', {
+            timeZone: timezone,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
+    } catch (error) {
+        console.error('Error formatting date:', error);
+        return dateString; // fallback to original string
+    }
+}
+
 // Update Audit Logs Table
 function updateAuditLogsTable(logs) {
     const tbody = document.getElementById('auditLogsTable');
@@ -71,7 +124,7 @@ function updateAuditLogsTable(logs) {
      logs.forEach(log => {
          const row = `
              <tr>
-                 <td>${log.created_at}</td>
+                 <td>${formatDateTime(log.created_at)}</td>
                  <td>${log.user_name || 'N/A'}</td>
                  <td>${log.formatted_action}</td>
                  <td>${log.ip_address || 'N/A'}</td>
@@ -159,18 +212,52 @@ function clearAuditLogs() {
     });
 }
 
-// Load Audit Settings from localStorage
+// Listen for timezone changes from general settings
+function listenForTimezoneChanges() {
+    // Listen for storage changes (when general settings are updated)
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'generalSettings') {
+            // Reload audit logs with new timezone
+            loadAuditLogs();
+        }
+    });
+    
+    // Also listen for custom events (for same-tab updates)
+    window.addEventListener('timezoneChanged', function() {
+        loadAuditLogs();
+    });
+}
+
+// Initialize timezone listener and load settings
+document.addEventListener('DOMContentLoaded', function() {
+    listenForTimezoneChanges();
+    loadAuditSettings();
+});
+
+// Load Audit Settings from API
 function loadAuditSettings() {
-    const auditSettings = localStorage.getItem('auditSettings');
-    if (auditSettings) {
-        const data = JSON.parse(auditSettings);
-        document.getElementById('auditEnabled').checked = data.auditEnabled || false;
-        document.getElementById('auditRetention').value = data.auditRetention || '90';
-        document.getElementById('auditLevel').value = data.auditLevel || 'basic';
-        document.getElementById('auditRealTime').checked = data.auditRealTime || false;
-        document.getElementById('auditEmailAlerts').checked = data.auditEmailAlerts || false;
-        document.getElementById('auditSensitiveActions').checked = data.auditSensitiveActions || false;
-        
-        console.log('Audit settings loaded');
-    }
+    fetch('/api/settings/audit')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update form fields with saved settings
+                document.getElementById('auditEnabled').checked = data.data.auditEnabled;
+                document.getElementById('auditRetention').value = data.data.auditRetention;
+                document.getElementById('auditLevel').value = data.data.auditLevel;
+                
+                // Also save to localStorage for immediate access
+                localStorage.setItem('auditSettings', JSON.stringify(data.data));
+            }
+        })
+        .catch(error => {
+            console.error('Error loading audit settings:', error);
+            // Fallback to localStorage if API fails
+            const auditSettings = localStorage.getItem('auditSettings');
+            if (auditSettings) {
+                const data = JSON.parse(auditSettings);
+                document.getElementById('auditEnabled').checked = data.auditEnabled || false;
+                document.getElementById('auditRetention').value = data.auditRetention || '90';
+                document.getElementById('auditLevel').value = data.auditLevel || 'basic';
+            }
+        });
 }

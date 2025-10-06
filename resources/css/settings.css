@@ -206,6 +206,49 @@
     box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
 }
 
+/* System Info Styles */
+.input-group-text {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    color: #495057;
+}
+
+.input-group-text i {
+    width: 16px;
+    text-align: center;
+}
+
+.form-control[readonly] {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+.progress {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+}
+
+.progress-bar {
+    border-radius: 4px;
+    transition: width 0.6s ease;
+}
+
+.log-container {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.log-entry {
+    padding: 5px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.log-entry:last-child {
+    border-bottom: none;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .settings-card .card-body {

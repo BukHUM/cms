@@ -322,6 +322,63 @@ class AuditLogMiddleware
      */
     private function logAuditEntry(array $data): void
     {
-        AuditLog::createLog($data);
+        // Check if this action should be logged based on audit level
+        if ($this->shouldLogAction($data['action'])) {
+            AuditLog::createLog($data);
+        }
+    }
+
+    /**
+     * Check if action should be logged based on current audit level
+     */
+    private function shouldLogAction(string $action): bool
+    {
+        // Get current audit level from settings
+        $auditLevel = $this->getCurrentAuditLevel();
+        
+        switch ($auditLevel) {
+            case 'basic':
+                // Basic: Login, Logout, Password change, Settings update
+                return in_array($action, ['login', 'logout', 'password_change', 'settings_update']);
+                
+            case 'detailed':
+                // Detailed: All important actions except view
+                return in_array($action, [
+                    'login', 'logout', 'password_change', 'settings_update',
+                    'create', 'update', 'delete', 'export', 'import', 'profile_update'
+                ]);
+                
+            case 'comprehensive':
+                // Comprehensive: All actions including view
+                return true;
+                
+            default:
+                // Default to basic if no setting found
+                return in_array($action, ['login', 'logout', 'password_change', 'settings_update']);
+        }
+    }
+
+    /**
+     * Get current audit level from settings
+     */
+    private function getCurrentAuditLevel(): string
+    {
+        try {
+            // Try to get from database settings table (if exists)
+            $settings = DB::table('laravel_settings')
+                ->where('key', 'audit_level')
+                ->first();
+                
+            if ($settings) {
+                return $settings->value ?? 'basic';
+            }
+            
+            // Fallback: try to get from cache or config
+            return config('audit.level', 'basic');
+            
+        } catch (\Exception $e) {
+            // If any error, default to basic
+            return 'basic';
+        }
     }
 }

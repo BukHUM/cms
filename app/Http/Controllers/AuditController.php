@@ -17,6 +17,9 @@ class AuditController extends Controller
     {
         try {
             $limit = $request->get('limit', 10);
+            
+            // Get all logs without filtering by audit level
+            // The audit level setting only controls what gets logged, not what gets displayed
             $logs = AuditLog::getRecentLogs($limit);
 
             return response()->json([
@@ -344,6 +347,43 @@ class AuditController extends Controller
                 'message' => 'ไม่พบ Audit Log ที่ระบุ'
             ], 404);
         }
+    }
+
+    /**
+     * Get logs filtered by audit level
+     */
+    private function getLogsByAuditLevel($auditLevel, $limit = 10)
+    {
+        $query = AuditLog::query();
+        
+        switch ($auditLevel) {
+            case 'basic':
+                // Basic: Login, Logout, Password change, Settings update
+                $query->whereIn('action', ['login', 'logout', 'password_change', 'settings_update']);
+                break;
+                
+            case 'detailed':
+                // Detailed: All important actions except view
+                $query->whereIn('action', [
+                    'login', 'logout', 'password_change', 'settings_update',
+                    'create', 'update', 'delete', 'export', 'import', 'profile_update'
+                ]);
+                break;
+                
+            case 'comprehensive':
+                // Comprehensive: All actions including view
+                // No additional filtering needed - show all logs
+                break;
+                
+            default:
+                // Default to basic if invalid level
+                $query->whereIn('action', ['login', 'logout', 'password_change', 'settings_update']);
+                break;
+        }
+        
+        return $query->orderBy('created_at', 'desc')
+                    ->limit($limit)
+                    ->get();
     }
 
     /**

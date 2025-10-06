@@ -28,6 +28,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'avatar',
+        'last_login_at',
     ];
 
     /**
@@ -50,6 +53,36 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_login_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Check if user is admin
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    /**
+     * Get user's display name
+     */
+    public function getDisplayName(): string
+    {
+        return $this->name ?: 'User';
+    }
+
+    /**
+     * Get user's role display name
+     */
+    public function getRoleDisplayName(): string
+    {
+        return match($this->role) {
+            'admin' => 'Administrator',
+            'moderator' => 'Moderator',
+            'user' => 'User',
+            default => 'User'
+        };
     }
 }
