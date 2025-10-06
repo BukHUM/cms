@@ -46,6 +46,7 @@ cd corebackend
 ```bash
 composer install
 npm install
+npm run build
 ```
 
 3. **ตั้งค่าสภาพแวดล้อม**
