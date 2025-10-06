@@ -60,6 +60,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (settingsNavLink) {
         settingsNavLink.classList.add('active');
     }
+    
+    // Load last active tab
+    loadLastActiveTab();
 });
 </script>
 @endpush

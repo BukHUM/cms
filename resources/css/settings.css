@@ -206,6 +206,65 @@
     box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
 }
 
+/* Switch Label Colors */
+.form-check-label.enabled {
+    color: #28a745 !important;
+    font-weight: 600;
+}
+
+.form-check-label.disabled {
+    color: #dc3545 !important;
+    font-weight: 600;
+}
+
+/* Force red color for disabled labels */
+#siteEnabledLabel.disabled,
+#maintenanceModeLabel.disabled,
+#debugModeLabel.disabled,
+#autoSaveLabel.disabled,
+#notificationsLabel.disabled,
+#analyticsLabel.disabled,
+#updatesLabel.disabled,
+#mailEnabledLabel.disabled,
+#passwordRequireUppercaseLabel.disabled,
+#passwordRequireLowercaseLabel.disabled,
+#passwordRequireNumbersLabel.disabled,
+#passwordRequireSpecialCharsLabel.disabled,
+#twoFactorAuthLabel.disabled,
+#ipWhitelistLabel.disabled,
+#backupEnabledLabel.disabled,
+#auditEnabledLabel.disabled,
+#cacheEnabledLabel.disabled,
+#queryLoggingLabel.disabled,
+#compressionEnabledLabel.disabled {
+    color: #dc3545 !important;
+    font-weight: 600 !important;
+}
+
+/* Force green color for enabled labels */
+#siteEnabledLabel.enabled,
+#maintenanceModeLabel.enabled,
+#debugModeLabel.enabled,
+#autoSaveLabel.enabled,
+#notificationsLabel.enabled,
+#analyticsLabel.enabled,
+#updatesLabel.enabled,
+#mailEnabledLabel.enabled,
+#passwordRequireUppercaseLabel.enabled,
+#passwordRequireLowercaseLabel.enabled,
+#passwordRequireNumbersLabel.enabled,
+#passwordRequireSpecialCharsLabel.enabled,
+#twoFactorAuthLabel.enabled,
+#ipWhitelistLabel.enabled,
+#backupEnabledLabel.enabled,
+#auditEnabledLabel.enabled,
+#cacheEnabledLabel.enabled,
+#queryLoggingLabel.enabled,
+#compressionEnabledLabel.enabled {
+    color: #28a745 !important;
+    font-weight: 600 !important;
+}
+
 /* System Info Styles */
 .input-group-text {
     background-color: #f8f9fa;

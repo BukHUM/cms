@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Support\Facades\Hash;
 
 class AdminUserSeeder extends Seeder
@@ -14,39 +15,70 @@ class AdminUserSeeder extends Seeder
      */
     public function run(): void
     {
+        // Get roles
+        $superAdminRole = Role::where('slug', 'super-admin')->first();
+        $adminRole = Role::where('slug', 'admin')->first();
+        $moderatorRole = Role::where('slug', 'moderator')->first();
+        $userRole = Role::where('slug', 'user')->first();
+
+        // Create super admin user
+        $superAdmin = User::updateOrCreate(
+            ['email' => 'superadmin@example.com'],
+            [
+                'name' => 'Super Administrator',
+                'email' => 'superadmin@example.com',
+                'password' => Hash::make('password'),
+                'status' => 'active',
+                'email_verified_at' => now(),
+            ]
+        );
+        if ($superAdminRole) {
+            $superAdmin->syncRoles([$superAdminRole->id]);
+        }
+
         // Create admin user
-        User::updateOrCreate(
+        $admin = User::updateOrCreate(
             ['email' => 'admin@example.com'],
             [
                 'name' => 'Administrator',
                 'email' => 'admin@example.com',
                 'password' => Hash::make('password'),
-                'role' => 'admin',
+                'status' => 'active',
                 'email_verified_at' => now(),
             ]
         );
+        if ($adminRole) {
+            $admin->syncRoles([$adminRole->id]);
+        }
 
-        // Create demo users
-        User::updateOrCreate(
+        // Create moderator user
+        $moderator = User::updateOrCreate(
             ['email' => 'moderator@example.com'],
             [
                 'name' => 'Moderator',
                 'email' => 'moderator@example.com',
                 'password' => Hash::make('password'),
-                'role' => 'moderator',
+                'status' => 'active',
                 'email_verified_at' => now(),
             ]
         );
+        if ($moderatorRole) {
+            $moderator->syncRoles([$moderatorRole->id]);
+        }
 
-        User::updateOrCreate(
+        // Create regular user
+        $user = User::updateOrCreate(
             ['email' => 'user@example.com'],
             [
                 'name' => 'Regular User',
                 'email' => 'user@example.com',
                 'password' => Hash::make('password'),
-                'role' => 'user',
+                'status' => 'active',
                 'email_verified_at' => now(),
             ]
         );
+        if ($userRole) {
+            $user->syncRoles([$userRole->id]);
+        }
     }
 }

@@ -76,27 +76,14 @@ Route::post('/contact/send', function () {
 })->name('contact.send');
 
 // Admin Routes (Protected)
-Route::prefix('admin')->group(function () {
-    Route::get('/', function () {
-        if (!session('admin_logged_in')) {
-            return redirect()->route('login')->with('error', 'กรุณาเข้าสู่ระบบก่อน');
-        }
-        return view('admin.dashboard');
-    })->name('admin.dashboard');
+Route::prefix('admin')->middleware(['web'])->group(function () {
+    Route::get('/', [App\Http\Controllers\DashboardController::class, 'index'])->name('admin.dashboard');
     
-    Route::get('/dashboard', function () {
-        if (!session('admin_logged_in')) {
-            return redirect()->route('login')->with('error', 'กรุณาเข้าสู่ระบบก่อน');
-        }
-        return view('admin.dashboard');
-    })->name('admin.dashboard');
+    Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('admin.dashboard');
     
-    Route::get('/users', function () {
-        if (!session('admin_logged_in')) {
-            return redirect()->route('login')->with('error', 'กรุณาเข้าสู่ระบบก่อน');
-        }
-        return view('admin.users.index');
-    })->name('admin.users.index');
+    // User Management
+    Route::get('/user-management', [App\Http\Controllers\UserManagementController::class, 'index'])->name('admin.user-management');
+    
     
     Route::get('/settings', function () {
         if (!session('admin_logged_in')) {
@@ -104,6 +91,58 @@ Route::prefix('admin')->group(function () {
         }
         return view('admin.settings.index');
     })->name('admin.settings.index');
+    
+    // Settings API Routes
+    Route::prefix('settings')->group(function () {
+        // General Settings
+        Route::get('/general', [App\Http\Controllers\SettingsController::class, 'getGeneralSettings'])->name('admin.settings.general.get');
+        Route::post('/general', [App\Http\Controllers\SettingsController::class, 'saveGeneralSettings'])->name('admin.settings.general.save');
+        
+        // Email Settings
+        Route::get('/email', [App\Http\Controllers\SettingsController::class, 'getEmailSettings'])->name('admin.settings.email.get');
+        Route::post('/email', [App\Http\Controllers\SettingsController::class, 'saveEmailSettings'])->name('admin.settings.email.save');
+        Route::post('/email/test', [App\Http\Controllers\SettingsController::class, 'testEmail'])->name('admin.settings.email.test');
+        
+        // Security Settings
+        Route::get('/security', [App\Http\Controllers\SettingsController::class, 'getSecuritySettings'])->name('admin.settings.security.get');
+        Route::post('/security', [App\Http\Controllers\SettingsController::class, 'saveSecuritySettings'])->name('admin.settings.security.save');
+        
+        // Backup Settings
+        Route::get('/backup', [App\Http\Controllers\SettingsController::class, 'getBackupSettings'])->name('admin.settings.backup.get');
+        Route::post('/backup', [App\Http\Controllers\SettingsController::class, 'saveBackupSettings'])->name('admin.settings.backup.save');
+        Route::post('/backup/create', [App\Http\Controllers\SettingsController::class, 'createBackup'])->name('admin.settings.backup.create');
+        Route::get('/backup/history', [App\Http\Controllers\SettingsController::class, 'getBackupHistory'])->name('admin.settings.backup.history');
+        Route::get('/backup/download/{id}', [App\Http\Controllers\SettingsController::class, 'downloadBackup'])->name('admin.settings.backup.download');
+        Route::delete('/backup/delete/{id}', [App\Http\Controllers\SettingsController::class, 'deleteBackup'])->name('admin.settings.backup.delete');
+        
+        // Audit Settings
+        Route::get('/audit', [App\Http\Controllers\SettingsController::class, 'getAuditSettings'])->name('admin.settings.audit.get');
+        Route::post('/audit', [App\Http\Controllers\SettingsController::class, 'saveAuditSettings'])->name('admin.settings.audit.save');
+        Route::get('/audit/logs', [App\Http\Controllers\SettingsController::class, 'getAuditLogs'])->name('admin.settings.audit.logs');
+        Route::post('/audit/export', [App\Http\Controllers\SettingsController::class, 'exportAuditLogs'])->name('admin.settings.audit.export');
+        Route::delete('/audit/clear', [App\Http\Controllers\SettingsController::class, 'clearAuditLogs'])->name('admin.settings.audit.clear');
+        
+        // Performance Settings
+        Route::get('/performance', [App\Http\Controllers\SettingsController::class, 'getPerformanceSettings'])->name('admin.settings.performance.get');
+        Route::post('/performance', [App\Http\Controllers\SettingsController::class, 'savePerformanceSettings'])->name('admin.settings.performance.save');
+        Route::get('/performance/metrics', [App\Http\Controllers\SettingsController::class, 'getPerformanceMetrics'])->name('admin.settings.performance.metrics');
+        Route::get('/performance/slow-queries', [App\Http\Controllers\SettingsController::class, 'getSlowQueries'])->name('admin.settings.performance.slow-queries');
+        Route::get('/performance/duplicate-queries', [App\Http\Controllers\SettingsController::class, 'getDuplicateQueries'])->name('admin.settings.performance.duplicate-queries');
+        Route::get('/performance/table-statistics', [App\Http\Controllers\SettingsController::class, 'getTableStatistics'])->name('admin.settings.performance.table-statistics');
+        Route::get('/performance/index-statistics', [App\Http\Controllers\SettingsController::class, 'getIndexStatistics'])->name('admin.settings.performance.index-statistics');
+        Route::post('/performance/clear-cache', [App\Http\Controllers\SettingsController::class, 'clearCache'])->name('admin.settings.performance.clear-cache');
+        Route::post('/performance/test', [App\Http\Controllers\SettingsController::class, 'runPerformanceTest'])->name('admin.settings.performance.test');
+        
+        // System Info Routes
+        Route::get('/system-info', [App\Http\Controllers\SettingsController::class, 'getSystemInfo'])->name('admin.settings.system-info.get');
+        Route::post('/system-info/export', [App\Http\Controllers\SettingsController::class, 'exportSystemInfo'])->name('admin.settings.system-info.export');
+        Route::get('/system-info/logs/{filename}', [App\Http\Controllers\SettingsController::class, 'getLogFile'])->name('admin.settings.system-info.logs');
+        Route::delete('/system-info/clear-logs', [App\Http\Controllers\SettingsController::class, 'clearLogs'])->name('admin.settings.system-info.clear-logs');
+        Route::get('/system-info/download-logs', [App\Http\Controllers\SettingsController::class, 'downloadLogs'])->name('admin.settings.system-info.download-logs');
+        
+        // All Settings
+        Route::get('/all', [App\Http\Controllers\SettingsController::class, 'getAllSettings'])->name('admin.settings.all.get');
+    });
     
     Route::get('/reports', function () {
         if (!session('admin_logged_in')) {
@@ -217,6 +256,44 @@ Route::prefix('api/audit')->group(function () {
 Route::prefix('api/settings')->group(function () {
     Route::post('/audit', [App\Http\Controllers\SettingsController::class, 'saveAuditSettings']);
     Route::get('/audit', [App\Http\Controllers\SettingsController::class, 'getAuditSettings']);
+});
+
+// User Management Routes
+Route::prefix('admin')->middleware(['web'])->group(function () {
+    // User Management Routes (New Tab System)
+    Route::get('/user-management', [App\Http\Controllers\UserManagementController::class, 'index'])->name('admin.user-management');
+    
+    // API Routes for User Management
+    Route::prefix('api/user-management')->group(function () {
+        // Users API
+        Route::get('/users', [App\Http\Controllers\UserManagementController::class, 'getUsers'])->name('user-management.users.api');
+        Route::post('/users', [App\Http\Controllers\UserManagementController::class, 'storeUser'])->name('user-management.users.store');
+        Route::get('/users/{user}', [App\Http\Controllers\UserManagementController::class, 'getUser'])->name('user-management.users.show');
+        Route::put('/users/{user}', [App\Http\Controllers\UserManagementController::class, 'updateUser'])->name('user-management.users.update');
+        Route::delete('/users/{user}', [App\Http\Controllers\UserManagementController::class, 'deleteUser'])->name('user-management.users.delete');
+        Route::post('/users/{user}/status', [App\Http\Controllers\UserManagementController::class, 'updateUserStatus'])->name('user-management.users.status');
+        Route::post('/users/{user}/roles', [App\Http\Controllers\UserManagementController::class, 'updateUserRoles'])->name('user-management.users.roles');
+        Route::get('/users/export', [App\Http\Controllers\UserManagementController::class, 'exportUsers'])->name('user-management.users.export');
+        
+        // Roles API
+        Route::get('/roles', [App\Http\Controllers\UserManagementController::class, 'getRoles'])->name('user-management.roles.api');
+        Route::post('/roles', [App\Http\Controllers\UserManagementController::class, 'storeRole'])->name('user-management.roles.store');
+        Route::get('/roles/{role}', [App\Http\Controllers\UserManagementController::class, 'getRole'])->name('user-management.roles.show');
+        Route::put('/roles/{role}', [App\Http\Controllers\UserManagementController::class, 'updateRole'])->name('user-management.roles.update');
+        Route::delete('/roles/{role}', [App\Http\Controllers\UserManagementController::class, 'deleteRole'])->name('user-management.roles.delete');
+        Route::post('/roles/{role}/status', [App\Http\Controllers\UserManagementController::class, 'updateRoleStatus'])->name('user-management.roles.status');
+        Route::get('/roles/{role}/permissions', [App\Http\Controllers\UserManagementController::class, 'getRolePermissions'])->name('user-management.roles.permissions');
+        Route::post('/roles/{role}/permissions', [App\Http\Controllers\UserManagementController::class, 'updateRolePermissions'])->name('user-management.roles.permissions.update');
+        
+        // Permissions API
+        Route::get('/permissions', [App\Http\Controllers\UserManagementController::class, 'getPermissions'])->name('user-management.permissions.api');
+        Route::post('/permissions', [App\Http\Controllers\UserManagementController::class, 'storePermission'])->name('user-management.permissions.store');
+        Route::get('/permissions/{permission}', [App\Http\Controllers\UserManagementController::class, 'getPermission'])->name('user-management.permissions.show');
+        Route::put('/permissions/{permission}', [App\Http\Controllers\UserManagementController::class, 'updatePermission'])->name('user-management.permissions.update');
+        Route::delete('/permissions/{permission}', [App\Http\Controllers\UserManagementController::class, 'deletePermission'])->name('user-management.permissions.delete');
+        Route::post('/permissions/{permission}/status', [App\Http\Controllers\UserManagementController::class, 'updatePermissionStatus'])->name('user-management.permissions.status');
+        Route::get('/permissions/groups', [App\Http\Controllers\UserManagementController::class, 'getPermissionGroups'])->name('user-management.permissions.groups');
+    });
 });
 
 // System Info API Routes

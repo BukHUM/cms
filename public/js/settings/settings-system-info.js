@@ -1,778 +1,585 @@
-// ========================================
-// SYSTEM INFO FUNCTIONS
-// ========================================
+/**
+ * System Info JavaScript
+ * แสดงข้อมูลระบบและทรัพยากรเซิร์ฟเวอร์
+ */
 
-// Load system information
-function loadSystemInfo() {
-    console.log('Loading system info...');
-    
-    try {
-        // Load all data from API in one call
-        fetch('/api/system/info')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Server Information
-                    const serverNameEl = document.getElementById('server-name');
-                    const phpVersionEl = document.getElementById('php-version');
-                    const laravelVersionEl = document.getElementById('laravel-version');
-                    const serverTimeEl = document.getElementById('server-time');
-                    
-                    if (serverNameEl) serverNameEl.value = window.location.hostname || 'localhost';
-                    if (phpVersionEl) phpVersionEl.value = 'PHP ' + (window.phpVersion || 'Unknown');
-                    if (laravelVersionEl) laravelVersionEl.value = 'Laravel ' + (window.laravelVersion || 'Unknown');
-                    
-                    // Use server time from API
-                    if (data.data.server_time && serverTimeEl) {
-                        serverTimeEl.value = data.data.server_time.formatted;
-                    } else {
-                        updateServerTime();
-                    }
-                    
-                    // System Resources - Use real data
-                    loadMemoryInfoFromAPI(data.data);
-                    loadDiskInfoFromAPI(data.data);
-                    loadCPUInfoFromAPI(data.data);
-                    loadActiveUsersFromAPI(data.data);
-                    
-                    // Database Information - Use real data
-                    loadDatabaseInfoFromAPI(data.data);
-                    
-                    // Application Information - Use real data
-                    loadApplicationInfoFromAPI(data.data);
-                    
-                    console.log('System info loaded successfully');
-                } else {
-                    console.error('API returned error:', data.error);
-                    loadFallbackData();
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching system info:', error);
-                loadFallbackData();
-            });
-    } catch (error) {
-        console.error('Error loading system info:', error);
-        loadFallbackData();
+class SystemInfo {
+    constructor() {
+        this.isRefreshing = false;
+        this.isExporting = false;
+        this.refreshInterval = null;
+        this.systemData = {};
+        
+        this.init();
     }
-}
 
-// Update server time every second
-function updateServerTime() {
-    try {
-        const serverTimeEl = document.getElementById('server-time');
-        if (!serverTimeEl) {
-            console.error('Server time element not found');
-            return;
-        }
-        
-        // Try to get server time from API first
-        fetch('/api/system/info')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && data.data.server_time) {
-                    serverTimeEl.value = data.data.server_time.formatted;
-                } else {
-                    // Fallback: use browser time with server timezone
-                    const now = new Date();
-                    const timeString = now.toLocaleString('th-TH', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        second: '2-digit',
-                        timeZone: 'Asia/Bangkok'
-                    });
-                    serverTimeEl.value = timeString + ' (Asia/Bangkok)';
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching server time:', error);
-                // Fallback: use browser time with server timezone
-                const now = new Date();
-                const timeString = now.toLocaleString('th-TH', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    timeZone: 'Asia/Bangkok'
-                });
-                serverTimeEl.value = timeString + ' (Asia/Bangkok)';
-            });
-    } catch (error) {
-        console.error('Error updating server time:', error);
+    /**
+     * Initialize System Info
+     */
+    init() {
+        this.loadSystemInfo();
+        this.bindEvents();
+        this.setupAutoRefresh();
+        this.startRealTimeUpdates();
     }
-}
 
-// Load memory information from API data
-function loadMemoryInfoFromAPI(data) {
-    try {
-        const memoryUsageEl = document.getElementById('memory-usage');
-        const memoryProgressEl = document.getElementById('memory-progress');
-        
-        if (!memoryUsageEl || !memoryProgressEl) {
-            console.error('Memory elements not found');
-            return;
-        }
-        
-        if (data.system_memory) {
-            const memory = data.system_memory;
-            memoryUsageEl.value = 
-                `${formatBytes(memory.used)} / ${formatBytes(memory.total)} (${memory.percentage}%)`;
+    /**
+     * Load system information
+     */
+    async loadSystemInfo() {
+        try {
+            this.showRefreshing(true);
             
-            memoryProgressEl.style.width = memory.percentage + '%';
-            memoryProgressEl.className = `progress-bar ${getProgressBarClass(memory.percentage)}`;
-        } else {
-            // Fallback: use PHP memory data
-            if (window.memoryUsage && window.memoryLimit) {
-                const currentUsage = parseInt(window.memoryUsage);
-                const memoryLimit = parseMemoryLimit(window.memoryLimit);
-                const percentage = Math.round((currentUsage / memoryLimit) * 100);
-                
-                memoryUsageEl.value = 
-                    `${formatBytes(currentUsage)} / ${formatBytes(memoryLimit)} (${percentage}%)`;
-                
-                memoryProgressEl.style.width = percentage + '%';
-                memoryProgressEl.className = `progress-bar ${getProgressBarClass(percentage)}`;
-            }
-        }
-    } catch (error) {
-        console.error('Error loading memory info:', error);
-    }
-}
+            const response = await fetch('/admin/settings/system-info', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            });
 
-// Load disk information from API data
-function loadDiskInfoFromAPI(data) {
-    try {
-        const diskUsageEl = document.getElementById('disk-usage');
-        const diskProgressEl = document.getElementById('disk-progress');
-        
-        if (!diskUsageEl || !diskProgressEl) {
-            console.error('Disk elements not found');
-            return;
-        }
-        
-        if (data.disk_usage) {
-            const disk = data.disk_usage;
-            diskUsageEl.value = 
-                `${disk.used} GB / ${disk.total} GB (${disk.percentage}%)`;
-            
-            diskProgressEl.style.width = disk.percentage + '%';
-            diskProgressEl.className = `progress-bar ${getProgressBarClass(disk.percentage)}`;
-        }
-    } catch (error) {
-        console.error('Error loading disk info:', error);
-    }
-}
+            const result = await response.json();
 
-// Load CPU information from API data
-function loadCPUInfoFromAPI(data) {
-    try {
-        const cpuLoadEl = document.getElementById('cpu-load');
-        
-        if (!cpuLoadEl) {
-            console.error('CPU element not found');
-            return;
-        }
-        
-        if (data.cpu_load) {
-            const cpu = data.cpu_load;
-            if (cpu.threads && cpu.threads !== cpu.cores) {
-                cpuLoadEl.value = `${cpu.load}% (${cpu.cores} cores, ${cpu.threads} threads)`;
+            if (result.success) {
+                this.systemData = result.data;
+                this.populateSystemInfo();
+                this.updateProgressBars();
+                // No auto success message for system info
             } else {
-                cpuLoadEl.value = `${cpu.load}% (${cpu.cores} cores)`;
+                this.showError(result.message || 'ไม่สามารถโหลดข้อมูลระบบได้');
             }
+
+        } catch (error) {
+            console.error('Error loading system info:', error);
+            this.showError('เกิดข้อผิดพลาดในการโหลดข้อมูลระบบ');
+        } finally {
+            this.showRefreshing(false);
         }
-    } catch (error) {
-        console.error('Error loading CPU info:', error);
     }
-}
 
-// Load active users from API data
-function loadActiveUsersFromAPI(data) {
-    try {
-        const activeUsersEl = document.getElementById('active-users');
-        
-        if (!activeUsersEl) {
-            console.error('Active users element not found');
-            return;
-        }
-        
-        if (data.active_users !== undefined) {
-            activeUsersEl.value = `${data.active_users} users`;
-        }
-    } catch (error) {
-        console.error('Error loading active users:', error);
+    /**
+     * Populate system information
+     */
+    populateSystemInfo() {
+        // Server Information
+        this.setValue('server-name', this.systemData.serverName || 'Unknown');
+        this.setValue('php-version', this.systemData.phpVersion || 'Unknown');
+        this.setValue('laravel-version', this.systemData.laravelVersion || 'Unknown');
+        this.setValue('server-time', this.systemData.serverTime || 'Unknown');
+
+        // System Resources
+        this.setValue('memory-usage', this.systemData.memoryUsage || 'Unknown');
+        this.setValue('disk-usage', this.systemData.diskUsage || 'Unknown');
+        this.setValue('cpu-load', this.systemData.cpuLoad || 'Unknown');
+        this.setValue('active-users', this.systemData.activeUsers || 'Unknown');
+
+        // Database Information
+        this.setValue('db-type', this.systemData.dbType || 'Unknown');
+        this.setValue('db-size', this.systemData.dbSize || 'Unknown');
+        this.setValue('db-connections', this.systemData.dbConnections || 'Unknown');
+        this.setValue('last-backup', this.systemData.lastBackup || 'Unknown');
+
+        // Application Information
+        this.setValue('app-env', this.systemData.appEnv || 'Unknown');
+        this.setValue('debug-mode', this.systemData.debugMode ? 'Enabled' : 'Disabled');
+        this.setValue('app-key', this.systemData.appKey || 'Unknown');
+        this.setValue('uptime', this.systemData.uptime || 'Unknown');
     }
-}
 
-// Load database information from API data
-function loadDatabaseInfoFromAPI(data) {
-    try {
-        const dbTypeEl = document.getElementById('db-type');
-        const dbSizeEl = document.getElementById('db-size');
-        const dbConnectionsEl = document.getElementById('db-connections');
-        const lastBackupEl = document.getElementById('last-backup');
-        
-        if (!dbTypeEl || !dbSizeEl || !dbConnectionsEl || !lastBackupEl) {
-            console.error('Database elements not found');
-            return;
+    /**
+     * Set input value
+     */
+    setValue(id, value) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.value = value;
         }
-        
-        // Database type
-        const dbType = window.dbType || 'MySQL';
-        dbTypeEl.value = dbType;
-        
-        // Database size
-        if (data.db_size !== undefined) {
-            dbSizeEl.value = `${data.db_size} MB`;
-        }
-        
-        // DB connections
-        if (data.db_connections !== undefined) {
-            dbConnectionsEl.value = `${data.db_connections} active`;
-        }
-        
-        // Last backup
-        if (data.last_backup !== undefined) {
-            lastBackupEl.value = data.last_backup;
-        }
-    } catch (error) {
-        console.error('Error loading database info:', error);
     }
-}
 
-// Load application information from API data
-function loadApplicationInfoFromAPI(data) {
-    try {
-        const appEnvEl = document.getElementById('app-env');
-        const debugModeEl = document.getElementById('debug-mode');
-        const appKeyEl = document.getElementById('app-key');
-        const uptimeEl = document.getElementById('uptime');
-        
-        if (!appEnvEl || !debugModeEl || !appKeyEl || !uptimeEl) {
-            console.error('Application elements not found');
-            return;
+    /**
+     * Update progress bars
+     */
+    updateProgressBars() {
+        // Memory usage progress bar
+        const memoryProgress = document.getElementById('memory-progress');
+        if (memoryProgress && this.systemData.memoryUsagePercent) {
+            memoryProgress.style.width = this.systemData.memoryUsagePercent + '%';
+            memoryProgress.className = `progress-bar ${this.getProgressBarClass(this.systemData.memoryUsagePercent)}`;
         }
-        
-        // App environment
-        const env = window.appEnv || 'production';
-        appEnvEl.value = env;
-        
-        // Debug mode
-        const debugMode = window.debugMode || false;
-        debugModeEl.value = debugMode ? 'เปิดใช้งาน' : 'ปิดใช้งาน';
-        
-        // App key
-        const appKey = window.appKey || 'Not available';
-        const shortKey = appKey.length > 20 ? appKey.substring(0, 20) + '...' : appKey;
-        appKeyEl.value = shortKey;
-        
-        // Uptime
-        if (data.uptime !== undefined) {
-            uptimeEl.value = `${data.uptime} days`;
+
+        // Disk usage progress bar
+        const diskProgress = document.getElementById('disk-progress');
+        if (diskProgress && this.systemData.diskUsagePercent) {
+            diskProgress.style.width = this.systemData.diskUsagePercent + '%';
+            diskProgress.className = `progress-bar ${this.getProgressBarClass(this.systemData.diskUsagePercent)}`;
         }
-    } catch (error) {
-        console.error('Error loading application info:', error);
     }
-}
 
-// Load fallback data when API fails
-function loadFallbackData() {
-    console.log('Loading fallback data...');
-    
-    // Server Information
-    const serverNameEl = document.getElementById('server-name');
-    const phpVersionEl = document.getElementById('php-version');
-    const laravelVersionEl = document.getElementById('laravel-version');
-    
-    if (serverNameEl) serverNameEl.value = window.location.hostname || 'localhost';
-    if (phpVersionEl) phpVersionEl.value = 'PHP ' + (window.phpVersion || 'Unknown');
-    if (laravelVersionEl) laravelVersionEl.value = 'Laravel ' + (window.laravelVersion || 'Unknown');
-    
-    updateServerTime();
-    
-    // Fallback for other data
-    loadMemoryInfo();
-    loadDiskInfo();
-    loadCPUInfo();
-    loadActiveUsers();
-    loadDatabaseInfo();
-    loadApplicationInfo();
-}
-
-// Load disk information (fallback)
-function loadDiskInfo() {
-    try {
-        const diskUsageEl = document.getElementById('disk-usage');
-        const diskProgressEl = document.getElementById('disk-progress');
-        
-        if (!diskUsageEl || !diskProgressEl) {
-            console.error('Disk elements not found');
-            return;
-        }
-        
-        // Fallback: simulate disk usage
-        const totalDisk = 500; // GB
-        const usedDisk = Math.floor(Math.random() * totalDisk * 0.6);
-        const percentage = Math.round((usedDisk / totalDisk) * 100);
-        
-        diskUsageEl.value = 
-            `${usedDisk} GB / ${totalDisk} GB (${percentage}%)`;
-        
-        diskProgressEl.style.width = percentage + '%';
-        diskProgressEl.className = `progress-bar ${getProgressBarClass(percentage)}`;
-    } catch (error) {
-        console.error('Error loading disk info:', error);
+    /**
+     * Get progress bar class based on percentage
+     */
+    getProgressBarClass(percentage) {
+        if (percentage >= 90) return 'bg-danger';
+        if (percentage >= 70) return 'bg-warning';
+        if (percentage >= 50) return 'bg-info';
+        return 'bg-success';
     }
-}
 
-// Load CPU information (fallback)
-function loadCPUInfo() {
-    try {
-        const cpuLoadEl = document.getElementById('cpu-load');
-        
-        if (!cpuLoadEl) {
-            console.error('CPU element not found');
-            return;
+    /**
+     * Bind events
+     */
+    bindEvents() {
+        // Refresh button
+        const refreshBtn = document.querySelector('button[onclick="refreshSystemInfo()"]');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.refreshSystemInfo();
+            });
         }
-        
-        // Fallback: use browser info
-        if (navigator.hardwareConcurrency) {
-            const cores = navigator.hardwareConcurrency;
-            const load = (Math.random() * 100).toFixed(1);
-            cpuLoadEl.value = `${load}% (${cores} cores)`;
+
+        // Export button
+        const exportBtn = document.querySelector('button[onclick="exportSystemInfo()"]');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.exportSystemInfo();
+            });
+        }
+
+        // Show logs button
+        const logsBtn = document.querySelector('button[onclick="showSystemLogs()"]');
+        if (logsBtn) {
+            logsBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showSystemLogs();
+            });
+        }
+    }
+
+    /**
+     * Setup auto refresh
+     */
+    setupAutoRefresh() {
+        // Auto refresh every 30 seconds
+        this.refreshInterval = setInterval(() => {
+            this.loadSystemInfo();
+        }, 30000);
+    }
+
+    /**
+     * Start real-time updates
+     */
+    startRealTimeUpdates() {
+        // Update server time every second
+        setInterval(() => {
+            const now = new Date();
+            const timeString = now.toLocaleString('th-TH', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            this.setValue('server-time', timeString);
+        }, 1000);
+
+        // Update uptime every minute
+        setInterval(() => {
+            if (this.systemData.startTime) {
+                const uptime = this.calculateUptime(this.systemData.startTime);
+                this.setValue('uptime', uptime);
+            }
+        }, 60000);
+    }
+
+    /**
+     * Calculate uptime
+     */
+    calculateUptime(startTime) {
+        const start = new Date(startTime);
+        const now = new Date();
+        const diff = now - start;
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+        if (days > 0) {
+            return `${days} วัน ${hours} ชั่วโมง ${minutes} นาที`;
+        } else if (hours > 0) {
+            return `${hours} ชั่วโมง ${minutes} นาที`;
         } else {
-            // Fallback: simulate CPU info
-            const cores = Math.floor(Math.random() * 8) + 4; // 4-12 cores
-            const load = (Math.random() * 100).toFixed(1);
-            cpuLoadEl.value = `${load}% (${cores} cores)`;
+            return `${minutes} นาที`;
         }
-    } catch (error) {
-        console.error('Error loading CPU info:', error);
     }
-}
 
-// Load active users (fallback)
-function loadActiveUsers() {
-    try {
-        const activeUsersEl = document.getElementById('active-users');
-        
-        if (!activeUsersEl) {
-            console.error('Active users element not found');
-            return;
-        }
-        
-        // Fallback: simulate active users
-        const activeUsers = Math.floor(Math.random() * 10) + 1; // 1-10 users
-        activeUsersEl.value = `${activeUsers} users`;
-    } catch (error) {
-        console.error('Error loading active users:', error);
+    /**
+     * Refresh system info
+     */
+    async refreshSystemInfo() {
+        if (this.isRefreshing) return;
+
+        await this.loadSystemInfo();
+        this.showSuccess('รีเฟรชข้อมูลระบบสำเร็จ');
     }
-}
 
-// Load database information (fallback)
-function loadDatabaseInfo() {
-    try {
-        const dbTypeEl = document.getElementById('db-type');
-        const dbSizeEl = document.getElementById('db-size');
-        const dbConnectionsEl = document.getElementById('db-connections');
-        const lastBackupEl = document.getElementById('last-backup');
-        
-        if (!dbTypeEl || !dbSizeEl || !dbConnectionsEl || !lastBackupEl) {
-            console.error('Database elements not found');
-            return;
+    /**
+     * Export system info
+     */
+    async exportSystemInfo() {
+        if (this.isExporting) return;
+
+        try {
+            this.isExporting = true;
+            this.showExportLoading(true);
+
+            const response = await fetch('/admin/settings/system-info/export', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Download the exported file
+                if (result.data && result.data.download_url) {
+                    window.open(result.data.download_url, '_blank');
+                }
+                this.showSuccess(result.message || 'ส่งออกข้อมูลระบบสำเร็จ');
+            } else {
+                this.showError(result.message || 'ไม่สามารถส่งออกข้อมูลระบบได้');
+            }
+
+        } catch (error) {
+            console.error('Error exporting system info:', error);
+            this.showError('เกิดข้อผิดพลาดในการส่งออกข้อมูลระบบ');
+        } finally {
+            this.isExporting = false;
+            this.showExportLoading(false);
         }
-        
-        // Database type
-        const dbType = window.dbType || 'MySQL';
-        dbTypeEl.value = dbType;
-        
-        // Fallback: simulate database info
-        const dbSize = (Math.random() * 100 + 50).toFixed(1);
-        dbSizeEl.value = `${dbSize} MB`;
-        
-        const connections = Math.floor(Math.random() * 20) + 5;
-        dbConnectionsEl.value = `${connections} active`;
-        
-        // Last backup (simulate)
-        const lastBackup = new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000);
-        lastBackupEl.value = lastBackup.toLocaleDateString('th-TH');
-    } catch (error) {
-        console.error('Error loading database info:', error);
     }
-}
 
-// Load application information (fallback)
-function loadApplicationInfo() {
-    try {
-        const appEnvEl = document.getElementById('app-env');
-        const debugModeEl = document.getElementById('debug-mode');
-        const appKeyEl = document.getElementById('app-key');
-        const uptimeEl = document.getElementById('uptime');
-        
-        if (!appEnvEl || !debugModeEl || !appKeyEl || !uptimeEl) {
-            console.error('Application elements not found');
-            return;
-        }
-        
-        // App environment
-        const env = window.appEnv || 'production';
-        appEnvEl.value = env;
-        
-        // Debug mode
-        const debugMode = window.debugMode || false;
-        debugModeEl.value = debugMode ? 'เปิดใช้งาน' : 'ปิดใช้งาน';
-        
-        // App key
-        const appKey = window.appKey || 'Not available';
-        const shortKey = appKey.length > 20 ? appKey.substring(0, 20) + '...' : appKey;
-        appKeyEl.value = shortKey;
-        
-        // Fallback: simulate uptime
-        const uptime = Math.floor(Math.random() * 30) + 1;
-        uptimeEl.value = `${uptime} days`;
-    } catch (error) {
-        console.error('Error loading application info:', error);
-    }
-}
-
-// Load memory information (fallback)
-function loadMemoryInfo() {
-    try {
-        const memoryUsageEl = document.getElementById('memory-usage');
-        const memoryProgressEl = document.getElementById('memory-progress');
-        
-        if (!memoryUsageEl || !memoryProgressEl) {
-            console.error('Memory elements not found');
-            return;
-        }
-        
-        // Fallback: use PHP memory data
-        if (window.memoryUsage && window.memoryLimit) {
-            const currentUsage = parseInt(window.memoryUsage);
-            const memoryLimit = parseMemoryLimit(window.memoryLimit);
-            const percentage = Math.round((currentUsage / memoryLimit) * 100);
-            
-            memoryUsageEl.value = 
-                `${formatBytes(currentUsage)} / ${formatBytes(memoryLimit)} (${percentage}%)`;
-            
-            memoryProgressEl.style.width = percentage + '%';
-            memoryProgressEl.className = `progress-bar ${getProgressBarClass(percentage)}`;
-        } else {
-            // Fallback: simulate memory usage
-            const totalMemory = 8192; // 8GB
-            const usedMemory = Math.floor(Math.random() * totalMemory * 0.6) + 2000; // 2-7GB
-            const percentage = Math.round((usedMemory / totalMemory) * 100);
-            
-            memoryUsageEl.value = 
-                `${formatBytes(usedMemory * 1024 * 1024)} / ${formatBytes(totalMemory * 1024 * 1024)} (${percentage}%)`;
-            
-            memoryProgressEl.style.width = percentage + '%';
-            memoryProgressEl.className = `progress-bar ${getProgressBarClass(percentage)}`;
-        }
-    } catch (error) {
-        console.error('Error loading memory info:', error);
-    }
-}
-
-// Refresh system information
-function refreshSystemInfo() {
-    // Show loading state
-    const refreshBtn = event.target;
-    const originalText = refreshBtn.innerHTML;
-    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>กำลังโหลด...';
-    refreshBtn.disabled = true;
-    
-    // Simulate refresh delay
-    setTimeout(() => {
-        loadSystemInfo();
-        
-        // Restore button
-        refreshBtn.innerHTML = originalText;
-        refreshBtn.disabled = false;
-        
-        // Show success message
-        showToast('รีเฟรชข้อมูลระบบสำเร็จ', 'success');
-    }, 1000);
-}
-
-// Export system information
-function exportSystemInfo() {
-    
-    const systemData = {
-        timestamp: new Date().toISOString(),
-        server: {
-            name: document.getElementById('server-name').value,
-            phpVersion: document.getElementById('php-version').value,
-            laravelVersion: document.getElementById('laravel-version').value,
-            time: document.getElementById('server-time').value
-        },
-        resources: {
-            memory: document.getElementById('memory-usage').value,
-            disk: document.getElementById('disk-usage').value,
-            cpu: document.getElementById('cpu-load').value,
-            activeUsers: document.getElementById('active-users').value
-        },
-        database: {
-            type: document.getElementById('db-type').value,
-            size: document.getElementById('db-size').value,
-            connections: document.getElementById('db-connections').value,
-            lastBackup: document.getElementById('last-backup').value
-        },
-        application: {
-            environment: document.getElementById('app-env').value,
-            debugMode: document.getElementById('debug-mode').value,
-            appKey: document.getElementById('app-key').value,
-            uptime: document.getElementById('uptime').value
-        }
-    };
-    
-    // Create and download JSON file
-    const dataStr = JSON.stringify(systemData, null, 2);
-    const dataBlob = new Blob([dataStr], {type: 'application/json'});
-    const url = URL.createObjectURL(dataBlob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `system-info-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    URL.revokeObjectURL(url);
-    
-    showToast('ส่งออกข้อมูลระบบสำเร็จ', 'success');
-}
-
-// Refresh system information
-function refreshSystemInfo() {
-    // Show loading state
-    const refreshBtn = event.target;
-    const originalText = refreshBtn.innerHTML;
-    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>กำลังโหลด...';
-    refreshBtn.disabled = true;
-    
-    // Simulate refresh delay
-    setTimeout(() => {
-        loadSystemInfo();
-        
-        // Restore button
-        refreshBtn.innerHTML = originalText;
-        refreshBtn.disabled = false;
-        
-        // Show success message
-        showToast('รีเฟรชข้อมูลระบบสำเร็จ', 'success');
-    }, 1000);
-}
-
-// Export system information
-function exportSystemInfo() {
-    
-    const systemData = {
-        timestamp: new Date().toISOString(),
-        server: {
-            name: document.getElementById('server-name').value,
-            phpVersion: document.getElementById('php-version').value,
-            laravelVersion: document.getElementById('laravel-version').value,
-            time: document.getElementById('server-time').value
-        },
-        resources: {
-            memory: document.getElementById('memory-usage').value,
-            disk: document.getElementById('disk-usage').value,
-            cpu: document.getElementById('cpu-load').value,
-            activeUsers: document.getElementById('active-users').value
-        },
-        database: {
-            type: document.getElementById('db-type').value,
-            size: document.getElementById('db-size').value,
-            connections: document.getElementById('db-connections').value,
-            lastBackup: document.getElementById('last-backup').value
-        },
-        application: {
-            environment: document.getElementById('app-env').value,
-            debugMode: document.getElementById('debug-mode').value,
-            appKey: document.getElementById('app-key').value,
-            uptime: document.getElementById('uptime').value
-        }
-    };
-    
-    // Create and download JSON file
-    const dataStr = JSON.stringify(systemData, null, 2);
-    const dataBlob = new Blob([dataStr], {type: 'application/json'});
-    const url = URL.createObjectURL(dataBlob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `system-info-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    URL.revokeObjectURL(url);
-    
-    showToast('ส่งออกข้อมูลระบบสำเร็จ', 'success');
-}
-
-// Show system logs
-function showSystemLogs() {
-    
-    Swal.fire({
-        title: 'System Logs',
-        html: `
-            <div class="text-start">
-                <h6>Recent Log Entries:</h6>
-                <div class="log-container" style="max-height: 300px; overflow-y: auto; background: #f8f9fa; padding: 15px; border-radius: 5px;">
-                    <div class="log-entry mb-2">
-                        <small class="text-muted">[2024-01-06 10:30:15]</small>
-                        <span class="text-success">INFO:</span> System information loaded successfully
-                    </div>
-                    <div class="log-entry mb-2">
-                        <small class="text-muted">[2024-01-06 10:29:45]</small>
-                        <span class="text-info">DEBUG:</span> Memory usage: 45% (2.1GB/4.7GB)
-                    </div>
-                    <div class="log-entry mb-2">
-                        <small class="text-muted">[2024-01-06 10:29:30]</small>
-                        <span class="text-warning">WARNING:</span> Disk usage approaching 80%
-                    </div>
-                    <div class="log-entry mb-2">
-                        <small class="text-muted">[2024-01-06 10:28:15]</small>
-                        <span class="text-success">INFO:</span> Database connection established
-                    </div>
-                    <div class="log-entry mb-2">
-                        <small class="text-muted">[2024-01-06 10:27:00]</small>
-                        <span class="text-info">DEBUG:</span> Cache cleared successfully
+    /**
+     * Show system logs
+     */
+    showSystemLogs() {
+        // Create modal for system logs
+        const modalHtml = `
+            <div class="modal fade" id="systemLogsModal" tabindex="-1">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="fas fa-file-alt me-2"></i>
+                                System Logs
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="loadLogFile('laravel.log')">
+                                        Laravel Log
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="loadLogFile('error.log')">
+                                        Error Log
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="loadLogFile('access.log')">
+                                        Access Log
+                                    </button>
+                                </div>
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="clearLogs()">
+                                    <i class="fas fa-trash me-1"></i>
+                                    Clear Logs
+                                </button>
+                            </div>
+                            <div class="log-content">
+                                <pre id="logContent" class="bg-dark text-light p-3 rounded" style="height: 400px; overflow-y: auto;">
+                                    <i class="fas fa-spinner fa-spin me-2"></i>
+                                    กำลังโหลด logs...
+                                </pre>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                            <button type="button" class="btn btn-primary" onclick="downloadLogs()">
+                                <i class="fas fa-download me-1"></i>
+                                ดาวน์โหลด Logs
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-        `,
-        width: '600px',
-        showCancelButton: true,
-        confirmButtonText: 'ปิด',
-        cancelButtonText: 'ส่งออก Logs'
-    }).then((result) => {
-        if (result.dismiss === Swal.DismissReason.cancel) {
-            // Export logs
-            const logData = `System Logs - ${new Date().toLocaleString('th-TH')}\n\n` +
-                '[2024-01-06 10:30:15] INFO: System information loaded successfully\n' +
-                '[2024-01-06 10:29:45] DEBUG: Memory usage: 45% (2.1GB/4.7GB)\n' +
-                '[2024-01-06 10:29:30] WARNING: Disk usage approaching 80%\n' +
-                '[2024-01-06 10:28:15] INFO: Database connection established\n' +
-                '[2024-01-06 10:27:00] DEBUG: Cache cleared successfully';
-            
-            const dataBlob = new Blob([logData], {type: 'text/plain'});
-            const url = URL.createObjectURL(dataBlob);
-            
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `system-logs-${new Date().toISOString().split('T')[0]}.txt`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            URL.revokeObjectURL(url);
-            
-            showToast('ส่งออก Logs สำเร็จ', 'success');
+        `;
+
+        // Remove existing modal if any
+        const existingModal = document.getElementById('systemLogsModal');
+        if (existingModal) {
+            existingModal.remove();
         }
-    });
-}
 
-// ========================================
-// UTILITY FUNCTIONS
-// ========================================
+        // Add modal to body
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
 
-// Show toast notification
-function showToast(message, type = 'info') {
-    const iconMap = {
-        'success': 'success',
-        'error': 'error',
-        'warning': 'warning',
-        'info': 'info'
-    };
-    
-    Swal.fire({
-        icon: iconMap[type] || 'info',
-        title: message,
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true
-    });
-}
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('systemLogsModal'));
+        modal.show();
 
-// Helper function to parse memory limit string
-function parseMemoryLimit(memoryLimit) {
-    if (!memoryLimit || memoryLimit === '-1') {
-        return 1024 * 1024 * 1024; // 1GB default
+        // Load default log file
+        this.loadLogFile('laravel.log');
     }
-    
-    const value = parseInt(memoryLimit);
-    const unit = memoryLimit.slice(-1).toUpperCase();
-    
-    switch (unit) {
-        case 'G':
-            return value * 1024 * 1024 * 1024;
-        case 'M':
-            return value * 1024 * 1024;
-        case 'K':
-            return value * 1024;
-        default:
-            return value; // Assume bytes
+
+    /**
+     * Load log file
+     */
+    async loadLogFile(filename) {
+        try {
+            const logContent = document.getElementById('logContent');
+            if (logContent) {
+                logContent.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>กำลังโหลด logs...';
+            }
+
+            const response = await fetch(`/admin/settings/system-info/logs/${filename}`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success && logContent) {
+                logContent.textContent = result.data.content || 'ไม่มีข้อมูล logs';
+            } else {
+                if (logContent) {
+                    logContent.textContent = 'ไม่สามารถโหลด logs ได้';
+                }
+            }
+
+        } catch (error) {
+            console.error('Error loading log file:', error);
+            const logContent = document.getElementById('logContent');
+            if (logContent) {
+                logContent.textContent = 'เกิดข้อผิดพลาดในการโหลด logs';
+            }
+        }
+    }
+
+    /**
+     * Clear logs
+     */
+    async clearLogs() {
+        if (typeof Swal !== 'undefined') {
+            const result = await Swal.fire({
+                title: 'ยืนยันการล้าง Logs',
+                text: 'คุณต้องการล้าง Logs ทั้งหมดหรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'ใช่, ล้างทั้งหมด',
+                cancelButtonText: 'ยกเลิก'
+            });
+
+            if (!result.isConfirmed) return;
+        } else {
+            if (!confirm('คุณต้องการล้าง Logs ทั้งหมดหรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้!')) {
+                return;
+            }
+        }
+
+        try {
+            const response = await fetch('/admin/settings/system-info/clear-logs', {
+                method: 'DELETE',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.showSuccess(result.message || 'ล้าง Logs สำเร็จ');
+                this.loadLogFile('laravel.log'); // Refresh current log
+            } else {
+                this.showError(result.message || 'ไม่สามารถล้าง Logs ได้');
+            }
+
+        } catch (error) {
+            console.error('Error clearing logs:', error);
+            this.showError('เกิดข้อผิดพลาดในการล้าง Logs');
+        }
+    }
+
+    /**
+     * Download logs
+     */
+    async downloadLogs() {
+        try {
+            const response = await fetch('/admin/settings/system-info/download-logs', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `system_logs_${new Date().toISOString().split('T')[0]}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                this.showSuccess('ดาวน์โหลด Logs สำเร็จ');
+            } else {
+                this.showError('ไม่สามารถดาวน์โหลด Logs ได้');
+            }
+
+        } catch (error) {
+            console.error('Error downloading logs:', error);
+            this.showError('เกิดข้อผิดพลาดในการดาวน์โหลด Logs');
+        }
+    }
+
+    /**
+     * Show refreshing state
+     */
+    showRefreshing(show) {
+        const refreshBtn = document.querySelector('button[onclick="refreshSystemInfo()"]');
+        if (refreshBtn) {
+            if (show) {
+                refreshBtn.disabled = true;
+                refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>กำลังรีเฟรช...';
+            } else {
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>รีเฟรชข้อมูล';
+            }
+        }
+    }
+
+    /**
+     * Show export loading state
+     */
+    showExportLoading(show) {
+        const exportBtn = document.querySelector('button[onclick="exportSystemInfo()"]');
+        if (exportBtn) {
+            if (show) {
+                exportBtn.disabled = true;
+                exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>กำลังส่งออก...';
+            } else {
+                exportBtn.disabled = false;
+                exportBtn.innerHTML = '<i class="fas fa-download me-2"></i>ส่งออกข้อมูล';
+            }
+        }
+    }
+
+    /**
+     * Show success message
+     */
+    showSuccess(message) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'success',
+                title: 'สำเร็จ',
+                text: message,
+                timer: 2000,
+                showConfirmButton: false
+            });
+        } else {
+            alert(message);
+        }
+    }
+
+    /**
+     * Show error message
+     */
+    showError(message) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: message
+            });
+        } else {
+            alert(message);
+        }
+    }
+
+    /**
+     * Cleanup on page unload
+     */
+    cleanup() {
+        if (this.refreshInterval) {
+            clearInterval(this.refreshInterval);
+        }
     }
 }
 
-// Helper function to format bytes
-function formatBytes(bytes, decimals = 2) {
-    if (bytes === 0) return '0 Bytes';
-    
-    const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-    
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+// Global functions for buttons
+function refreshSystemInfo() {
+    if (window.systemInfo) {
+        window.systemInfo.refreshSystemInfo();
+    }
 }
 
-// Helper function to get progress bar class based on percentage
-function getProgressBarClass(percentage) {
-    if (percentage >= 90) return 'bg-danger';
-    if (percentage >= 70) return 'bg-warning';
-    return 'bg-success';
+function exportSystemInfo() {
+    if (window.systemInfo) {
+        window.systemInfo.exportSystemInfo();
+    }
 }
 
-// Initialize system info when tab is loaded
+function showSystemLogs() {
+    if (window.systemInfo) {
+        window.systemInfo.showSystemLogs();
+    }
+}
+
+function loadLogFile(filename) {
+    if (window.systemInfo) {
+        window.systemInfo.loadLogFile(filename);
+    }
+}
+
+function clearLogs() {
+    if (window.systemInfo) {
+        window.systemInfo.clearLogs();
+    }
+}
+
+function downloadLogs() {
+    if (window.systemInfo) {
+        window.systemInfo.downloadLogs();
+    }
+}
+
+// Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, initializing system info...');
-    
-    // Set up time update interval
-    setInterval(updateServerTime, 1000);
-    
-    // Load system info immediately with a small delay
-    setTimeout(() => {
-        console.log('Loading system info...');
-        loadSystemInfo();
-    }, 500);
-    
-    // Load system info when system-info tab is shown
-    const systemInfoTab = document.getElementById('system-info-tab');
-    if (systemInfoTab) {
-        systemInfoTab.addEventListener('shown.bs.tab', function() {
-            console.log('System info tab shown, reloading...');
-            loadSystemInfo();
-        });
-    } else {
-        console.error('System info tab element not found');
+    // Only initialize if we're on the settings page
+    if (document.getElementById('server-name')) {
+        window.systemInfo = new SystemInfo();
     }
-    
-    // Listen for timezone changes from General Settings
-    window.addEventListener('timezoneChanged', function(event) {
-        console.log('Timezone changed to:', event.detail.timezone);
-        // Reload system info to get updated time with new timezone
-        setTimeout(loadSystemInfo, 500);
-    });
 });
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (window.systemInfo) {
+        window.systemInfo.cleanup();
+    }
+});
+
+// Export for use in other scripts
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = SystemInfo;
+}

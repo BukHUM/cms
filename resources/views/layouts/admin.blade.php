@@ -52,6 +52,130 @@
             background: #3b82f6 !important;
             border-radius: 0 2px 2px 0 !important;
         }
+        
+        /* Override Bootstrap btn-outline-secondary hover effects */
+        .btn-outline-secondary:hover,
+        .btn-outline-secondary:focus,
+        .btn-outline-secondary:active,
+        .btn-outline-secondary:focus-visible {
+            background-color: transparent !important;
+            border-color: #dee2e6 !important;
+            color: #6c757d !important;
+            transform: none !important;
+            box-shadow: none !important;
+            outline: none !important;
+        }
+        
+        /* Ultra-specific override for Bootstrap CDN styles */
+        button.btn.btn-outline-secondary:hover,
+        button.btn.btn-outline-secondary:focus,
+        button.btn.btn-outline-secondary:active,
+        a.btn.btn-outline-secondary:hover,
+        a.btn.btn-outline-secondary:focus,
+        a.btn.btn-outline-secondary:active {
+            background-color: transparent !important;
+            border-color: #dee2e6 !important;
+            color: #6c757d !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        /* Remove hover effects from all outline buttons to match table style */
+        .btn-outline-info:hover,
+        .btn-outline-info:focus,
+        .btn-outline-info:active,
+        .btn-outline-primary:hover,
+        .btn-outline-primary:focus,
+        .btn-outline-primary:active,
+        .btn-outline-warning:hover,
+        .btn-outline-warning:focus,
+        .btn-outline-warning:active,
+        .btn-outline-success:hover,
+        .btn-outline-success:focus,
+        .btn-outline-success:active,
+        .btn-outline-danger:hover,
+        .btn-outline-danger:focus,
+        .btn-outline-danger:active {
+            background-color: transparent !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        /* Remove hover effects from ALL buttons - ultra specific */
+        button.btn:hover,
+        button.btn:focus,
+        button.btn:active,
+        a.btn:hover,
+        a.btn:focus,
+        a.btn:active,
+        .btn:hover,
+        .btn:focus,
+        .btn:active {
+            background-color: transparent !important;
+            transform: none !important;
+            box-shadow: none !important;
+            border-color: inherit !important;
+        }
+        
+        /* Specific overrides for different button types */
+        .btn-info:hover,
+        .btn-info:focus,
+        .btn-info:active {
+            background-color: #0dcaf0 !important;
+            border-color: #0dcaf0 !important;
+            color: #000 !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        .btn-primary:hover,
+        .btn-primary:focus,
+        .btn-primary:active {
+            background-color: #0d6efd !important;
+            border-color: #0d6efd !important;
+            color: #fff !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        .btn-success:hover,
+        .btn-success:focus,
+        .btn-success:active {
+            background-color: #198754 !important;
+            border-color: #198754 !important;
+            color: #fff !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        /* Ultra-specific overrides for user management buttons */
+        .user-management .btn:hover,
+        .user-management .btn:focus,
+        .user-management .btn:active,
+        #users .btn:hover,
+        #users .btn:focus,
+        #users .btn:active,
+        .tab-pane#users .btn:hover,
+        .tab-pane#users .btn:focus,
+        .tab-pane#users .btn:active {
+            background-color: transparent !important;
+            transform: none !important;
+            box-shadow: none !important;
+            border-color: inherit !important;
+        }
+        
+        /* Force remove all hover effects with maximum specificity */
+        .btn.btn-sm:hover,
+        .btn.btn-sm:focus,
+        .btn.btn-sm:active,
+        .btn.dropdown-toggle:hover,
+        .btn.dropdown-toggle:focus,
+        .btn.dropdown-toggle:active {
+            background-color: transparent !important;
+            transform: none !important;
+            box-shadow: none !important;
+            border-color: inherit !important;
+        }
     </style>
     
     @stack('styles')
@@ -94,7 +218,7 @@
                 </li>
                 
                 <li class="nav-item">
-                    <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.user-management') }}" class="nav-link {{ request()->routeIs('admin.user-management*') ? 'active' : '' }}">
                         <div class="nav-icon">
                             <i class="fas fa-users"></i>
                         </div>

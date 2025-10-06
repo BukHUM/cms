@@ -77,49 +77,52 @@
             </div>
             <div class="card-body">
                 <div class="activity-list">
-                    <div class="activity-item">
-                        <div class="activity-icon">
-                            <i class="fas fa-user-plus text-success"></i>
+                    @forelse($recentActivities as $activity)
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                @switch($activity->action)
+                                    @case('login')
+                                        <i class="fas fa-sign-in-alt text-success"></i>
+                                        @break
+                                    @case('logout')
+                                        <i class="fas fa-sign-out-alt text-warning"></i>
+                                        @break
+                                    @case('create')
+                                        <i class="fas fa-plus text-primary"></i>
+                                        @break
+                                    @case('update')
+                                        <i class="fas fa-edit text-info"></i>
+                                        @break
+                                    @case('delete')
+                                        <i class="fas fa-trash text-danger"></i>
+                                        @break
+                                    @default
+                                        <i class="fas fa-circle text-secondary"></i>
+                                @endswitch
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">{{ $activity->formatted_action }}</div>
+                                <div class="activity-description">
+                                    @if($activity->user_email)
+                                        {{ $activity->user_email }} - {{ $activity->description ?? 'ไม่ระบุรายละเอียด' }}
+                                    @else
+                                        {{ $activity->description ?? 'ไม่ระบุรายละเอียด' }}
+                                    @endif
+                                </div>
+                                <div class="activity-time">{{ $activity->created_at->diffForHumans() }}</div>
+                            </div>
                         </div>
-                        <div class="activity-content">
-                            <div class="activity-title">ผู้ใช้ใหม่ลงทะเบียน</div>
-                            <div class="activity-description">John Doe ได้ลงทะเบียนเป็นสมาชิกใหม่</div>
-                            <div class="activity-time">2 นาทีที่แล้ว</div>
+                    @empty
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-info-circle text-muted"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">ไม่มีกิจกรรมล่าสุด</div>
+                                <div class="activity-description">ยังไม่มีกิจกรรมที่บันทึกไว้</div>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="activity-item">
-                        <div class="activity-icon">
-                            <i class="fas fa-cog text-primary"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-title">อัปเดตการตั้งค่า</div>
-                            <div class="activity-description">ระบบได้รับการอัปเดตการตั้งค่าความปลอดภัย</div>
-                            <div class="activity-time">15 นาทีที่แล้ว</div>
-                        </div>
-                    </div>
-                    
-                    <div class="activity-item">
-                        <div class="activity-icon">
-                            <i class="fas fa-chart-bar text-warning"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-title">สร้างรายงานใหม่</div>
-                            <div class="activity-description">รายงานการใช้งานประจำเดือนถูกสร้างขึ้น</div>
-                            <div class="activity-time">1 ชั่วโมงที่แล้ว</div>
-                        </div>
-                    </div>
-                    
-                    <div class="activity-item">
-                        <div class="activity-icon">
-                            <i class="fas fa-shield-alt text-info"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-title">การสำรองข้อมูล</div>
-                            <div class="activity-description">ระบบสำรองข้อมูลอัตโนมัติเสร็จสิ้น</div>
-                            <div class="activity-time">2 ชั่วโมงที่แล้ว</div>
-                        </div>
-                    </div>
+                    @endforelse
                 </div>
             </div>
         </div>
@@ -136,7 +139,7 @@
             </div>
             <div class="card-body">
                 <div class="quick-actions">
-                    <a href="{{ route('admin.users.index') }}" class="quick-action-btn">
+                    <a href="{{ route('admin.user-management') }}" class="quick-action-btn">
                         <div class="quick-action-icon">
                             <i class="fas fa-users"></i>
                         </div>

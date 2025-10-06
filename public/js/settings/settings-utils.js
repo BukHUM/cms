@@ -166,13 +166,9 @@ function updateSwitchStyle(switchId, labelId) {
 
 // Load saved settings from localStorage
 function loadSavedSettings() {
-    // Load all settings
-    loadGeneralSettings();
-    loadEmailSettings();
-    loadSecuritySettings();
-    loadBackupSettings();
-    loadAuditSettings();
-    loadPerformanceSettings();
+    // Load all settings - these functions are defined in their respective files
+    // They will be called automatically when their classes are initialized
+    // console.log('Loading saved settings...'); // Hidden console log
 }
 
 // Auto-save functionality
@@ -207,8 +203,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load last active tab
     loadLastActiveTab();
     
-    // Load audit logs on page load
-    loadAuditLogs();
+    // Load audit logs on page load (if audit settings class exists)
+    if (typeof window.auditSettings !== 'undefined' && window.auditSettings.loadAuditLogs) {
+        window.auditSettings.loadAuditLogs();
+    }
     
     // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {
