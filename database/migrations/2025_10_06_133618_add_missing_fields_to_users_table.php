@@ -12,9 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('laravel_users', function (Blueprint $table) {
-            $table->string('role')->default('user')->after('email');
-            $table->string('avatar')->nullable()->after('role');
-            $table->timestamp('last_login_at')->nullable()->after('avatar');
+            // Check if columns don't exist before adding them
+            if (!Schema::hasColumn('laravel_users', 'role')) {
+                $table->string('role')->default('user')->after('email');
+            }
+            if (!Schema::hasColumn('laravel_users', 'avatar')) {
+                $table->string('avatar')->nullable()->after('role');
+            }
+            if (!Schema::hasColumn('laravel_users', 'last_login_at')) {
+                $table->timestamp('last_login_at')->nullable()->after('avatar');
+            }
         });
     }
 
