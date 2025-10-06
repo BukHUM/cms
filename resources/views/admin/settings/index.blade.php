@@ -1,48 +1,78 @@
 @extends('layouts.admin')
 
 @section('title', 'ตั้งค่าระบบ')
+@section('page-title', 'ตั้งค่าระบบ')
+@section('page-subtitle', 'จัดการการตั้งค่าระบบและค่าพารามิเตอร์ต่างๆ')
 
 @section('content')
-<div class="row mb-4">
-    <div class="col-12">
-        <h2 class="h3 mb-0">
-            <i class="fas fa-cog me-2"></i>
-            ตั้งค่าระบบ
-        </h2>
-        <p class="text-muted">จัดการการตั้งค่าระบบและค่าพารามิเตอร์ต่างๆ</p>
-    </div>
+<!-- Settings Navigation - Desktop -->
+<div class="d-none d-md-block">
+    <ul class="nav nav-tabs mb-4" id="settingsTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button">
+                <i class="fas fa-cog"></i>ทั่วไป
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="email-tab" data-bs-toggle="tab" data-bs-target="#email" type="button">
+                <i class="fas fa-envelope"></i>อีเมล
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button">
+                <i class="fas fa-shield-alt"></i>ความปลอดภัย
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="backup-tab" data-bs-toggle="tab" data-bs-target="#backup" type="button">
+                <i class="fas fa-database"></i>สำรองข้อมูล
+            </button>
+        </li>
+    </ul>
 </div>
 
-<!-- Settings Tabs -->
-<ul class="nav nav-tabs mb-4" id="settingsTabs" role="tablist">
-    <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button">
-            <i class="fas fa-cog me-2"></i>ทั่วไป
-        </button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link" id="email-tab" data-bs-toggle="tab" data-bs-target="#email" type="button">
-            <i class="fas fa-envelope me-2"></i>อีเมล
-        </button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button">
-            <i class="fas fa-shield-alt me-2"></i>ความปลอดภัย
-        </button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link" id="backup-tab" data-bs-toggle="tab" data-bs-target="#backup" type="button">
-            <i class="fas fa-database me-2"></i>สำรองข้อมูล
-        </button>
-    </li>
-</ul>
+<!-- Settings Navigation - Mobile -->
+<div class="d-md-none mb-4">
+    <div class="settings-mobile-nav">
+        <div class="current-tab-display" onclick="toggleSettingsDropdown()">
+            <div class="tab-info">
+                <i class="fas fa-cog" id="currentTabIcon"></i>
+                <span id="currentTabText">ทั่วไป</span>
+            </div>
+            <i class="fas fa-chevron-down dropdown-arrow"></i>
+        </div>
+        
+        <div class="settings-dropdown" id="settingsDropdown" style="display: none;">
+            <div class="dropdown-item" onclick="switchTab('general', 'fas fa-cog', 'ทั่วไป')">
+                <i class="fas fa-cog"></i>
+                <span>ทั่วไป</span>
+                <small>การตั้งค่าพื้นฐานของระบบ</small>
+            </div>
+            <div class="dropdown-item" onclick="switchTab('email', 'fas fa-envelope', 'อีเมล')">
+                <i class="fas fa-envelope"></i>
+                <span>อีเมล</span>
+                <small>การตั้งค่าการส่งอีเมล</small>
+            </div>
+            <div class="dropdown-item" onclick="switchTab('security', 'fas fa-shield-alt', 'ความปลอดภัย')">
+                <i class="fas fa-shield-alt"></i>
+                <span>ความปลอดภัย</span>
+                <small>การตั้งค่าความปลอดภัยระบบ</small>
+            </div>
+            <div class="dropdown-item" onclick="switchTab('backup', 'fas fa-database', 'สำรองข้อมูล')">
+                <i class="fas fa-database"></i>
+                <span>สำรองข้อมูล</span>
+                <small>การตั้งค่าการสำรองข้อมูล</small>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="tab-content" id="settingsTabContent">
     <!-- General Settings -->
     <div class="tab-pane fade show active" id="general" role="tabpanel">
-        <div class="card">
+        <div class="settings-card">
             <div class="card-header">
-                <h5 class="mb-0">การตั้งค่าทั่วไป</h5>
+                <h5>การตั้งค่าทั่วไป</h5>
             </div>
             <div class="card-body">
                 <form id="generalSettingsForm">
@@ -102,9 +132,9 @@
 
     <!-- Email Settings -->
     <div class="tab-pane fade" id="email" role="tabpanel">
-        <div class="card">
+        <div class="settings-card">
             <div class="card-header">
-                <h5 class="mb-0">การตั้งค่าอีเมล</h5>
+                <h5>การตั้งค่าอีเมล</h5>
             </div>
             <div class="card-body">
                 <form id="emailSettingsForm">
@@ -167,9 +197,9 @@
 
     <!-- Security Settings -->
     <div class="tab-pane fade" id="security" role="tabpanel">
-        <div class="card">
+        <div class="settings-card">
             <div class="card-header">
-                <h5 class="mb-0">การตั้งค่าความปลอดภัย</h5>
+                <h5>การตั้งค่าความปลอดภัย</h5>
             </div>
             <div class="card-body">
                 <form id="securitySettingsForm">
@@ -227,9 +257,9 @@
 
     <!-- Backup Settings -->
     <div class="tab-pane fade" id="backup" role="tabpanel">
-        <div class="card">
+        <div class="settings-card">
             <div class="card-header">
-                <h5 class="mb-0">การตั้งค่าสำรองข้อมูล</h5>
+                <h5>การตั้งค่าสำรองข้อมูล</h5>
             </div>
             <div class="card-body">
                 <form id="backupSettingsForm">
@@ -272,7 +302,7 @@
                 </form>
                 
                 <!-- Backup History -->
-                <div class="mt-5">
+                <div class="backup-history-table">
                     <h6>ประวัติการสำรองข้อมูล</h6>
                     <div class="table-responsive">
                         <table class="table table-sm">
@@ -315,6 +345,46 @@
 
 @push('scripts')
 <script>
+// Mobile Settings Navigation
+function toggleSettingsDropdown() {
+    const dropdown = document.getElementById('settingsDropdown');
+    const arrow = document.querySelector('.dropdown-arrow');
+    
+    if (dropdown.style.display === 'none') {
+        dropdown.style.display = 'block';
+        arrow.style.transform = 'rotate(180deg)';
+    } else {
+        dropdown.style.display = 'none';
+        arrow.style.transform = 'rotate(0deg)';
+    }
+}
+
+function switchTab(tabId, iconClass, tabText) {
+    // Hide all tab panes
+    document.querySelectorAll('.tab-pane').forEach(pane => {
+        pane.classList.remove('show', 'active');
+    });
+    
+    // Show selected tab pane
+    document.getElementById(tabId).classList.add('show', 'active');
+    
+    // Update mobile navigation display
+    document.getElementById('currentTabIcon').className = iconClass;
+    document.getElementById('currentTabText').textContent = tabText;
+    
+    // Close dropdown
+    document.getElementById('settingsDropdown').style.display = 'none';
+    document.querySelector('.dropdown-arrow').style.transform = 'rotate(0deg)';
+    
+    // Update desktop tabs if visible
+    if (window.innerWidth >= 768) {
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active');
+        });
+        document.getElementById(tabId + '-tab').classList.add('active');
+    }
+}
+
 // Form submissions
 document.getElementById('generalSettingsForm').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -364,5 +434,28 @@ function createBackup() {
         }, 3000);
     });
 }
+
+// Initialize mobile functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        const mobileNav = document.querySelector('.settings-mobile-nav');
+        const dropdown = document.getElementById('settingsDropdown');
+        
+        if (mobileNav && !mobileNav.contains(e.target) && dropdown.style.display === 'block') {
+            dropdown.style.display = 'none';
+            document.querySelector('.dropdown-arrow').style.transform = 'rotate(0deg)';
+        }
+    });
+    
+    // Handle window resize
+    window.addEventListener('resize', function() {
+        const dropdown = document.getElementById('settingsDropdown');
+        if (window.innerWidth >= 768 && dropdown.style.display === 'block') {
+            dropdown.style.display = 'none';
+            document.querySelector('.dropdown-arrow').style.transform = 'rotate(0deg)';
+        }
+    });
+});
 </script>
 @endpush

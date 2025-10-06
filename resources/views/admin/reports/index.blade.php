@@ -1,18 +1,10 @@
 @extends('layouts.admin')
 
 @section('title', 'รายงาน')
+@section('page-title', 'รายงาน')
+@section('page-subtitle', 'รายงานและสถิติการใช้งานระบบ')
 
 @section('content')
-<div class="row mb-4">
-    <div class="col-12">
-        <h2 class="h3 mb-0">
-            <i class="fas fa-chart-bar me-2"></i>
-            รายงาน
-        </h2>
-        <p class="text-muted">รายงานและสถิติการใช้งานระบบ</p>
-    </div>
-</div>
-
 <!-- Report Filters -->
 <div class="card mb-4">
     <div class="card-body">
