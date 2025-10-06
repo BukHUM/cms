@@ -15,8 +15,6 @@ body.admin-body {
     color: #334155;
     line-height: 1.6;
     overflow-x: hidden;
-    display: flex;
-    flex-direction: row;
 }
 
 /* ========================================
@@ -37,17 +35,9 @@ body.admin-body {
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
 }
 
-/* Default state: sidebar is hidden on mobile/tablet */
-@media (max-width: 1023px) {
-    .admin-sidebar {
-        transform: translateX(-100%);
-    }
-    
-    .admin-sidebar.active {
-        transform: translateX(0);
-    }
+.admin-sidebar.active {
+    transform: translateX(0);
 }
-
 
 /* Sidebar Header */
 .sidebar-header {
@@ -269,17 +259,13 @@ body.admin-body {
    ======================================== */
 
 .main-wrapper {
-    flex: 1;
-    transition: all 0.3s ease;
+    margin-left: 0;
+    transition: margin-left 0.3s ease;
     min-height: 100vh;
-    width: 100%;
-    position: relative;
-    display: flex;
-    flex-direction: column;
 }
 
 .main-wrapper.sidebar-active {
-    width: 100%;
+    margin-left: 280px;
 }
 
 /* ========================================
@@ -555,24 +541,17 @@ body.admin-body {
         transform: translateX(0);
         position: relative;
         width: 280px;
-        flex-shrink: 0;
     }
     
     .main-wrapper {
-        flex: 1;
-        width: auto;
+        margin-left: 280px;
     }
     
     .main-wrapper.sidebar-active {
-        flex: 1;
-        width: auto;
+        margin-left: 0;
     }
     
     .sidebar-toggle {
-        display: none;
-    }
-    
-    .sidebar-close {
         display: none;
     }
     
@@ -588,7 +567,7 @@ body.admin-body {
     }
     
     .main-wrapper.sidebar-active {
-        width: 100%;
+        margin-left: 260px;
     }
     
     .search-box input {
@@ -598,21 +577,16 @@ body.admin-body {
 
 /* Mobile */
 @media (max-width: 768px) {
-    body.admin-body {
-        display: block;
-    }
-    
     .admin-sidebar {
         width: 280px;
-        position: fixed;
     }
     
     .main-wrapper {
-        width: 100%;
+        margin-left: 0;
     }
     
     .main-wrapper.sidebar-active {
-        width: 100%;
+        margin-left: 0;
     }
     
     .admin-header {
@@ -687,76 +661,8 @@ body.admin-body {
 }
 
 /* ========================================
-   TOAST NOTIFICATION STYLES
+   ANIMATIONS
    ======================================== */
-
-/* SweetAlert2 Toast Customization */
-.swal2-toast {
-    border-radius: 12px !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-    font-family: 'Prompt', sans-serif !important;
-}
-
-.swal2-toast .swal2-title {
-    font-size: 14px !important;
-    font-weight: 500 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-.swal2-toast .swal2-icon {
-    margin: 0 8px 0 0 !important;
-}
-
-.swal2-toast .swal2-timer-progress-bar {
-    background: rgba(255, 255, 255, 0.3) !important;
-}
-
-/* Success Toast */
-.swal2-toast.swal2-show {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-    color: white !important;
-}
-
-/* Error Toast */
-.swal2-toast.swal2-show.swal2-error {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
-    color: white !important;
-}
-
-/* Warning Toast */
-.swal2-toast.swal2-show.swal2-warning {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
-    color: white !important;
-}
-
-/* Info Toast */
-.swal2-toast.swal2-show.swal2-info {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
-    color: white !important;
-}
-
-/* Toast Animation */
-@keyframes slideInRight {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-.swal2-toast.swal2-show {
-    animation: slideInRight 0.3s ease !important;
-}
-
-/* Toast Hover Effect */
-.swal2-toast:hover {
-    transform: translateX(-5px) !important;
-    transition: transform 0.3s ease !important;
-}
 
 @keyframes slideInLeft {
     from {
