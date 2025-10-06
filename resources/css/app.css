@@ -19,6 +19,98 @@ body.admin-body {
     flex-direction: row;
 }
 
+/* Login Page Styling */
+body.login-page {
+    font-family: 'Prompt', sans-serif;
+    background-color: #f8fafc;
+    color: #334155;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+}
+
+.login-container {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    opacity: 0.1;
+    z-index: 1;
+}
+
+.login-content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+}
+
+.admin-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    color: white;
+    margin: 0 auto;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.admin-icon i {
+    font-size: 2.5rem;
+}
+
+.login-content .card {
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.login-content .form-control {
+    border-radius: 10px;
+    border: 2px solid #e2e8f0;
+    padding: 12px 15px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.login-content .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.login-content .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.login-content .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.login-content .form-label {
+    font-weight: 500;
+    color: #334155;
+    margin-bottom: 8px;
+}
+
 /* ========================================
    SIDEBAR STYLES
    ======================================== */
@@ -35,6 +127,8 @@ body.admin-body {
     transform: translateX(-100%);
     transition: transform 0.3s ease;
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
 }
 
 /* Default state: sidebar is hidden on mobile/tablet */
@@ -56,6 +150,7 @@ body.admin-body {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-shrink: 0;
 }
 
 .sidebar-brand {
@@ -119,6 +214,27 @@ body.admin-body {
     flex: 1;
     padding: 20px 0;
     overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+}
+
+/* Custom scrollbar for sidebar */
+.sidebar-nav::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
 }
 
 .nav-list {
@@ -199,6 +315,8 @@ body.admin-body {
 .sidebar-footer {
     padding: 20px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+    margin-top: auto;
 }
 
 .user-profile {
@@ -1762,15 +1880,113 @@ body.admin-body {
         padding: 16px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         border: 1px solid #e2e8f0;
+        margin-top: 16px;
     }
 
     .mobile-primary-action {
         margin-bottom: 12px;
     }
 
+    .mobile-primary-action .btn {
+        font-size: 14px;
+        padding: 12px 16px;
+        font-weight: 600;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .mobile-primary-action .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .mobile-secondary-actions {
+        margin-top: 12px;
+    }
+
     .mobile-secondary-actions .btn {
         font-size: 13px;
-        padding: 8px 12px;
+        padding: 10px 12px;
+        font-weight: 500;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .mobile-secondary-actions .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .mobile-secondary-actions .btn i {
+        font-size: 12px;
+        flex-shrink: 0;
+    }
+
+    .mobile-secondary-actions .btn span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Mobile Action Button Colors */
+    .mobile-actions .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+    }
+
+    .mobile-actions .btn-primary:hover {
+        background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+        color: white;
+    }
+
+    .mobile-actions .btn-info {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        border: none;
+        color: white;
+    }
+
+    .mobile-actions .btn-info:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: white;
+    }
+
+    .mobile-actions .btn-warning {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        border: none;
+        color: white;
+    }
+
+    .mobile-actions .btn-warning:hover {
+        background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+        color: white;
+    }
+
+    .mobile-actions .btn-success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border: none;
+        color: white;
+    }
+
+    .mobile-actions .btn-success:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        color: white;
+    }
+
+    .mobile-actions .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border: none;
+        color: white;
+    }
+
+    .mobile-actions .btn-danger:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        color: white;
     }
 
     .mobile-search-container {
@@ -2135,19 +2351,22 @@ body.admin-body {
 @media (min-width: 1024px) {
     .admin-sidebar {
         transform: translateX(0);
-        position: relative;
+        position: fixed;
         width: 280px;
+        height: 100vh;
         flex-shrink: 0;
     }
     
     .main-wrapper {
         flex: 1;
         width: auto;
+        margin-left: 280px;
     }
     
     .main-wrapper.sidebar-active {
         flex: 1;
         width: auto;
+        margin-left: 280px;
     }
     
     .sidebar-toggle {
@@ -2169,8 +2388,13 @@ body.admin-body {
         width: 260px;
     }
     
+    .main-wrapper {
+        margin-left: 0;
+    }
+    
     .main-wrapper.sidebar-active {
         width: 100%;
+        margin-left: 0;
     }
     
     .search-box input {
@@ -2191,10 +2415,12 @@ body.admin-body {
     
     .main-wrapper {
         width: 100%;
+        margin-left: 0;
     }
     
     .main-wrapper.sidebar-active {
         width: 100%;
+        margin-left: 0;
     }
     
     .admin-header {
@@ -2230,6 +2456,10 @@ body.admin-body {
 @media (max-width: 480px) {
     .admin-sidebar {
         width: 100%;
+    }
+    
+    .main-wrapper {
+        margin-left: 0;
     }
     
     .admin-header {
@@ -2381,4 +2611,245 @@ body.admin-body {
 
 .animate-fade-in {
     animation: fadeIn 0.3s ease;
+}
+
+
+/* Performance Metrics */
+.performance-metrics {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.metric-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.metric-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 8px;
+}
+
+.metric-label {
+    font-size: 12px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Audit Logs Table */
+.audit-logs-table {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.audit-logs-table h6 {
+    color: #333;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.audit-logs-table .table {
+    margin-bottom: 0;
+}
+
+.audit-logs-table .table th {
+    background: #e9ecef;
+    border-top: none;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.audit-logs-table .table td {
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.audit-logs-table .badge {
+    font-size: 10px;
+    padding: 4px 8px;
+}
+
+/* Performance Analysis Tables */
+.performance-analysis {
+    margin-top: 30px;
+}
+
+.analysis-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+}
+
+.analysis-card .card-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.analysis-card .card-header h6 {
+    margin: 0;
+    color: #333;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.analysis-card .card-header h6 i {
+    color: #007bff;
+    margin-right: 8px;
+}
+
+.analysis-card .card-body {
+    padding: 20px;
+}
+
+.analysis-card .table {
+    margin-bottom: 0;
+}
+
+.analysis-card .table th {
+    background: #f8f9fa;
+    border-top: none;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #666;
+    padding: 12px 8px;
+}
+
+.analysis-card .table td {
+    font-size: 13px;
+    vertical-align: middle;
+    padding: 12px 8px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.analysis-card .table code {
+    background: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #e83e8c;
+    word-break: break-all;
+}
+
+.analysis-card .table small {
+    font-size: 11px;
+    color: #6c757d;
+}
+
+.analysis-card .badge {
+    font-size: 10px;
+    padding: 4px 8px;
+    font-weight: 500;
+}
+
+.analysis-card .btn-sm {
+    padding: 4px 8px;
+    font-size: 11px;
+}
+
+/* Responsive adjustments for analysis tables */
+@media (max-width: 768px) {
+    .analysis-card .card-header {
+        padding: 12px 15px;
+    }
+    
+    .analysis-card .card-body {
+        padding: 15px;
+    }
+    
+    .analysis-card .table th,
+    .analysis-card .table td {
+        padding: 8px 4px;
+        font-size: 12px;
+    }
+    
+    .analysis-card .table code {
+        font-size: 10px;
+    }
+}
+
+/* Mobile Action Buttons Responsive */
+@media (max-width: 576px) {
+    .mobile-actions {
+        padding: 12px;
+        margin-top: 12px;
+    }
+    
+    .mobile-primary-action .btn {
+        font-size: 13px;
+        padding: 10px 14px;
+    }
+    
+    .mobile-secondary-actions .btn {
+        font-size: 12px;
+        padding: 8px 10px;
+    }
+    
+    .mobile-secondary-actions .btn i {
+        font-size: 11px;
+    }
+    
+    .mobile-secondary-actions .row.g-2 {
+        margin: 0 -4px;
+    }
+    
+    .mobile-secondary-actions .row.g-2 > * {
+        padding: 0 4px;
+    }
+}
+
+@media (min-width: 577px) and (max-width: 767px) {
+    .mobile-actions {
+        padding: 14px;
+    }
+    
+    .mobile-primary-action .btn {
+        font-size: 14px;
+        padding: 11px 15px;
+    }
+    
+    .mobile-secondary-actions .btn {
+        font-size: 13px;
+        padding: 9px 11px;
+    }
+}
+
+/* Tablet adjustments */
+@media (min-width: 768px) and (max-width: 991px) {
+    .mobile-actions {
+        display: none;
+    }
+}
+
+/* Desktop adjustments */
+@media (min-width: 992px) {
+    .mobile-actions {
+        display: none;
+    }
 }

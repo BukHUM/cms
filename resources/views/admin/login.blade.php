@@ -10,13 +10,13 @@
     <div class="login-content">
         <div class="container">
             <div class="row justify-content-center align-items-center min-vh-100">
-                <div class="col-md-6 col-lg-4">
+                <div class="col-md-8 col-lg-6 col-xl-5">
             <div class="card shadow-lg border-0">
                 <div class="card-body p-5">
                     <!-- Header -->
                     <div class="text-center mb-4">
                         <div class="admin-icon mb-3">
-                            <i class="fas fa-shield-alt text-primary" style="font-size: 3rem;"></i>
+                            <i class="fas fa-shield-alt"></i>
                         </div>
                         <h2 class="h3 mb-2">เข้าสู่ระบบ Admin</h2>
                         <p class="text-muted">กรุณาเข้าสู่ระบบเพื่อเข้าถึง Admin Panel</p>
@@ -36,7 +36,7 @@
                                    id="email" 
                                    name="email" 
                                    value="{{ old('email') }}" 
-                                   placeholder="กรุณากรอกอีเมล"
+                                   placeholder="กรุณากรอกอีเมลของคุณ"
                                    required 
                                    autofocus>
                             @error('email')
@@ -56,7 +56,7 @@
                                        class="form-control @error('password') is-invalid @enderror" 
                                        id="password" 
                                        name="password" 
-                                       placeholder="กรุณากรอกรหัสผ่าน"
+                                       placeholder="กรุณากรอกรหัสผ่านของคุณ"
                                        required>
                                 <button class="btn btn-outline-secondary" 
                                         type="button" 
@@ -91,16 +91,6 @@
                             </button>
                         </div>
 
-                        <!-- Demo Credentials -->
-                        <div class="alert alert-info">
-                            <h6 class="alert-heading">
-                                <i class="fas fa-info-circle me-2"></i>ข้อมูลทดสอบ
-                            </h6>
-                            <small>
-                                <strong>อีเมล:</strong> admin@example.com<br>
-                                <strong>รหัสผ่าน:</strong> password
-                            </small>
-                        </div>
                     </form>
 
                     <!-- Additional Links -->
@@ -158,18 +148,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Auto-fill demo credentials
-    const demoButton = document.createElement('button');
-    demoButton.type = 'button';
-    demoButton.className = 'btn btn-outline-secondary btn-sm mt-2';
-    demoButton.innerHTML = '<i class="fas fa-magic me-2"></i>ใช้ข้อมูลทดสอบ';
-    demoButton.onclick = function() {
-        document.getElementById('email').value = 'admin@example.com';
-        document.getElementById('password').value = 'password';
-    };
-    
-    const alertDiv = document.querySelector('.alert-info');
-    alertDiv.appendChild(demoButton);
 
     // Form validation
     const form = document.querySelector('form');

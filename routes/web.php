@@ -178,3 +178,13 @@ Route::get('/api/test', function () {
         ]
     ]);
 });
+
+// Performance API Routes
+Route::prefix('api/performance')->group(function () {
+    Route::get('/slow-queries', [App\Http\Controllers\PerformanceController::class, 'getSlowQueries']);
+    Route::get('/duplicate-queries', [App\Http\Controllers\PerformanceController::class, 'getDuplicateQueries']);
+    Route::get('/metrics', [App\Http\Controllers\PerformanceController::class, 'getPerformanceMetrics']);
+    Route::get('/table-statistics', [App\Http\Controllers\PerformanceController::class, 'getTableStatistics']);
+    Route::get('/index-statistics', [App\Http\Controllers\PerformanceController::class, 'getIndexStatistics']);
+    Route::get('/connection-statistics', [App\Http\Controllers\PerformanceController::class, 'getConnectionStatistics']);
+});
