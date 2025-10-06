@@ -1,0 +1,231 @@
+/* Settings Page Styles */
+.settings-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.settings-card .card-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 15px 20px;
+}
+
+.settings-card .card-header h5 {
+    margin: 0;
+    color: #495057;
+    font-weight: 600;
+}
+
+.settings-card .card-body {
+    padding: 20px;
+}
+
+/* Mobile Navigation Styles */
+.settings-mobile-nav {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.current-tab-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    cursor: pointer;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.tab-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tab-info i {
+    font-size: 18px;
+    color: #007bff;
+}
+
+.tab-info span {
+    font-weight: 600;
+    color: #495057;
+}
+
+.dropdown-arrow {
+    transition: transform 0.3s ease;
+    color: #6c757d;
+}
+
+.settings-dropdown {
+    background: #fff;
+    border-top: 1px solid #dee2e6;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 20px;
+    cursor: pointer;
+    border-bottom: 1px solid #f8f9fa;
+    transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background: #f8f9fa;
+}
+
+.dropdown-item i {
+    font-size: 16px;
+    color: #007bff;
+    width: 20px;
+    text-align: center;
+}
+
+.dropdown-item span {
+    font-weight: 500;
+    color: #495057;
+}
+
+.dropdown-item small {
+    color: #6c757d;
+    font-size: 12px;
+}
+
+/* Mobile Actions */
+.mobile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.mobile-primary-action {
+    order: 1;
+}
+
+.mobile-secondary-actions {
+    order: 2;
+}
+
+/* Performance Metrics */
+.performance-metrics {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.metric-card {
+    background: #fff;
+    border-radius: 6px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.metric-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #007bff;
+    margin-bottom: 5px;
+}
+
+.metric-label {
+    font-size: 12px;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Analysis Cards */
+.analysis-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.analysis-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 15px 20px;
+}
+
+.analysis-card .card-header h6 {
+    margin: 0;
+    color: #495057;
+    font-weight: 600;
+}
+
+.analysis-card .card-body {
+    padding: 20px;
+}
+
+/* Backup History */
+.backup-history-table {
+    margin-top: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.backup-history-table h6 {
+    margin-bottom: 15px;
+    color: #495057;
+    font-weight: 600;
+}
+
+/* Audit Logs */
+.audit-logs-table {
+    margin-top: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.audit-logs-table h6 {
+    margin-bottom: 15px;
+    color: #495057;
+    font-weight: 600;
+}
+
+/* Form Switch Styling */
+.form-check-input:checked {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .settings-card .card-body {
+        padding: 15px;
+    }
+    
+    .metric-card {
+        padding: 10px;
+    }
+    
+    .metric-value {
+        font-size: 20px;
+    }
+    
+    .analysis-card .card-body {
+        padding: 15px;
+    }
+    
+    .backup-history-table,
+    .audit-logs-table {
+        padding: 15px;
+    }
+}

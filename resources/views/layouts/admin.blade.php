@@ -15,6 +15,45 @@
     <!-- Custom CSS -->
     @vite(['resources/css/app.css'])
     
+    <!-- Enhanced CSS for Settings Menu -->
+    <style>
+        /* Sidebar Navigation Active State */
+        .admin-sidebar .nav-link.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+        }
+        .admin-sidebar .nav-link.active::before {
+            content: '' !important;
+            position: absolute !important;
+            left: -16px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            width: 4px !important;
+            height: 60% !important;
+            background: #3b82f6 !important;
+            border-radius: 0 2px 2px 0 !important;
+        }
+        
+        /* Ensure settings menu stays active when on settings page */
+        body[data-page="settings"] .admin-sidebar .nav-link[href*="settings"] {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+        }
+        body[data-page="settings"] .admin-sidebar .nav-link[href*="settings"]::before {
+            content: '' !important;
+            position: absolute !important;
+            left: -16px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            width: 4px !important;
+            height: 60% !important;
+            background: #3b82f6 !important;
+            border-radius: 0 2px 2px 0 !important;
+        }
+    </style>
+    
     @stack('styles')
 </head>
 <body class="admin-body">
