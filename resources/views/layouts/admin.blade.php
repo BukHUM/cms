@@ -176,6 +176,70 @@
             box-shadow: none !important;
             border-color: inherit !important;
         }
+        
+        /* User Menu Dropdown - Simple Fix */
+        .user-menu {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .user-menu .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            padding: 8px 0;
+            min-width: 200px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 9999;
+            pointer-events: none;
+        }
+        
+        .user-menu.active .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        
+        .user-menu .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: #334155;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .user-menu .dropdown-item:hover {
+            background: #f8fafc;
+            color: #1e293b;
+        }
+        
+        .user-menu .dropdown-divider {
+            border: none;
+            border-top: 1px solid #e2e8f0;
+            margin: 8px 0;
+        }
+        
+        /* Force dropdown to be visible */
+        .user-menu .dropdown-menu {
+            display: block !important;
+        }
+        
+        .user-menu.active .dropdown-menu {
+            display: block !important;
+        }
+        
     </style>
     
     @stack('styles')
@@ -257,20 +321,15 @@
         
         <!-- Sidebar Footer -->
         <div class="sidebar-footer">
-            <div class="user-profile">
-                <div class="user-avatar">
-                    <i class="fas fa-user-circle"></i>
+            <div class="sidebar-info">
+                <div class="info-icon">
+                    <i class="fas fa-info-circle"></i>
                 </div>
-                <div class="user-info">
-                    <span class="user-name">{{ getCurrentAdminUserName() }}</span>
-                    <small class="user-role">{{ getCurrentAdminUserRole() }}</small>
+                <div class="info-text">
+                    <span class="info-title">Admin Panel</span>
+                    <small class="info-subtitle">Management System</small>
                 </div>
             </div>
-            
-            <a href="{{ route('logout') }}" class="logout-btn">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>ออกจากระบบ</span>
-            </a>
         </div>
     </aside>
     
@@ -320,11 +379,7 @@
                         <div class="dropdown-menu">
                             <a href="#" class="dropdown-item">
                                 <i class="fas fa-user"></i>
-                                โปรไฟล์
-                            </a>
-                            <a href="#" class="dropdown-item">
-                                <i class="fas fa-cog"></i>
-                                ตั้งค่า
+                                ข้อมูลส่วนตัว
                             </a>
                             <hr class="dropdown-divider">
                             <a href="{{ route('logout') }}" class="dropdown-item">
@@ -418,6 +473,7 @@
             // User Menu Toggle
             if (userMenu) {
                 userMenu.addEventListener('click', function(e) {
+                    e.preventDefault();
                     e.stopPropagation();
                     userMenu.classList.toggle('active');
                 });
@@ -427,6 +483,17 @@
                     if (!userMenu.contains(e.target)) {
                         userMenu.classList.remove('active');
                     }
+                });
+                
+                // Handle dropdown items
+                const dropdownItems = userMenu.querySelectorAll('.dropdown-item');
+                dropdownItems.forEach(item => {
+                    item.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        if (this.textContent.includes('ออกจากระบบ')) {
+                            userMenu.classList.remove('active');
+                        }
+                    });
                 });
             }
             

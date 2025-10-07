@@ -77,7 +77,7 @@
             </div>
             <div class="card-body">
                 <div class="activity-list">
-                    @forelse($recentActivities as $activity)
+                    @forelse($recentActivities ?? [] as $activity)
                         <div class="activity-item">
                             <div class="activity-icon">
                                 @switch($activity->action)

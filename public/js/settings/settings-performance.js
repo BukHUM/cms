@@ -28,6 +28,7 @@ class PerformanceSettings {
         this.bindEvents();
         this.loadPerformanceMetrics();
         this.loadPerformanceAnalysis();
+        this.refreshPerformanceMetrics();
         this.forceUpdateSwitchLabels(); // Force update labels on init
     }
 
@@ -90,6 +91,7 @@ class PerformanceSettings {
         this.setValue('memoryLimit', data.memoryLimit);
         this.setValue('maxExecutionTime', data.maxExecutionTime);
         this.setCheckbox('compressionEnabled', data.compressionEnabled);
+        this.setCheckbox('slowQueryLogEnabled', data.slowQueryLogEnabled);
 
         // Update cache driver settings
         this.updateCacheDriverSettings(data.cacheDriver);
@@ -125,7 +127,8 @@ class PerformanceSettings {
             const labels = {
                 'cacheEnabled': { true: 'เปิดใช้งาน', false: 'ปิดใช้งาน' },
                 'queryLogging': { true: 'เปิดใช้งาน', false: 'ปิดใช้งาน' },
-                'compressionEnabled': { true: 'เปิดใช้งาน', false: 'ปิดใช้งาน' }
+                'compressionEnabled': { true: 'เปิดใช้งาน', false: 'ปิดใช้งาน' },
+                'slowQueryLogEnabled': { true: 'เปิดใช้งาน', false: 'ปิดใช้งาน' }
             };
 
             if (labels[id]) {
@@ -269,7 +272,11 @@ class PerformanceSettings {
      * Bind refresh buttons
      */
     bindRefreshButtons() {
-        document.addEventListener('click', (e) => {
+        // Remove existing event listeners to prevent duplicates
+        document.removeEventListener('click', this.handleRefreshClick);
+        
+        // Bind new event listener
+        this.handleRefreshClick = (e) => {
             if (e.target.classList.contains('refresh-slow-queries')) {
                 e.preventDefault();
                 this.refreshSlowQueries();
@@ -285,11 +292,9 @@ class PerformanceSettings {
                 this.refreshTableStatistics();
             }
 
-            if (e.target.classList.contains('refresh-index-statistics')) {
-                e.preventDefault();
-                this.refreshIndexStatistics();
-            }
-        });
+        };
+        
+        document.addEventListener('click', this.handleRefreshClick);
     }
 
     /**
@@ -351,8 +356,7 @@ class PerformanceSettings {
         await Promise.all([
             this.loadSlowQueries(),
             this.loadDuplicateQueries(),
-            this.loadTableStatistics(),
-            this.loadIndexStatistics()
+            this.loadTableStatistics()
         ]);
     }
 
@@ -361,6 +365,19 @@ class PerformanceSettings {
      */
     async loadSlowQueries() {
         try {
+            // Show loading state in table
+            const tableBody = document.getElementById('slowQueriesTable');
+            if (tableBody) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="text-center text-muted">
+                            <i class="fas fa-spinner fa-spin me-2"></i>
+                            กำลังโหลดข้อมูล...
+                        </td>
+                    </tr>
+                `;
+            }
+
             const response = await fetch('/admin/settings/performance/slow-queries', {
                 method: 'GET',
                 headers: {
@@ -375,6 +392,7 @@ class PerformanceSettings {
                 this.slowQueries = result.data;
                 this.displaySlowQueries();
             } else {
+                console.error('Error loading slow queries:', result.message);
                 this.displaySlowQueries(); // Show empty state
             }
 
@@ -535,80 +553,43 @@ class PerformanceSettings {
 
         let html = '';
         this.tableStatistics.forEach(table => {
-            html += `
-                <tr>
-                    <td>${table.name}</td>
-                    <td>${table.rows.toLocaleString()}</td>
-                    <td>${table.size}MB</td>
-                    <td>${table.engine}</td>
-                </tr>
-            `;
-        });
-
-        tableBody.innerHTML = html;
-    }
-
-    /**
-     * Load index statistics
-     */
-    async loadIndexStatistics() {
-        try {
-            const response = await fetch('/admin/settings/performance/index-statistics', {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                this.indexStatistics = result.data;
-                this.displayIndexStatistics();
-            } else {
-                this.displayIndexStatistics(); // Show empty state
+            // Handle both object and array formats with safe parsing
+            const tableName = table.table_name || table['table_name'] || 'Unknown';
+            const rowCountRaw = table.row_count || table['row_count'] || 0;
+            const sizeMbRaw = table.size_mb || table['size_mb'] || 0;
+            const engine = table.engine || table['engine'] || 'Unknown';
+            
+            // Safe parsing with fallback - ensure we have valid numbers
+            let rowCount = 0;
+            let sizeMb = 0;
+            
+            try {
+                rowCount = parseInt(rowCountRaw);
+                if (isNaN(rowCount) || rowCount < 0) rowCount = 0;
+            } catch (e) {
+                rowCount = 0;
             }
-
-        } catch (error) {
-            console.error('Error loading index statistics:', error);
-            this.displayIndexStatistics(); // Show empty state
-        }
-    }
-
-    /**
-     * Display index statistics
-     */
-    displayIndexStatistics() {
-        const tableBody = document.getElementById('indexStatisticsTable');
-        if (!tableBody) return;
-
-        if (this.indexStatistics.length === 0) {
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="4" class="text-center text-muted">
-                        <i class="fas fa-info-circle me-2"></i>
-                        กำลังโหลดข้อมูล index...
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        let html = '';
-        this.indexStatistics.forEach(index => {
+            
+            try {
+                sizeMb = parseFloat(sizeMbRaw);
+                if (isNaN(sizeMb) || sizeMb < 0) sizeMb = 0;
+            } catch (e) {
+                sizeMb = 0;
+            }
+            
             html += `
                 <tr>
-                    <td>${index.table}</td>
-                    <td>${index.name}</td>
-                    <td>${index.usage}%</td>
-                    <td>${index.type}</td>
+                    <td>${tableName}</td>
+                    <td>${rowCount.toLocaleString()}</td>
+                    <td>${sizeMb}MB</td>
+                    <td>${engine}</td>
                 </tr>
             `;
         });
 
         tableBody.innerHTML = html;
     }
+
 
     /**
      * Setup performance recommendations
@@ -820,37 +801,36 @@ class PerformanceSettings {
         }
     }
 
+
     /**
-     * Refresh slow queries
+     * Refresh CSRF token
      */
-    async refreshSlowQueries() {
-        await this.loadSlowQueries();
+    async refreshCSRFToken() {
+        try {
+            const response = await fetch('/admin/settings/performance', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            if (response.ok) {
+                // Token should be refreshed automatically by Laravel
+                console.log('CSRF token refreshed');
+                return true;
+            }
+        } catch (error) {
+            console.error('Error refreshing CSRF token:', error);
+        }
+        return false;
     }
 
     /**
-     * Refresh duplicate queries
+     * Get current CSRF token
      */
-    async refreshDuplicateQueries() {
-        await this.loadDuplicateQueries();
+    getCSRFToken() {
+        return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     }
-
-    /**
-     * Refresh table statistics
-     */
-    async refreshTableStatistics() {
-        await this.loadTableStatistics();
-    }
-
-    /**
-     * Refresh index statistics
-     */
-    async refreshIndexStatistics() {
-        await this.loadIndexStatistics();
-    }
-
-    /**
-     * Save settings to server
-     */
     async saveSettings() {
         if (this.isLoading) return;
 
@@ -859,22 +839,35 @@ class PerformanceSettings {
             this.showLoading(true);
 
             const formData = new FormData(this.form);
-            const data = Object.fromEntries(formData.entries());
+            
+            // Get all form values explicitly
+            const data = {
+                cacheEnabled: document.getElementById('cacheEnabled')?.checked || false,
+                cacheDriver: document.getElementById('cacheDriver')?.value || 'file',
+                cacheTTL: document.getElementById('cacheTTL')?.value || 60,
+                queryLogging: document.getElementById('queryLogging')?.checked || false,
+                slowQueryThreshold: document.getElementById('slowQueryThreshold')?.value || 1000,
+                memoryLimit: document.getElementById('memoryLimit')?.value || 256,
+                maxExecutionTime: document.getElementById('maxExecutionTime')?.value || 30,
+                compressionEnabled: document.getElementById('compressionEnabled')?.checked || false,
+                slowQueryLogEnabled: document.getElementById('slowQueryLogEnabled')?.checked || false
+            };
 
-            // Convert checkbox values to boolean
-            const checkboxes = ['cacheEnabled', 'queryLogging', 'compressionEnabled'];
-            checkboxes.forEach(key => {
-                data[key] = formData.has(key);
-            });
+            // Get CSRF token
+            const csrfToken = this.getCSRFToken();
+            if (!csrfToken) {
+                this.showError('ไม่พบ CSRF Token กรุณาโหลดหน้าใหม่');
+                return;
+            }
 
             const response = await fetch('/admin/settings/performance', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded',
                     'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    'X-CSRF-TOKEN': csrfToken
                 },
-                body: JSON.stringify(data)
+                body: new URLSearchParams(data)
             });
 
             const result = await response.json();
@@ -883,7 +876,22 @@ class PerformanceSettings {
                 this.showSuccess(result.message || 'บันทึกการตั้งค่า Performance สำเร็จ');
                 this.updatePerformanceRecommendations();
             } else {
-                this.showError(result.message || 'ไม่สามารถบันทึกการตั้งค่า Performance ได้');
+                // Handle specific error types
+                if (result.message && result.message.includes('CSRF')) {
+                    this.showError('CSRF Token หมดอายุ กำลังรีเฟรช...');
+                    const refreshed = await this.refreshCSRFToken();
+                    if (refreshed) {
+                        this.showError('กรุณาลองบันทึกอีกครั้ง');
+                    } else {
+                        this.showError('CSRF Token หมดอายุ กรุณาโหลดหน้าใหม่');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                    }
+                } else {
+                    this.showError(result.message || 'ไม่สามารถบันทึกการตั้งค่า Performance ได้');
+                }
+                
                 if (result.errors) {
                     this.showValidationErrors(result.errors);
                 }
@@ -1041,12 +1049,184 @@ class PerformanceSettings {
             }
         }
     }
+
+    /**
+     * Refresh performance metrics
+     */
+    async refreshPerformanceMetrics() {
+        try {
+            this.showLoading(true);
+            
+            const response = await fetch('/admin/settings/performance/metrics', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': this.getCSRFToken()
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.updatePerformanceMetrics(result.data);
+            } else {
+                console.error('Error loading performance metrics:', result.message);
+                this.showError('ไม่สามารถโหลด Performance Metrics ได้');
+            }
+
+        } catch (error) {
+            console.error('Error refreshing performance metrics:', error);
+            this.showError('เกิดข้อผิดพลาดในการโหลด Performance Metrics');
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    /**
+     * Update performance metrics display
+     */
+    updatePerformanceMetrics(data) {
+        const metrics = {
+            'responseTime': data.response_time ? `${data.response_time}ms` : 'N/A',
+            'memoryUsage': data.memory_usage ? `${data.memory_usage}MB` : 'N/A',
+            'cacheHitRate': data.cache_hit_rate ? `${data.cache_hit_rate}%` : 'N/A',
+            'activeConnections': data.active_connections || 'N/A',
+            'bufferPoolHitRate': data.buffer_pool_hit_rate ? `${data.buffer_pool_hit_rate}%` : 'N/A',
+            'tableLockWaitRatio': data.table_lock_wait_ratio ? `${data.table_lock_wait_ratio}%` : 'N/A',
+            'tmpTableRatio': data.tmp_table_ratio ? `${data.tmp_table_ratio}%` : 'N/A',
+            'totalQueries': data.total_queries || 'N/A'
+        };
+
+        Object.keys(metrics).forEach(key => {
+            const element = document.getElementById(key);
+            if (element) {
+                element.innerHTML = metrics[key];
+            }
+        });
+    }
+
+    /**
+     * Show slow queries loading state
+     */
+    showSlowQueriesLoading(show) {
+        const refreshBtn = document.querySelector('button[onclick="refreshSlowQueries()"]');
+        if (refreshBtn) {
+            if (show) {
+                refreshBtn.disabled = true;
+                refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            } else {
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+            }
+        }
+    }
+
+    /**
+     * Show duplicate queries loading state
+     */
+    showDuplicateQueriesLoading(show) {
+        const refreshBtn = document.querySelector('button[onclick="refreshDuplicateQueries()"]');
+        if (refreshBtn) {
+            if (show) {
+                refreshBtn.disabled = true;
+                refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            } else {
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+            }
+        }
+    }
+
+    /**
+     * Show table statistics loading state
+     */
+    showTableStatisticsLoading(show) {
+        const refreshBtn = document.querySelector('button[onclick="refreshTableStatistics()"]');
+        if (refreshBtn) {
+            if (show) {
+                refreshBtn.disabled = true;
+                refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            } else {
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+            }
+        }
+    }
+
+
+    /**
+     * Refresh slow queries
+     */
+    async refreshSlowQueries() {
+        try {
+            this.showSlowQueriesLoading(true);
+            await this.loadSlowQueries();
+        } catch (error) {
+            console.error('Error refreshing slow queries:', error);
+            this.showError('เกิดข้อผิดพลาดในการโหลด Slow Queries');
+        } finally {
+            this.showSlowQueriesLoading(false);
+        }
+    }
+
+    /**
+     * Refresh duplicate queries
+     */
+    async refreshDuplicateQueries() {
+        try {
+            this.showDuplicateQueriesLoading(true);
+            await this.loadDuplicateQueries();
+        } catch (error) {
+            console.error('Error refreshing duplicate queries:', error);
+            this.showError('เกิดข้อผิดพลาดในการโหลด Duplicate Queries');
+        } finally {
+            this.showDuplicateQueriesLoading(false);
+        }
+    }
+
+    /**
+     * Refresh table statistics
+     */
+    async refreshTableStatistics() {
+        try {
+            this.showTableStatisticsLoading(true);
+            await this.loadTableStatistics();
+        } catch (error) {
+            console.error('Error refreshing table statistics:', error);
+            this.showError('เกิดข้อผิดพลาดในการโหลด Table Statistics');
+        } finally {
+            this.showTableStatisticsLoading(false);
+        }
+    }
+
+
+    /**
+     * Refresh slow queries
+     */
+    async refreshSlowQueries() {
+        try {
+            this.showSlowQueriesLoading(true);
+            await this.loadSlowQueries();
+        } catch (error) {
+            console.error('Error refreshing slow queries:', error);
+            this.showError('เกิดข้อผิดพลาดในการรีเฟรช Slow Queries');
+        } finally {
+            this.showSlowQueriesLoading(false);
+        }
+    }
+
 }
 
 // Global functions for buttons
 function clearCache() {
     if (window.performanceSettings) {
         window.performanceSettings.clearCache();
+    }
+}
+
+function refreshPerformanceMetrics() {
+    if (window.performanceSettings) {
+        window.performanceSettings.refreshPerformanceMetrics();
     }
 }
 
@@ -1057,26 +1237,40 @@ function runPerformanceTest() {
 }
 
 function refreshSlowQueries() {
-    if (window.performanceSettings) {
+    if (window.performanceSettings && typeof window.performanceSettings.refreshSlowQueries === 'function') {
         window.performanceSettings.refreshSlowQueries();
+    } else {
+        console.error('PerformanceSettings not initialized or refreshSlowQueries method not available');
+        alert('ระบบยังไม่พร้อม กรุณารอสักครู่');
     }
 }
 
 function refreshDuplicateQueries() {
-    if (window.performanceSettings) {
+    if (window.performanceSettings && typeof window.performanceSettings.refreshDuplicateQueries === 'function') {
         window.performanceSettings.refreshDuplicateQueries();
+    } else {
+        console.error('PerformanceSettings not initialized or refreshDuplicateQueries method not available');
+        alert('ระบบยังไม่พร้อม กรุณารอสักครู่');
     }
 }
 
 function refreshTableStatistics() {
-    if (window.performanceSettings) {
+    if (window.performanceSettings && typeof window.performanceSettings.refreshTableStatistics === 'function') {
         window.performanceSettings.refreshTableStatistics();
+    } else {
+        console.error('PerformanceSettings not initialized or refreshTableStatistics method not available');
+        alert('ระบบยังไม่พร้อม กรุณารอสักครู่');
     }
 }
 
-function refreshIndexStatistics() {
+
+// Slow Query Log management functions
+function refreshSlowQueries() {
     if (window.performanceSettings) {
-        window.performanceSettings.refreshIndexStatistics();
+        window.performanceSettings.refreshSlowQueries();
+    } else {
+        console.error('PerformanceSettings not initialized');
+        alert('ระบบยังไม่พร้อม กรุณารอสักครู่');
     }
 }
 
@@ -1084,7 +1278,18 @@ function refreshIndexStatistics() {
 document.addEventListener('DOMContentLoaded', function() {
     // Only initialize if we're on the settings page
     if (document.getElementById('performanceSettingsForm')) {
-        window.performanceSettings = new PerformanceSettings();
+        if (window.performanceSettings) {
+            console.log('PerformanceSettings already initialized, skipping');
+        } else {
+            try {
+                window.performanceSettings = new PerformanceSettings();
+                console.log('PerformanceSettings initialized:', window.performanceSettings);
+            } catch (error) {
+                console.error('Error initializing PerformanceSettings:', error);
+            }
+        }
+    } else {
+        console.log('PerformanceSettingsForm not found, skipping initialization');
     }
 });
 

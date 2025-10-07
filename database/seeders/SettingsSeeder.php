@@ -139,28 +139,52 @@ class SettingsSeeder extends Seeder
 
             // Security Settings
             [
-                'key' => 'session_lifetime',
-                'value' => '120',
-                'type' => 'integer',
-                'description' => 'ระยะเวลา Session (นาที)'
-            ],
-            [
-                'key' => 'max_login_attempts',
-                'value' => '5',
-                'type' => 'integer',
-                'description' => 'จำนวนครั้งการเข้าสู่ระบบสูงสุด'
-            ],
-            [
                 'key' => 'password_min_length',
                 'value' => '8',
                 'type' => 'integer',
                 'description' => 'ความยาวรหัสผ่านขั้นต่ำ'
             ],
             [
-                'key' => 'require_special_chars',
+                'key' => 'password_require_uppercase',
                 'value' => '1',
                 'type' => 'boolean',
+                'description' => 'ต้องมีตัวอักษรพิมพ์ใหญ่'
+            ],
+            [
+                'key' => 'password_require_lowercase',
+                'value' => '1',
+                'type' => 'boolean',
+                'description' => 'ต้องมีตัวอักษรพิมพ์เล็ก'
+            ],
+            [
+                'key' => 'password_require_numbers',
+                'value' => '1',
+                'type' => 'boolean',
+                'description' => 'ต้องมีตัวเลข'
+            ],
+            [
+                'key' => 'password_require_special_chars',
+                'value' => '0',
+                'type' => 'boolean',
                 'description' => 'ต้องมีอักขระพิเศษ'
+            ],
+            [
+                'key' => 'session_timeout',
+                'value' => '30',
+                'type' => 'integer',
+                'description' => 'ระยะเวลา Session (นาที)'
+            ],
+            [
+                'key' => 'lockout_duration',
+                'value' => '15',
+                'type' => 'integer',
+                'description' => 'ระยะเวลาล็อค (นาที)'
+            ],
+            [
+                'key' => 'max_login_attempts',
+                'value' => '5',
+                'type' => 'integer',
+                'description' => 'จำนวนครั้งการเข้าสู่ระบบสูงสุด'
             ],
             [
                 'key' => 'two_factor_auth',
@@ -275,6 +299,12 @@ class SettingsSeeder extends Seeder
                 'value' => '1',
                 'type' => 'boolean',
                 'description' => 'เปิดใช้งาน Compression'
+            ],
+            [
+                'key' => 'slow_query_log_enabled',
+                'value' => '0',
+                'type' => 'boolean',
+                'description' => 'เปิดใช้งาน Slow Query Log'
             ],
         ];
 

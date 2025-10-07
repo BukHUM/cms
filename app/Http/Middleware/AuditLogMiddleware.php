@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\AuditLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Helpers\SettingsHelper;
 use Symfony\Component\HttpFoundation\Response;
 
 class AuditLogMiddleware
@@ -364,17 +365,8 @@ class AuditLogMiddleware
     private function getCurrentAuditLevel(): string
     {
         try {
-            // Try to get from database settings table (if exists)
-            $settings = DB::table('laravel_settings')
-                ->where('key', 'audit_level')
-                ->first();
-                
-            if ($settings) {
-                return $settings->value ?? 'basic';
-            }
-            
-            // Fallback: try to get from cache or config
-            return config('audit.level', 'basic');
+            // Use SettingsHelper to get audit level
+            return SettingsHelper::get('audit_level', 'basic');
             
         } catch (\Exception $e) {
             // If any error, default to basic

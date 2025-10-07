@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use App\Helpers\SettingsHelper;
 
 class PerformanceController extends Controller
 {
@@ -14,62 +15,133 @@ class PerformanceController extends Controller
     public function getSlowQueries()
     {
         try {
-            // First try to get slow queries from MySQL slow query log
-            $slowQueries = DB::select("
-                SELECT 
-                    sql_text as query,
-                    query_time as time,
-                    count as count,
-                    db as table_name
-                FROM (
-                    SELECT 
-                        SUBSTRING(sql_text, 1, 100) as sql_text,
-                        AVG(query_time) as query_time,
-                        COUNT(*) as count,
-                        db
-                    FROM mysql.slow_log 
-                    WHERE start_time > DATE_SUB(NOW(), INTERVAL 1 HOUR)
-                    GROUP BY SUBSTRING(sql_text, 1, 100), db
-                    ORDER BY query_time DESC
-                    LIMIT 10
-                ) as slow_queries
-            ");
-
-            // If slow_log table doesn't exist or is empty, use processlist as fallback
-            if (empty($slowQueries)) {
-                $slowQueries = DB::select("
-                    SELECT 
-                        SUBSTRING(INFO, 1, 100) as query,
-                        TIME as time,
-                        1 as count,
-                        DB as table_name
-                    FROM INFORMATION_SCHEMA.PROCESSLIST 
-                    WHERE COMMAND != 'Sleep' 
-                    AND TIME > 1
-                    ORDER BY TIME DESC
-                    LIMIT 10
-                ");
+            // Check if slow query log is enabled
+            $slowQueryLog = DB::select("SHOW VARIABLES LIKE 'slow_query_log'");
+            $slowQueryLogFile = DB::select("SHOW VARIABLES LIKE 'slow_query_log_file'");
+            $longQueryTime = DB::select("SHOW VARIABLES LIKE 'long_query_time'");
+            
+            $isSlowLogEnabled = $slowQueryLog[0]->Value === 'ON';
+            $slowLogFile = $slowQueryLogFile[0]->Value ?? '';
+            $queryTimeThreshold = $longQueryTime[0]->Value ?? 10;
+            
+            // Try to get slow queries from MySQL slow query log table
+            $slowQueries = [];
+            
+            if ($isSlowLogEnabled) {
+                try {
+                    // Try to access mysql.slow_log table
+                    $slowQueries = DB::select("
+                        SELECT 
+                            SUBSTRING(sql_text, 1, 100) as query,
+                            ROUND(AVG(query_time), 2) as time,
+                            COUNT(*) as count
+                        FROM mysql.slow_log 
+                        WHERE start_time > DATE_SUB(NOW(), INTERVAL 24 HOUR)
+                        AND query_time > ?
+                        GROUP BY SUBSTRING(sql_text, 1, 100)
+                        ORDER BY AVG(query_time) DESC
+                        LIMIT 10
+                    ", [$queryTimeThreshold]);
+                } catch (\Exception $e) {
+                    \Log::info('mysql.slow_log table not accessible: ' . $e->getMessage());
+                }
             }
-
-            // If still empty, provide sample data
+            
+            // If slow_log table is not accessible, try to get from performance_schema
+            if (empty($slowQueries)) {
+                try {
+                    $slowQueries = DB::select("
+                        SELECT 
+                            SUBSTRING(DIGEST_TEXT, 1, 100) as query,
+                            ROUND(AVG_TIMER_WAIT/1000000000, 2) as time,
+                            COUNT_STAR as count
+                        FROM performance_schema.events_statements_summary_by_digest 
+                        WHERE AVG_TIMER_WAIT > ?
+                        ORDER BY AVG_TIMER_WAIT DESC
+                        LIMIT 10
+                    ", [$queryTimeThreshold * 1000000000]);
+                } catch (\Exception $e) {
+                    \Log::info('performance_schema not accessible: ' . $e->getMessage());
+                }
+            }
+            
+            // If still empty, try to get current running queries
+            if (empty($slowQueries)) {
+                try {
+                    $slowQueries = DB::select("
+                        SELECT 
+                            SUBSTRING(INFO, 1, 100) as query,
+                            TIME as time,
+                            1 as count
+                        FROM INFORMATION_SCHEMA.PROCESSLIST 
+                        WHERE COMMAND != 'Sleep' 
+                        AND TIME > ?
+                        AND INFO IS NOT NULL
+                        ORDER BY TIME DESC
+                        LIMIT 10
+                    ", [$queryTimeThreshold]);
+                } catch (\Exception $e) {
+                    \Log::info('PROCESSLIST not accessible: ' . $e->getMessage());
+                }
+            }
+            
+            // If still empty, return empty array with message
             if (empty($slowQueries)) {
                 return response()->json([
                     'success' => true,
-                    'data' => []
+                    'data' => [],
+                    'message' => 'ไม่มี Slow Queries ในช่วง 24 ชั่วโมงที่ผ่านมา หรือ Slow Query Log ยังไม่ได้เปิดใช้งาน'
                 ]);
             }
 
             return response()->json([
                 'success' => true,
-                'data' => $slowQueries
+                'data' => $slowQueries,
+                'debug_info' => [
+                    'slow_log_enabled' => $isSlowLogEnabled,
+                    'slow_log_file' => $slowLogFile,
+                    'query_time_threshold' => $queryTimeThreshold,
+                    'found_queries' => count($slowQueries)
+                ]
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('Error getting slow queries: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'ไม่สามารถดึงข้อมูล Slow Queries ได้: ' . $e->getMessage(),
+                'data' => []
+            ]);
+        }
+    }
+
+    /**
+     * Get slow query log status
+     */
+    public function getSlowQueryLogStatus()
+    {
+        try {
+            $status = DB::select("SHOW VARIABLES LIKE 'slow_query_log'");
+            $logFile = DB::select("SHOW VARIABLES LIKE 'slow_query_log_file'");
+            $longQueryTime = DB::select("SHOW VARIABLES LIKE 'long_query_time'");
+            $logQueriesNotUsingIndexes = DB::select("SHOW VARIABLES LIKE 'log_queries_not_using_indexes'");
+            
             return response()->json([
                 'success' => true,
-                'data' => [],
-                'message' => 'Unable to fetch slow queries: ' . $e->getMessage()
+                'data' => [
+                    'slow_query_log' => $status[0]->Value ?? 'OFF',
+                    'slow_query_log_file' => $logFile[0]->Value ?? '',
+                    'long_query_time' => $longQueryTime[0]->Value ?? 10,
+                    'log_queries_not_using_indexes' => $logQueriesNotUsingIndexes[0]->Value ?? 'OFF'
+                ]
             ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ไม่สามารถดึงสถานะ Slow Query Log ได้: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -321,70 +393,6 @@ class PerformanceController extends Controller
         }
     }
 
-    /**
-     * Get index usage statistics
-     */
-    public function getIndexStatistics()
-    {
-        try {
-            $currentDb = config('database.connections.mysql.database');
-            
-            // Get index usage statistics
-            $indexes = DB::select("
-                SELECT 
-                    TABLE_NAME as table_name,
-                    INDEX_NAME as index_name,
-                    COLUMN_NAME as column_name,
-                    CARDINALITY as cardinality,
-                    CASE 
-                        WHEN NON_UNIQUE = 0 THEN 'UNIQUE'
-                        WHEN INDEX_TYPE = 'FULLTEXT' THEN 'FULLTEXT'
-                        ELSE 'INDEX'
-                    END as index_type,
-                    CASE 
-                        WHEN CARDINALITY = 0 THEN 'Unused'
-                        WHEN CARDINALITY < 10 THEN 'Low'
-                        WHEN CARDINALITY < 100 THEN 'Medium'
-                        ELSE 'High'
-                    END as usage_level
-                FROM INFORMATION_SCHEMA.STATISTICS 
-                WHERE TABLE_SCHEMA = ?
-                ORDER BY TABLE_NAME, CARDINALITY DESC
-                LIMIT 50
-            ", [$currentDb]);
-
-            return response()->json([
-                'success' => true,
-                'data' => $indexes
-            ]);
-
-        } catch (\Exception $e) {
-            $fallbackData = [
-                (object)[
-                    'table_name' => 'laravel_users',
-                    'index_name' => 'PRIMARY',
-                    'column_name' => 'id',
-                    'cardinality' => 150,
-                    'index_type' => 'UNIQUE',
-                    'usage_level' => 'High'
-                ],
-                (object)[
-                    'table_name' => 'laravel_users',
-                    'index_name' => 'users_email_unique',
-                    'column_name' => 'email',
-                    'cardinality' => 150,
-                    'index_type' => 'UNIQUE',
-                    'usage_level' => 'High'
-                ]
-            ];
-
-            return response()->json([
-                'success' => true,
-                'data' => $fallbackData,
-                'message' => 'Using fallback data: ' . $e->getMessage()
-            ]);
-        }
-    }
 
     /**
      * Get connection statistics
@@ -643,38 +651,24 @@ class PerformanceController extends Controller
     public function getPerformanceSettings()
     {
         try {
-            // Read from .env file
-            $envPath = base_path('.env');
-            $envSettings = [];
-            
-            if (file_exists($envPath)) {
-                $envContent = file_get_contents($envPath);
-                $lines = explode("\n", $envContent);
-                
-                foreach ($lines as $line) {
-                    $line = trim($line);
-                    if (strpos($line, '=') !== false && !str_starts_with($line, '#')) {
-                        [$key, $value] = explode('=', $line, 2);
-                        $envSettings[trim($key)] = trim($value);
-                    }
-                }
-            }
-            
-            // Get current settings with fallbacks
-            $settings = [
-                'cache_enabled' => config('cache.default') !== 'array',
-                'cache_driver' => config('cache.default'),
-                'cache_ttl' => (int) ($envSettings['CACHE_TTL'] ?? 60),
-                'query_logging' => $this->getQueryLoggingStatus(),
-                'slow_query_threshold' => (int) ($envSettings['SLOW_QUERY_THRESHOLD'] ?? 1000),
-                'memory_limit' => (int) ($envSettings['MEMORY_LIMIT'] ?? 256),
-                'max_execution_time' => (int) ($envSettings['MAX_EXECUTION_TIME'] ?? 30),
-                'compression_enabled' => filter_var($envSettings['COMPRESSION_ENABLED'] ?? 'true', FILTER_VALIDATE_BOOLEAN)
-            ];
+            // Get settings from database using SettingsHelper
+            $settings = SettingsHelper::getMultiple([
+                'cache_enabled', 'cache_driver', 'cache_ttl', 'query_logging', 
+                'slow_query_threshold', 'memory_limit', 'max_execution_time', 'compression_enabled'
+            ]);
 
             return response()->json([
                 'success' => true,
-                'data' => $settings
+                'data' => [
+                    'cache_enabled' => $settings['cache_enabled'] ?? true,
+                    'cache_driver' => $settings['cache_driver'] ?? config('cache.default'),
+                    'cache_ttl' => $settings['cache_ttl'] ?? 60,
+                    'query_logging' => $settings['query_logging'] ?? false,
+                    'slow_query_threshold' => $settings['slow_query_threshold'] ?? 1000,
+                    'memory_limit' => $settings['memory_limit'] ?? 256,
+                    'max_execution_time' => $settings['max_execution_time'] ?? 30,
+                    'compression_enabled' => $settings['compression_enabled'] ?? true
+                ]
             ]);
 
         } catch (\Exception $e) {

@@ -36,6 +36,14 @@ class AuditLog extends Model
     ];
 
     /**
+     * Get the user that owns the audit log.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
      * Get audit logs with pagination
      */
     public static function getRecentLogs($limit = 10)

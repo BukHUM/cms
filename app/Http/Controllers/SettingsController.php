@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Artisan;
+use App\Helpers\SettingsHelper;
 
 class SettingsController extends Controller
 {
@@ -34,16 +37,9 @@ class SettingsController extends Controller
                 'audit_level' => $request->auditLevel
             ];
 
-            // Save each setting to database
+            // Save each setting to database using SettingsHelper
             foreach ($settings as $key => $value) {
-                DB::table('laravel_settings')->updateOrInsert(
-                    ['key' => $key],
-                    [
-                        'value' => $value,
-                        'type' => is_bool($value) ? 'boolean' : (is_int($value) ? 'integer' : 'string'),
-                        'updated_at' => now()
-                    ]
-                );
+                SettingsHelper::set($key, $value);
             }
 
             return response()->json([
@@ -65,16 +61,17 @@ class SettingsController extends Controller
     public function getAuditSettings()
     {
         try {
-            $settings = DB::table('laravel_settings')
-                ->whereIn('key', ['audit_enabled', 'audit_retention', 'audit_level'])
-                ->pluck('value', 'key')
-                ->toArray();
+            $settings = SettingsHelper::getMultiple([
+                'audit_enabled', 
+                'audit_retention', 
+                'audit_level'
+            ]);
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'auditEnabled' => filter_var($settings['audit_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN),
-                    'auditRetention' => (int)($settings['audit_retention'] ?? 90),
+                    'auditEnabled' => $settings['audit_enabled'] ?? true,
+                    'auditRetention' => $settings['audit_retention'] ?? 90,
                     'auditLevel' => $settings['audit_level'] ?? 'basic'
                 ]
             ]);
@@ -169,7 +166,10 @@ class SettingsController extends Controller
                 ];
             }
 
-            $this->saveSettings($settings);
+            // Save settings using SettingsHelper
+            foreach ($settings as $key => $value) {
+                SettingsHelper::set($key, $value);
+            }
 
             return response()->json([
                 'success' => true,
@@ -190,10 +190,11 @@ class SettingsController extends Controller
     public function getGeneralSettings()
     {
         try {
-            $settings = DB::table('laravel_settings')
-                ->whereIn('key', ['site_name', 'site_url', 'timezone', 'language', 'site_enabled', 'maintenance_mode', 'debug_mode', 'auto_save', 'notifications', 'analytics', 'updates'])
-                ->pluck('value', 'key')
-                ->toArray();
+            $settings = SettingsHelper::getMultiple([
+                'site_name', 'site_url', 'timezone', 'language', 
+                'site_enabled', 'maintenance_mode', 'debug_mode', 
+                'auto_save', 'notifications', 'analytics', 'updates'
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -202,13 +203,13 @@ class SettingsController extends Controller
                     'siteUrl' => $settings['site_url'] ?? config('app.url'),
                     'timezone' => $settings['timezone'] ?? 'Asia/Bangkok',
                     'language' => $settings['language'] ?? 'th',
-                    'siteEnabled' => filter_var($settings['site_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN),
-                    'maintenanceMode' => filter_var($settings['maintenance_mode'] ?? false, FILTER_VALIDATE_BOOLEAN),
-                    'debugMode' => filter_var($settings['debug_mode'] ?? true, FILTER_VALIDATE_BOOLEAN),
-                    'autoSave' => filter_var($settings['auto_save'] ?? true, FILTER_VALIDATE_BOOLEAN),
-                    'notifications' => filter_var($settings['notifications'] ?? true, FILTER_VALIDATE_BOOLEAN),
-                    'analytics' => filter_var($settings['analytics'] ?? true, FILTER_VALIDATE_BOOLEAN),
-                    'updates' => filter_var($settings['updates'] ?? true, FILTER_VALIDATE_BOOLEAN)
+                    'siteEnabled' => $settings['site_enabled'] ?? true,
+                    'maintenanceMode' => $settings['maintenance_mode'] ?? false,
+                    'debugMode' => $settings['debug_mode'] ?? config('app.debug'),
+                    'autoSave' => $settings['auto_save'] ?? true,
+                    'notifications' => $settings['notifications'] ?? true,
+                    'analytics' => $settings['analytics'] ?? true,
+                    'updates' => $settings['updates'] ?? true
                 ]
             ]);
 
@@ -529,22 +530,9 @@ class SettingsController extends Controller
     public function getPerformanceMetrics()
     {
         try {
-            // This is a placeholder - you would get actual performance metrics
-            $metrics = [
-                'responseTime' => '245ms',
-                'memoryUsage' => '128MB',
-                'cacheHitRate' => '85%',
-                'activeConnections' => '12',
-                'bufferPoolHitRate' => '95.5%',
-                'tableLockWaitRatio' => '2.1%',
-                'tmpTableRatio' => '15.3%',
-                'totalQueries' => '1000'
-            ];
-
-            return response()->json([
-                'success' => true,
-                'data' => $metrics
-            ]);
+            // Use PerformanceController to get real metrics
+            $performanceController = new \App\Http\Controllers\PerformanceController();
+            return $performanceController->getPerformanceMetrics();
 
         } catch (\Exception $e) {
             return response()->json([
@@ -560,24 +548,9 @@ class SettingsController extends Controller
     public function getSlowQueries()
     {
         try {
-            // This is a placeholder - you would get actual slow queries from database
-            $slowQueries = [
-                [
-                    'query' => 'SELECT * FROM users WHERE created_at > ?',
-                    'time' => 1250,
-                    'count' => 5
-                ],
-                [
-                    'query' => 'SELECT COUNT(*) FROM orders WHERE status = ?',
-                    'time' => 890,
-                    'count' => 12
-                ]
-            ];
-
-            return response()->json([
-                'success' => true,
-                'data' => $slowQueries
-            ]);
+            // Use PerformanceController to get real slow queries
+            $performanceController = new \App\Http\Controllers\PerformanceController();
+            return $performanceController->getSlowQueries();
 
         } catch (\Exception $e) {
             return response()->json([
@@ -593,24 +566,9 @@ class SettingsController extends Controller
     public function getDuplicateQueries()
     {
         try {
-            // This is a placeholder - you would get actual duplicate queries
-            $duplicateQueries = [
-                [
-                    'query' => 'SELECT * FROM users WHERE id = ?',
-                    'count' => 150,
-                    'impact' => 'high'
-                ],
-                [
-                    'query' => 'SELECT name FROM products WHERE active = 1',
-                    'count' => 75,
-                    'impact' => 'medium'
-                ]
-            ];
-
-            return response()->json([
-                'success' => true,
-                'data' => $duplicateQueries
-            ]);
+            // Use PerformanceController to get real duplicate queries
+            $performanceController = new \App\Http\Controllers\PerformanceController();
+            return $performanceController->getDuplicateQueries();
 
         } catch (\Exception $e) {
             return response()->json([
@@ -626,32 +584,9 @@ class SettingsController extends Controller
     public function getTableStatistics()
     {
         try {
-            // This is a placeholder - you would get actual table statistics
-            $tableStatistics = [
-                [
-                    'name' => 'users',
-                    'rows' => 1250,
-                    'size' => '2.5',
-                    'engine' => 'InnoDB'
-                ],
-                [
-                    'name' => 'orders',
-                    'rows' => 5670,
-                    'size' => '8.2',
-                    'engine' => 'InnoDB'
-                ],
-                [
-                    'name' => 'products',
-                    'rows' => 890,
-                    'size' => '1.8',
-                    'engine' => 'InnoDB'
-                ]
-            ];
-
-            return response()->json([
-                'success' => true,
-                'data' => $tableStatistics
-            ]);
+            // Use PerformanceController to get real table statistics
+            $performanceController = new \App\Http\Controllers\PerformanceController();
+            return $performanceController->getTableStatistics();
 
         } catch (\Exception $e) {
             return response()->json([
@@ -661,46 +596,6 @@ class SettingsController extends Controller
         }
     }
 
-    /**
-     * Get index statistics
-     */
-    public function getIndexStatistics()
-    {
-        try {
-            // This is a placeholder - you would get actual index statistics
-            $indexStatistics = [
-                [
-                    'table' => 'users',
-                    'name' => 'PRIMARY',
-                    'usage' => '95.2',
-                    'type' => 'BTREE'
-                ],
-                [
-                    'table' => 'users',
-                    'name' => 'email_unique',
-                    'usage' => '87.5',
-                    'type' => 'BTREE'
-                ],
-                [
-                    'table' => 'orders',
-                    'name' => 'user_id_index',
-                    'usage' => '92.1',
-                    'type' => 'BTREE'
-                ]
-            ];
-
-            return response()->json([
-                'success' => true,
-                'data' => $indexStatistics
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถโหลด Index Statistics ได้: ' . $e->getMessage()
-            ], 500);
-        }
-    }
 
     /**
      * Clear cache
@@ -708,8 +603,14 @@ class SettingsController extends Controller
     public function clearCache()
     {
         try {
-            // This is a placeholder - you would implement actual cache clearing
-            // For now, we'll just simulate a successful cache clear
+            // Use PerformanceController to clear cache
+            $performanceController = new \App\Http\Controllers\PerformanceController();
+            
+            // Clear Laravel cache
+            \Artisan::call('cache:clear');
+            \Artisan::call('config:clear');
+            \Artisan::call('view:clear');
+            \Artisan::call('route:clear');
             
             return response()->json([
                 'success' => true,
@@ -730,12 +631,31 @@ class SettingsController extends Controller
     public function runPerformanceTest()
     {
         try {
-            // This is a placeholder - you would implement actual performance testing
-            // For now, we'll just simulate a successful test
+            // Use PerformanceController to run performance test
+            $performanceController = new \App\Http\Controllers\PerformanceController();
+            
+            // Run a simple performance test
+            $startTime = microtime(true);
+            
+            // Test database connection
+            DB::select('SELECT 1');
+            
+            // Test cache operations
+            Cache::put('performance_test', 'test_value', 60);
+            $cacheValue = Cache::get('performance_test');
+            Cache::forget('performance_test');
+            
+            $endTime = microtime(true);
+            $responseTime = round(($endTime - $startTime) * 1000, 2);
             
             return response()->json([
                 'success' => true,
-                'message' => 'ทดสอบประสิทธิภาพสำเร็จ'
+                'message' => 'ทดสอบประสิทธิภาพสำเร็จ',
+                'data' => [
+                    'response_time' => $responseTime . 'ms',
+                    'cache_test' => $cacheValue === 'test_value' ? 'passed' : 'failed',
+                    'database_test' => 'passed'
+                ]
             ]);
 
         } catch (\Exception $e) {
@@ -753,14 +673,15 @@ class SettingsController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'cacheEnabled' => 'boolean',
-                'cacheDriver' => 'required|string|in:file,redis,memcached',
-                'cacheTTL' => 'required|integer|min:1|max:1440',
-                'queryLogging' => 'boolean',
-                'slowQueryThreshold' => 'required|integer|min:100|max:10000',
-                'memoryLimit' => 'required|integer|min:64|max:2048',
-                'maxExecutionTime' => 'required|integer|min:30|max:300',
-                'compressionEnabled' => 'boolean'
+                'cacheEnabled' => 'nullable|in:true,false,1,0',
+                'cacheDriver' => 'nullable|string|in:file,redis,memcached',
+                'cacheTTL' => 'nullable|integer|min:1|max:1440',
+                'queryLogging' => 'nullable|in:true,false,1,0',
+                'slowQueryThreshold' => 'nullable|integer|min:100|max:10000',
+                'memoryLimit' => 'nullable|integer|min:64|max:2048',
+                'maxExecutionTime' => 'nullable|integer|min:30|max:300',
+                'compressionEnabled' => 'nullable|in:true,false,1,0',
+                'slowQueryLogEnabled' => 'nullable|in:true,false,1,0'
             ]);
 
             if ($validator->fails()) {
@@ -771,18 +692,28 @@ class SettingsController extends Controller
                 ], 400);
             }
 
+            // Get current settings as defaults using SettingsHelper
+            $currentSettings = SettingsHelper::getMultiple([
+                'cache_enabled', 'cache_driver', 'cache_ttl', 'query_logging', 
+                'slow_query_threshold', 'memory_limit', 'max_execution_time', 'compression_enabled', 'slow_query_log_enabled'
+            ]);
+
             $settings = [
-                'cache_enabled' => $request->cacheEnabled,
-                'cache_driver' => $request->cacheDriver,
-                'cache_ttl' => $request->cacheTTL,
-                'query_logging' => $request->queryLogging,
-                'slow_query_threshold' => $request->slowQueryThreshold,
-                'memory_limit' => $request->memoryLimit,
-                'max_execution_time' => $request->maxExecutionTime,
-                'compression_enabled' => $request->compressionEnabled
+                'cache_enabled' => $request->boolean('cacheEnabled'),
+                'cache_driver' => $request->input('cacheDriver') ?: ($currentSettings['cache_driver'] ?? 'file'),
+                'cache_ttl' => $request->input('cacheTTL') ?: ($currentSettings['cache_ttl'] ?? 60),
+                'query_logging' => $request->boolean('queryLogging'),
+                'slow_query_threshold' => $request->input('slowQueryThreshold') ?: ($currentSettings['slow_query_threshold'] ?? 1000),
+                'memory_limit' => $request->input('memoryLimit') ?: ($currentSettings['memory_limit'] ?? 256),
+                'max_execution_time' => $request->input('maxExecutionTime') ?: ($currentSettings['max_execution_time'] ?? 30),
+                'compression_enabled' => $request->boolean('compressionEnabled'),
+                'slow_query_log_enabled' => $request->boolean('slowQueryLogEnabled')
             ];
 
-            $this->saveSettings($settings);
+            // Save settings using SettingsHelper
+            foreach ($settings as $key => $value) {
+                SettingsHelper::set($key, $value);
+            }
 
             return response()->json([
                 'success' => true,
@@ -803,22 +734,23 @@ class SettingsController extends Controller
     public function getPerformanceSettings()
     {
         try {
-            $settings = DB::table('laravel_settings')
-                ->whereIn('key', ['cache_enabled', 'cache_driver', 'cache_ttl', 'query_logging', 'slow_query_threshold', 'memory_limit', 'max_execution_time', 'compression_enabled'])
-                ->pluck('value', 'key')
-                ->toArray();
+            $settings = SettingsHelper::getMultiple([
+                'cache_enabled', 'cache_driver', 'cache_ttl', 'query_logging', 
+                'slow_query_threshold', 'memory_limit', 'max_execution_time', 'compression_enabled', 'slow_query_log_enabled'
+            ]);
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'cacheEnabled' => filter_var($settings['cache_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN),
+                    'cacheEnabled' => $settings['cache_enabled'] ?? true,
                     'cacheDriver' => $settings['cache_driver'] ?? 'file',
-                    'cacheTTL' => (int)($settings['cache_ttl'] ?? 60),
-                    'queryLogging' => filter_var($settings['query_logging'] ?? false, FILTER_VALIDATE_BOOLEAN),
-                    'slowQueryThreshold' => (int)($settings['slow_query_threshold'] ?? 1000),
-                    'memoryLimit' => (int)($settings['memory_limit'] ?? 256),
-                    'maxExecutionTime' => (int)($settings['max_execution_time'] ?? 30),
-                    'compressionEnabled' => filter_var($settings['compression_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN)
+                    'cacheTTL' => $settings['cache_ttl'] ?? 60,
+                    'queryLogging' => $settings['query_logging'] ?? false,
+                    'slowQueryThreshold' => $settings['slow_query_threshold'] ?? 1000,
+                    'memoryLimit' => $settings['memory_limit'] ?? 256,
+                    'maxExecutionTime' => $settings['max_execution_time'] ?? 30,
+                    'compressionEnabled' => $settings['compression_enabled'] ?? true,
+                    'slowQueryLogEnabled' => $settings['slow_query_log_enabled'] ?? false
                 ]
             ]);
 
@@ -862,7 +794,10 @@ class SettingsController extends Controller
                 'backup_encryption' => $request->backupEncryption
             ];
 
-            $this->saveSettings($settings);
+            // Save settings using SettingsHelper
+            foreach ($settings as $key => $value) {
+                SettingsHelper::set($key, $value);
+            }
 
             return response()->json([
                 'success' => true,
@@ -883,20 +818,20 @@ class SettingsController extends Controller
     public function getBackupSettings()
     {
         try {
-            $settings = DB::table('laravel_settings')
-                ->whereIn('key', ['backup_enabled', 'backup_frequency', 'backup_retention', 'backup_location', 'backup_compression', 'backup_encryption'])
-                ->pluck('value', 'key')
-                ->toArray();
+            $settings = SettingsHelper::getMultiple([
+                'backup_enabled', 'backup_frequency', 'backup_retention', 
+                'backup_location', 'backup_compression', 'backup_encryption'
+            ]);
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'backupEnabled' => filter_var($settings['backup_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN),
+                    'backupEnabled' => $settings['backup_enabled'] ?? true,
                     'backupFrequency' => $settings['backup_frequency'] ?? 'daily',
-                    'backupRetention' => (int)($settings['backup_retention'] ?? 30),
+                    'backupRetention' => $settings['backup_retention'] ?? 30,
                     'backupLocation' => $settings['backup_location'] ?? 'local',
-                    'backupCompression' => filter_var($settings['backup_compression'] ?? true, FILTER_VALIDATE_BOOLEAN),
-                    'backupEncryption' => filter_var($settings['backup_encryption'] ?? false, FILTER_VALIDATE_BOOLEAN)
+                    'backupCompression' => $settings['backup_compression'] ?? true,
+                    'backupEncryption' => $settings['backup_encryption'] ?? false
                 ]
             ]);
 
@@ -1060,7 +995,10 @@ class SettingsController extends Controller
                 'mail_from_name' => $request->mailFromName
             ];
 
-            $this->saveSettings($settings);
+            // Save settings using SettingsHelper
+            foreach ($settings as $key => $value) {
+                SettingsHelper::set($key, $value);
+            }
 
             return response()->json([
                 'success' => true,
@@ -1081,22 +1019,24 @@ class SettingsController extends Controller
     public function getEmailSettings()
     {
         try {
-            $settings = DB::table('laravel_settings')
-                ->whereIn('key', ['mail_driver', 'mail_host', 'mail_port', 'mail_username', 'mail_password', 'mail_encryption', 'mail_from_address', 'mail_from_name'])
-                ->pluck('value', 'key')
-                ->toArray();
+            // Email settings should come from .env/config, not database
+            // Only get non-sensitive settings from database
+            $settings = SettingsHelper::getMultiple([
+                'mail_from_address', 'mail_from_name', 'mail_enabled'
+            ]);
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'mailDriver' => $settings['mail_driver'] ?? 'smtp',
-                    'mailHost' => $settings['mail_host'] ?? 'smtp.gmail.com',
-                    'mailPort' => (int)($settings['mail_port'] ?? 587),
-                    'mailUsername' => $settings['mail_username'] ?? '',
-                    'mailPassword' => $settings['mail_password'] ?? '',
-                    'mailEncryption' => $settings['mail_encryption'] ?? 'tls',
+                    'mailDriver' => config('mail.default', 'smtp'),
+                    'mailHost' => config('mail.mailers.smtp.host', 'smtp.gmail.com'),
+                    'mailPort' => config('mail.mailers.smtp.port', 587),
+                    'mailUsername' => config('mail.mailers.smtp.username', ''),
+                    'mailPassword' => config('mail.mailers.smtp.password', ''),
+                    'mailEncryption' => env('MAIL_ENCRYPTION', 'tls'),
                     'mailFromAddress' => $settings['mail_from_address'] ?? config('mail.from.address'),
-                    'mailFromName' => $settings['mail_from_name'] ?? config('mail.from.name')
+                    'mailFromName' => $settings['mail_from_name'] ?? config('mail.from.name'),
+                    'mailEnabled' => $settings['mail_enabled'] ?? true
                 ]
             ]);
 
@@ -1208,7 +1148,10 @@ class SettingsController extends Controller
                 'ip_whitelist' => $request->ipWhitelist
             ];
 
-            $this->saveSettings($settings);
+            // Save settings using SettingsHelper
+            foreach ($settings as $key => $value) {
+                SettingsHelper::set($key, $value);
+            }
 
             return response()->json([
                 'success' => true,
@@ -1229,24 +1172,25 @@ class SettingsController extends Controller
     public function getSecuritySettings()
     {
         try {
-            $settings = DB::table('laravel_settings')
-                ->whereIn('key', ['password_min_length', 'password_require_uppercase', 'password_require_lowercase', 'password_require_numbers', 'password_require_special_chars', 'session_timeout', 'max_login_attempts', 'lockout_duration', 'two_factor_auth', 'ip_whitelist'])
-                ->pluck('value', 'key')
-                ->toArray();
+            $settings = SettingsHelper::getMultiple([
+                'password_min_length', 'password_require_uppercase', 'password_require_lowercase', 
+                'password_require_numbers', 'password_require_special_chars', 'session_timeout', 
+                'max_login_attempts', 'lockout_duration', 'two_factor_auth', 'ip_whitelist'
+            ]);
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'passwordMinLength' => (int)($settings['password_min_length'] ?? 8),
-                    'passwordRequireUppercase' => filter_var($settings['password_require_uppercase'] ?? true, FILTER_VALIDATE_BOOLEAN),
-                    'passwordRequireLowercase' => filter_var($settings['password_require_lowercase'] ?? true, FILTER_VALIDATE_BOOLEAN),
-                    'passwordRequireNumbers' => filter_var($settings['password_require_numbers'] ?? true, FILTER_VALIDATE_BOOLEAN),
-                    'passwordRequireSpecialChars' => filter_var($settings['password_require_special_chars'] ?? false, FILTER_VALIDATE_BOOLEAN),
-                    'sessionTimeout' => (int)($settings['session_timeout'] ?? 30),
-                    'maxLoginAttempts' => (int)($settings['max_login_attempts'] ?? 5),
-                    'lockoutDuration' => (int)($settings['lockout_duration'] ?? 15),
-                    'twoFactorAuth' => filter_var($settings['two_factor_auth'] ?? false, FILTER_VALIDATE_BOOLEAN),
-                    'ipWhitelist' => filter_var($settings['ip_whitelist'] ?? false, FILTER_VALIDATE_BOOLEAN)
+                    'passwordMinLength' => $settings['password_min_length'] ?? 8,
+                    'passwordRequireUppercase' => $settings['password_require_uppercase'] ?? true,
+                    'passwordRequireLowercase' => $settings['password_require_lowercase'] ?? true,
+                    'passwordRequireNumbers' => $settings['password_require_numbers'] ?? true,
+                    'passwordRequireSpecialChars' => $settings['password_require_special_chars'] ?? false,
+                    'sessionTimeout' => $settings['session_timeout'] ?? 30,
+                    'maxLoginAttempts' => $settings['max_login_attempts'] ?? 5,
+                    'lockoutDuration' => $settings['lockout_duration'] ?? 15,
+                    'twoFactorAuth' => $settings['two_factor_auth'] ?? false,
+                    'ipWhitelist' => $settings['ip_whitelist'] ?? false
                 ]
             ]);
 
@@ -1364,7 +1308,7 @@ class SettingsController extends Controller
     public function getAllSettings()
     {
         try {
-            $settings = DB::table('laravel_settings')->pluck('value', 'key')->toArray();
+            $settings = SettingsHelper::getAll();
 
             return response()->json([
                 'success' => true,
@@ -1376,23 +1320,6 @@ class SettingsController extends Controller
                 'success' => false,
                 'message' => 'ไม่สามารถโหลดการตั้งค่าได้: ' . $e->getMessage()
             ], 500);
-        }
-    }
-
-    /**
-     * Save settings helper method
-     */
-    private function saveSettings(array $settings)
-    {
-        foreach ($settings as $key => $value) {
-            DB::table('laravel_settings')->updateOrInsert(
-                ['key' => $key],
-                [
-                    'value' => $value,
-                    'type' => is_bool($value) ? 'boolean' : (is_int($value) ? 'integer' : 'string'),
-                    'updated_at' => now()
-                ]
-            );
         }
     }
 }

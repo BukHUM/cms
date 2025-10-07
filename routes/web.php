@@ -77,12 +77,45 @@ Route::post('/contact/send', function () {
 
 // Admin Routes (Protected)
 Route::prefix('admin')->middleware(['web'])->group(function () {
-    Route::get('/', [App\Http\Controllers\DashboardController::class, 'index'])->name('admin.dashboard');
-    
-    Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/', function () {
+        if (!session('admin_logged_in')) {
+            return redirect()->route('login')->with('error', 'กรุณาเข้าสู่ระบบก่อน');
+        }
+        
+        // Get dashboard data
+        $totalUsers = \App\Models\User::count();
+        $newUsersToday = \App\Models\User::whereDate('created_at', today())->count();
+        $visitsToday = \App\Models\AuditLog::whereDate('created_at', today())->count();
+        
+        // Check if jobs table exists
+        try {
+            $pendingJobs = \Illuminate\Support\Facades\DB::table('jobs')->count();
+        } catch (\Exception $e) {
+            $pendingJobs = 0;
+        }
+        
+        // Get recent activities from audit logs
+        $recentActivities = \App\Models\AuditLog::with('user')
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+        
+        return view('admin.dashboard', compact(
+            'totalUsers', 
+            'newUsersToday', 
+            'visitsToday', 
+            'pendingJobs', 
+            'recentActivities'
+        ));
+    })->name('admin.dashboard');
     
     // User Management
-    Route::get('/user-management', [App\Http\Controllers\UserManagementController::class, 'index'])->name('admin.user-management');
+    Route::get('/user-management', function () {
+        if (!session('admin_logged_in')) {
+            return redirect()->route('login')->with('error', 'กรุณาเข้าสู่ระบบก่อน');
+        }
+        return app(App\Http\Controllers\UserManagementController::class)->index();
+    })->name('admin.user-management');
     
     
     Route::get('/settings', function () {
@@ -129,9 +162,11 @@ Route::prefix('admin')->middleware(['web'])->group(function () {
         Route::get('/performance/slow-queries', [App\Http\Controllers\SettingsController::class, 'getSlowQueries'])->name('admin.settings.performance.slow-queries');
         Route::get('/performance/duplicate-queries', [App\Http\Controllers\SettingsController::class, 'getDuplicateQueries'])->name('admin.settings.performance.duplicate-queries');
         Route::get('/performance/table-statistics', [App\Http\Controllers\SettingsController::class, 'getTableStatistics'])->name('admin.settings.performance.table-statistics');
-        Route::get('/performance/index-statistics', [App\Http\Controllers\SettingsController::class, 'getIndexStatistics'])->name('admin.settings.performance.index-statistics');
         Route::post('/performance/clear-cache', [App\Http\Controllers\SettingsController::class, 'clearCache'])->name('admin.settings.performance.clear-cache');
         Route::post('/performance/test', [App\Http\Controllers\SettingsController::class, 'runPerformanceTest'])->name('admin.settings.performance.test');
+        
+        // Slow Query Log management routes
+        Route::get('/performance/slow-log-status', [App\Http\Controllers\PerformanceController::class, 'getSlowQueryLogStatus'])->name('admin.settings.performance.slow-log-status');
         
         // System Info Routes
         Route::get('/system-info', [App\Http\Controllers\SettingsController::class, 'getSystemInfo'])->name('admin.settings.system-info.get');
@@ -234,7 +269,6 @@ Route::prefix('api/performance')->group(function () {
     Route::get('/duplicate-queries', [App\Http\Controllers\PerformanceController::class, 'getDuplicateQueries']);
     Route::get('/metrics', [App\Http\Controllers\PerformanceController::class, 'getPerformanceMetrics']);
     Route::get('/table-statistics', [App\Http\Controllers\PerformanceController::class, 'getTableStatistics']);
-    Route::get('/index-statistics', [App\Http\Controllers\PerformanceController::class, 'getIndexStatistics']);
     Route::get('/connection-statistics', [App\Http\Controllers\PerformanceController::class, 'getConnectionStatistics']);
     Route::get('/settings', [App\Http\Controllers\PerformanceController::class, 'getPerformanceSettings']);
     Route::post('/settings', [App\Http\Controllers\PerformanceController::class, 'savePerformanceSettings']);
