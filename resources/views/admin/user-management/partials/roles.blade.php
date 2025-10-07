@@ -46,7 +46,7 @@
                     <td>{{ $role->id }}</td>
                     <td>
                         <div class="d-flex align-items-center">
-                            <div class="me-2" style="width: 20px; height: 20px; background-color: {{ $role->color }}; border-radius: 4px;"></div>
+                            <div class="me-2"></div>
                             <div>
                                 <div class="fw-bold">{{ $role->name }}</div>
                                 <small class="text-muted">ลำดับ: {{ $role->sort_order }}</small>
@@ -56,7 +56,7 @@
                     <td><code>{{ $role->slug }}</code></td>
                     <td>{{ $role->description ?: '-' }}</td>
                     <td>
-                        <span class="role-badge" style="background-color: {{ $role->color }};">
+                        <span class="role-badge">
                             {{ $role->color }}
                         </span>
                     </td>

@@ -32,7 +32,7 @@
             <i class="fas fa-chevron-down dropdown-arrow"></i>
         </div>
         
-        <div class="settings-dropdown" id="userManagementDropdown" style="display: none;">
+        <div class="settings-dropdown d-none" id="userManagementDropdown">
             <div class="dropdown-item active" onclick="switchTab('users', 'fas fa-users', 'ผู้ใช้')">
                 <i class="fas fa-users"></i>
                 <span>ผู้ใช้</span>

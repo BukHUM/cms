@@ -85,10 +85,18 @@
 
                         <!-- Submit Button -->
                         <div class="d-grid mb-3">
-                            <button type="submit" class="btn btn-primary btn-lg">
+                            <button type="submit" class="btn btn-primary btn-lg" id="loginBtn">
                                 <i class="fas fa-sign-in-alt me-2"></i>
                                 เข้าสู่ระบบ
                             </button>
+                        </div>
+
+                        <!-- Security Notice -->
+                        <div class="alert alert-info alert-sm mb-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <small>
+                                ระบบจะล็อคบัญชีชั่วคราวหากเข้าสู่ระบบผิดเกิน 5 ครั้ง
+                            </small>
                         </div>
 
                     </form>
@@ -151,6 +159,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Form validation
     const form = document.querySelector('form');
+    const loginBtn = document.getElementById('loginBtn');
+    
     form.addEventListener('submit', function(e) {
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
@@ -162,10 +172,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Show loading state
-        const submitBtn = form.querySelector('button[type="submit"]');
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>กำลังเข้าสู่ระบบ...';
-        submitBtn.disabled = true;
+        loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>กำลังเข้าสู่ระบบ...';
+        loginBtn.disabled = true;
+        
+        // Prevent double submission
+        form.removeEventListener('submit', arguments.callee);
     });
+
+    // Check for rate limiting errors
+    @if(session('error'))
+        @if(str_contains(session('error'), 'ล็อค') || str_contains(session('error'), 'บล็อก'))
+            SwalHelper.error('{{ session('error') }}');
+        @endif
+    @endif
 });
 </script>
 @endpush

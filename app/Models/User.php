@@ -30,9 +30,12 @@ class User extends Authenticatable
         'email',
         'password',
         'phone',
+        'address',
+        'bio',
         'avatar',
         'status',
         'last_login_at',
+        'email_verified_at',
     ];
 
     /**
@@ -214,5 +217,57 @@ class User extends Authenticatable
     public function scopeStatus($query, string $status)
     {
         return $query->where('status', $status);
+    }
+
+    /**
+     * Get user's avatar URL
+     */
+    public function getAvatarUrl(): string
+    {
+        if ($this->avatar) {
+            return asset('storage/' . $this->avatar);
+        }
+        
+        // Return default avatar based on user's name
+        $initials = $this->getInitials();
+        return "https://ui-avatars.com/api/?name={$initials}&background=3b82f6&color=ffffff&size=200";
+    }
+
+    /**
+     * Get user's initials
+     */
+    public function getInitials(): string
+    {
+        $name = trim($this->name);
+        $words = explode(' ', $name);
+        
+        if (count($words) >= 2) {
+            return strtoupper(substr($words[0], 0, 1) . substr($words[1], 0, 1));
+        }
+        
+        return strtoupper(substr($name, 0, 2));
+    }
+
+    /**
+     * Get user's full profile data
+     */
+    public function getProfileData(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'email' => $this->email,
+            'phone' => $this->phone,
+            'address' => $this->address,
+            'bio' => $this->bio,
+            'avatar' => $this->avatar,
+            'avatar_url' => $this->getAvatarUrl(),
+            'status' => $this->status,
+            'status_display' => $this->getStatusDisplayName(),
+            'role' => $this->getRoleDisplayName(),
+            'last_login_at' => $this->last_login_at,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+        ];
     }
 }

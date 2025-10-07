@@ -71,7 +71,7 @@
                                         <li><hr class="dropdown-divider"></li>
                                         @foreach(\App\Models\Role::active()->ordered()->get() as $role)
                                         <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); filterByRole('{{ $role->id }}'); return false;">
-                                            <span class="role-badge me-2" style="background-color: {{ $role->color }}; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.75rem;">{{ $role->name }}</span>
+                                            <span class="role-badge me-2">{{ $role->name }}</span>
                                             {{ $role->name }}
                                         </a></li>
                                         @endforeach
@@ -120,19 +120,19 @@
             </div>
         </div>
         <div class="card-body p-0">
-            <div class="table-responsive" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                <table class="table table-hover mb-0" id="usersTable" style="min-width: 800px;">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="usersTable">
                     <thead class="table-light">
                         <tr>
-                            <th width="50">
+                            <th>
                                 <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
                             </th>
                             <th>ผู้ใช้</th>
                             <th>อีเมล</th>
                             <th>บทบาท</th>
-                            <th width="120">สถานะ</th>
-                            <th width="120">วันที่สมัคร</th>
-                            <th width="150">การดำเนินการ</th>
+                            <th>สถานะ</th>
+                            <th>วันที่สมัคร</th>
+                            <th>การดำเนินการ</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -145,13 +145,13 @@
                                 <div class="d-flex align-items-center">
                                     <div class="position-relative me-3">
                                         <img src="{{ $user->avatar ? asset('storage/' . $user->avatar) : 'https://ui-avatars.com/api/?name=' . urlencode($user->name) . '&background=6c757d&color=fff' }}" 
-                                             class="rounded-circle" alt="User" style="width: 45px; height: 45px; object-fit: cover;">
+                                             class="rounded-circle" alt="User">
                                         @if($user->status === 'active')
-                                        <span class="position-absolute bottom-0 end-0 badge rounded-pill bg-success" style="width: 12px; height: 12px;"></span>
+                                        <span class="position-absolute bottom-0 end-0 badge rounded-pill bg-success"></span>
                                         @elseif($user->status === 'pending')
-                                        <span class="position-absolute bottom-0 end-0 badge rounded-pill bg-warning" style="width: 12px; height: 12px;"></span>
+                                        <span class="position-absolute bottom-0 end-0 badge rounded-pill bg-warning"></span>
                                         @elseif($user->status === 'suspended')
-                                        <span class="position-absolute bottom-0 end-0 badge rounded-pill bg-danger" style="width: 12px; height: 12px;"></span>
+                                        <span class="position-absolute bottom-0 end-0 badge rounded-pill bg-danger"></span>
                                         @endif
                                     </div>
                                     <div>
@@ -183,7 +183,7 @@
                             <td>
                                 <div class="d-flex flex-wrap gap-1">
                                     @foreach($user->roles as $role)
-                                        <span class="role-badge" style="background-color: {{ $role->color }};" title="{{ $role->description }}">
+                                        <span class="role-badge" title="{{ $role->description }}">
                                             {{ $role->name }}
                                         </span>
                                     @endforeach
@@ -398,12 +398,12 @@
                                         <label class="form-label">รูปโปรไฟล์</label>
                                         <div class="text-center">
                                             <img id="avatarPreview" src="https://ui-avatars.com/api/?name=User&background=6c757d&color=fff" 
-                                                 class="rounded-circle mb-2" style="width: 80px; height: 80px; object-fit: cover;">
+                                                 class="rounded-circle mb-2">
                                             <div>
                                                 <button type="button" class="btn btn-sm btn-outline-primary" onclick="document.getElementById('avatar').click()">
                                                     <i class="fas fa-camera me-1"></i>เลือกรูป
                                                 </button>
-                                                <input type="file" id="avatar" accept="image/*" style="display: none;" onchange="previewAvatar(this)">
+                                                <input type="file" id="avatar" accept="image/*" class="d-none" onchange="previewAvatar(this)">
                                             </div>
                                         </div>
                                     </div>

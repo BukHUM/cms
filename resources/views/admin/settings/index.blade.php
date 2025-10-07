@@ -6,6 +6,15 @@
 
 @push('styles')
 @vite(['resources/css/settings.css'])
+<style>
+/* Hide all tab content initially to prevent flashing */
+.tab-content .tab-pane {
+    display: none !important;
+}
+.tab-content .tab-pane.show {
+    display: block !important;
+}
+</style>
 @endpush
 
 @section('content')
@@ -23,19 +32,6 @@
     @include('admin.settings.partials.system-info')
 </div>
 @endsection
-
-@push('styles')
-@vite(['resources/css/settings.css'])
-<style>
-/* Hide all tab content initially to prevent flashing */
-.tab-content .tab-pane {
-    display: none !important;
-}
-.tab-content .tab-pane.show {
-    display: block !important;
-}
-</style>
-@endpush
 
 @push('scripts')
 <!-- Settings JavaScript Files -->

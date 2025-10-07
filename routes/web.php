@@ -179,6 +179,17 @@ Route::prefix('admin')->middleware(['web'])->group(function () {
         Route::get('/all', [App\Http\Controllers\SettingsController::class, 'getAllSettings'])->name('admin.settings.all.get');
     });
     
+    // Profile Management Routes
+    Route::prefix('profile')->name('admin.profile.')->group(function () {
+        Route::get('/', [App\Http\Controllers\ProfileController::class, 'index'])->name('index');
+        Route::get('/edit', [App\Http\Controllers\ProfileController::class, 'edit'])->name('edit');
+        Route::put('/update', [App\Http\Controllers\ProfileController::class, 'update'])->name('update');
+        Route::get('/change-password', [App\Http\Controllers\ProfileController::class, 'changePassword'])->name('change-password');
+        Route::put('/update-password', [App\Http\Controllers\ProfileController::class, 'updatePassword'])->name('update-password');
+        Route::get('/activity-log', [App\Http\Controllers\ProfileController::class, 'activityLog'])->name('activity-log');
+        Route::post('/update-avatar', [App\Http\Controllers\ProfileController::class, 'updateAvatar'])->name('update-avatar');
+    });
+    
     Route::get('/reports', function () {
         if (!session('admin_logged_in')) {
             return redirect()->route('login')->with('error', 'กรุณาเข้าสู่ระบบก่อน');
@@ -192,16 +203,18 @@ Route::get('/login', function () {
     return view('admin.login');
 })->name('login');
 
-Route::post('/admin/login', function () {
-    $email = request('email');
-    $password = request('password');
+Route::post('/admin/login', function (Illuminate\Http\Request $request) {
+    $loginService = new \App\Services\LoginSecurityService();
+    $result = $loginService->attemptLogin($request);
     
-    // Find user in database
-    $user = \App\Models\User::where('email', $email)->first();
-    
-    if ($user && \Illuminate\Support\Facades\Hash::check($password, $user->password)) {
+    if ($result['success']) {
+        $user = $result['user'];
+        
         // Update last login time
         $user->update(['last_login_at' => now()]);
+        
+        // Regenerate session ID for security
+        session()->regenerate();
         
         // Set session with user data
         session([
@@ -209,23 +222,47 @@ Route::post('/admin/login', function () {
             'admin_user_id' => $user->id,
             'admin_user_email' => $user->email,
             'admin_user_name' => $user->name,
-            'admin_user_role' => $user->role
+            'admin_user_role' => $user->role,
+            'last_activity' => time()
         ]);
         
-        return redirect()->route('admin.dashboard')->with('success', 'เข้าสู่ระบบสำเร็จ!');
+        return redirect()->route('admin.dashboard')->with('success', $result['message']);
     }
     
+    // Handle locked accounts
+    if (isset($result['locked']) && $result['locked']) {
+        return redirect()->back()->withErrors([
+            'email' => $result['message']
+        ])->withInput();
+    }
+    
+    // Handle failed login
     return redirect()->back()->withErrors([
-        'email' => 'ข้อมูลการเข้าสู่ระบบไม่ถูกต้อง'
+        'email' => $result['message']
     ])->withInput();
-})->name('admin.login');
+})->middleware('throttle:5,1')->name('admin.login');
 
 Route::get('/register', function () {
     return redirect('/login');
 })->name('register');
 
 Route::post('/logout', function () {
-    session()->forget(['admin_logged_in', 'admin_user']);
+    // Regenerate session ID for security
+    session()->regenerate();
+    
+    // Clear all admin session data
+    session()->forget([
+        'admin_logged_in',
+        'admin_user_id',
+        'admin_user_email',
+        'admin_user_name',
+        'admin_user_role',
+        'last_activity'
+    ]);
+    
+    // Invalidate session completely
+    session()->invalidate();
+    
     return redirect('/')->with('success', 'ออกจากระบบเรียบร้อยแล้ว');
 })->name('logout');
 

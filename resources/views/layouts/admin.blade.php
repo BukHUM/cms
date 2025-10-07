@@ -96,7 +96,6 @@
         .btn-outline-danger:hover,
         .btn-outline-danger:focus,
         .btn-outline-danger:active {
-            background-color: transparent !important;
             transform: none !important;
             box-shadow: none !important;
         }
@@ -111,10 +110,8 @@
         .btn:hover,
         .btn:focus,
         .btn:active {
-            background-color: transparent !important;
             transform: none !important;
             box-shadow: none !important;
-            border-color: inherit !important;
         }
         
         /* Specific overrides for different button types */
@@ -124,6 +121,26 @@
             background-color: #0dcaf0 !important;
             border-color: #0dcaf0 !important;
             color: #000 !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        .btn-warning:hover,
+        .btn-warning:focus,
+        .btn-warning:active {
+            background-color: #ffca2c !important;
+            border-color: #ffca2c !important;
+            color: #000 !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        .btn-danger:hover,
+        .btn-danger:focus,
+        .btn-danger:active {
+            background-color: #b02a37 !important;
+            border-color: #b02a37 !important;
+            color: #fff !important;
             transform: none !important;
             box-shadow: none !important;
         }
@@ -148,6 +165,78 @@
             box-shadow: none !important;
         }
         
+        /* Secondary button hover effects */
+        .btn-secondary:hover,
+        .btn-secondary:focus,
+        .btn-secondary:active {
+            background-color: #6c757d !important;
+            border-color: #6c757d !important;
+            color: #fff !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        /* Outline button hover effects */
+        .btn-outline-primary:hover,
+        .btn-outline-primary:focus,
+        .btn-outline-primary:active {
+            background-color: #0d6efd !important;
+            border-color: #0d6efd !important;
+            color: #fff !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        .btn-outline-warning:hover,
+        .btn-outline-warning:focus,
+        .btn-outline-warning:active {
+            background-color: #ffc107 !important;
+            border-color: #ffc107 !important;
+            color: #000 !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        .btn-outline-danger:hover,
+        .btn-outline-danger:focus,
+        .btn-outline-danger:active {
+            background-color: #dc3545 !important;
+            border-color: #dc3545 !important;
+            color: #fff !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        .btn-outline-success:hover,
+        .btn-outline-success:focus,
+        .btn-outline-success:active {
+            background-color: #198754 !important;
+            border-color: #198754 !important;
+            color: #fff !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        .btn-outline-info:hover,
+        .btn-outline-info:focus,
+        .btn-outline-info:active {
+            background-color: #0dcaf0 !important;
+            border-color: #0dcaf0 !important;
+            color: #000 !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        .btn-outline-secondary:hover,
+        .btn-outline-secondary:focus,
+        .btn-outline-secondary:active {
+            background-color: #6c757d !important;
+            border-color: #6c757d !important;
+            color: #fff !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
         /* Ultra-specific overrides for user management buttons */
         .user-management .btn:hover,
         .user-management .btn:focus,
@@ -158,10 +247,8 @@
         .tab-pane#users .btn:hover,
         .tab-pane#users .btn:focus,
         .tab-pane#users .btn:active {
-            background-color: transparent !important;
             transform: none !important;
             box-shadow: none !important;
-            border-color: inherit !important;
         }
         
         /* Force remove all hover effects with maximum specificity */
@@ -171,10 +258,8 @@
         .btn.dropdown-toggle:hover,
         .btn.dropdown-toggle:focus,
         .btn.dropdown-toggle:active {
-            background-color: transparent !important;
             transform: none !important;
             box-shadow: none !important;
-            border-color: inherit !important;
         }
         
         /* User Menu Dropdown - Simple Fix */
@@ -377,9 +462,17 @@
                             <small class="user-role">{{ getCurrentAdminUserRole() }}</small>
                         </div>
                         <div class="dropdown-menu">
-                            <a href="#" class="dropdown-item">
+                            <a href="{{ route('admin.profile.index') }}" class="dropdown-item">
                                 <i class="fas fa-user"></i>
                                 ข้อมูลส่วนตัว
+                            </a>
+                            <a href="{{ route('admin.profile.edit') }}" class="dropdown-item">
+                                <i class="fas fa-user-edit"></i>
+                                แก้ไขข้อมูล
+                            </a>
+                            <a href="{{ route('admin.profile.change-password') }}" class="dropdown-item">
+                                <i class="fas fa-key"></i>
+                                เปลี่ยนรหัสผ่าน
                             </a>
                             <hr class="dropdown-divider">
                             <a href="{{ route('logout') }}" class="dropdown-item">
