@@ -6,6 +6,7 @@
 
 @push('styles')
 @vite(['resources/css/settings.css'])
+<link rel="stylesheet" href="{{ asset('js/libs/sweetalert2.min.css') }}">
 <style>
 /* Hide all tab content initially to prevent flashing */
 .tab-content .tab-pane {
@@ -29,11 +30,15 @@
     @include('admin.settings.partials.backup')
     @include('admin.settings.partials.audit')
     @include('admin.settings.partials.performance')
+    @include('admin.settings.partials.update')
     @include('admin.settings.partials.system-info')
 </div>
 @endsection
 
 @push('scripts')
+<!-- SweetAlert2 -->
+<script src="{{ asset('js/libs/sweetalert2.min.js') }}"></script>
+
 <!-- Settings JavaScript Files -->
 <script src="{{ asset('js/settings/settings-navigation.js') }}"></script>
 <script src="{{ asset('js/settings/settings-general.js') }}"></script>
@@ -42,6 +47,7 @@
 <script src="{{ asset('js/settings/settings-backup.js') }}"></script>
 <script src="{{ asset('js/settings/settings-audit.js') }}"></script>
 <script src="{{ asset('js/settings/settings-performance.js') }}"></script>
+<script src="{{ asset('js/settings/settings-update.js') }}"></script>
 <script src="{{ asset('js/settings/settings-system-info.js') }}"></script>
 <script src="{{ asset('js/settings/settings-utils.js') }}"></script>
 

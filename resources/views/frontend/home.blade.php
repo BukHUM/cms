@@ -30,7 +30,7 @@
             <div class="col-lg-6">
                 <h1 class="display-4 fw-bold mb-4">
                     ยินดีต้อนรับสู่<br>
-                    <span class="text-warning">{{ config('app.name') }}</span>
+                    <span class="text-warning">{{ \App\Helpers\SettingsHelper::get('site_name', config('app.name')) }}</span>
                 </h1>
                 <p class="lead mb-4">
                     ระบบจัดการข้อมูลที่ทันสมัย ปลอดภัย และใช้งานง่าย 

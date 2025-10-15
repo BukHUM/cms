@@ -25,16 +25,7 @@ class SettingsHelper
         'DB_PORT',
         'APP_KEY',
         'APP_ENV',
-        'APP_DEBUG',
-        'APP_URL',
-        'MAIL_MAILER',
-        'MAIL_HOST',
-        'MAIL_PORT',
-        'MAIL_USERNAME',
-        'MAIL_PASSWORD',
-        'MAIL_ENCRYPTION',
-        'MAIL_FROM_ADDRESS',
-        'MAIL_FROM_NAME'
+        'APP_URL'
     ];
 
     /**

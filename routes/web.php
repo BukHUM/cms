@@ -82,10 +82,14 @@ Route::prefix('admin')->middleware(['web'])->group(function () {
             return redirect()->route('login')->with('error', 'กรุณาเข้าสู่ระบบก่อน');
         }
         
-        // Get dashboard data
-        $totalUsers = \App\Models\User::count();
-        $newUsersToday = \App\Models\User::whereDate('created_at', today())->count();
-        $visitsToday = \App\Models\AuditLog::whereDate('created_at', today())->count();
+        // Get dashboard data using cache service for better performance
+        $dashboardStats = \App\Services\CacheService::getDashboardStats();
+        
+        // Get recent activities with optimized query
+        $recentActivities = \App\Models\AuditLog::with('user')
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
         
         // Check if jobs table exists
         try {
@@ -94,16 +98,8 @@ Route::prefix('admin')->middleware(['web'])->group(function () {
             $pendingJobs = 0;
         }
         
-        // Get recent activities from audit logs
-        $recentActivities = \App\Models\AuditLog::with('user')
-            ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get();
-        
         return view('admin.dashboard', compact(
-            'totalUsers', 
-            'newUsersToday', 
-            'visitsToday', 
+            'dashboardStats',
             'pendingJobs', 
             'recentActivities'
         ));
@@ -226,7 +222,7 @@ Route::post('/admin/login', function (Illuminate\Http\Request $request) {
             'last_activity' => time()
         ]);
         
-        return redirect()->route('admin.dashboard')->with('success', $result['message']);
+        return redirect()->route('admin.dashboard');
     }
     
     // Handle locked accounts
@@ -263,7 +259,7 @@ Route::post('/logout', function () {
     // Invalidate session completely
     session()->invalidate();
     
-    return redirect('/')->with('success', 'ออกจากระบบเรียบร้อยแล้ว');
+    return redirect('/');
 })->name('logout');
 
 Route::get('/profile', function () {
@@ -282,6 +278,72 @@ Route::get('/debug-test', function () {
     return view('frontend.debug-test', compact('totalUsers'));
 });
 
+// Debug Level Test Route
+Route::get('/debug-level-test', function () {
+    return view('tests.debug-test');
+});
+
+// Debug Test API Routes
+Route::prefix('api/debug-test')->group(function () {
+    Route::get('/error', function () {
+        // Simulate an error for testing
+        return response()->json([
+            'message' => 'Error simulation for testing',
+            'error_type' => 'Test Error',
+            'debug_level' => config('app.debug_level', 'standard'),
+            'debug_mode' => config('app.debug'),
+            'error_simulated' => true,
+            'timestamp' => now()->toISOString()
+        ]);
+    });
+    
+    Route::get('/logging', function () {
+        \Log::info('Debug Level Test - Info message');
+        \Log::warning('Debug Level Test - Warning message');
+        \Log::error('Debug Level Test - Error message');
+        \Log::debug('Debug Level Test - Debug message');
+        
+        return response()->json([
+            'message' => 'Logging test completed',
+            'debug_level' => config('app.debug_level', 'standard'),
+            'logs_written' => true
+        ]);
+    });
+    
+    Route::get('/database', function () {
+        $users = DB::table('laravel_users')->limit(5)->get();
+        $totalUsers = DB::table('laravel_users')->count();
+        
+        return response()->json([
+            'message' => 'Database test completed',
+            'debug_level' => config('app.debug_level', 'standard'),
+            'total_users' => $totalUsers,
+            'sample_users' => $users,
+            'queries_executed' => true
+        ]);
+    });
+    
+    Route::get('/performance', function () {
+        $startTime = microtime(true);
+        
+        // Simulate some work
+        for ($i = 0; $i < 1000; $i++) {
+            $result = $i * $i;
+        }
+        
+        $endTime = microtime(true);
+        $executionTime = ($endTime - $startTime) * 1000; // Convert to milliseconds
+        
+        return response()->json([
+            'message' => 'Performance test completed',
+            'debug_level' => config('app.debug_level', 'standard'),
+            'execution_time_ms' => round($executionTime, 2),
+            'memory_usage_mb' => round(memory_get_usage(true) / 1024 / 1024, 2),
+            'peak_memory_mb' => round(memory_get_peak_usage(true) / 1024 / 1024, 2)
+        ]);
+    });
+});
+
 // SweetAlert2 Test Route
 Route::get('/sweetalert-test', function () {
     return view('frontend.sweetalert-test');
@@ -297,6 +359,19 @@ Route::get('/api/test', function () {
             'environment' => app()->environment(),
             'debug_mode' => config('app.debug')
         ]
+    ]);
+});
+
+// Debug Mode Test Route
+Route::get('/test-debug', function () {
+    return response()->json([
+        'message' => 'Debug Mode Test',
+        'timestamp' => now()->toISOString(),
+        'debug_mode' => config('app.debug'),
+        'debug_level' => config('app.debug_level', 'standard'),
+        'settings_debug_level' => \App\Helpers\SettingsHelper::get('debug_level', 'standard'),
+        'settings_debug_mode' => \App\Helpers\SettingsHelper::get('debug_mode'),
+        'env_debug' => env('APP_DEBUG')
     ]);
 });
 

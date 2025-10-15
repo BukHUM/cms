@@ -331,3 +331,40 @@
         padding: 15px;
     }
 }
+
+/* Update Tab Styles */
+.log-container {
+    background: #2d3748;
+    border-radius: 6px;
+    padding: 15px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.log-content {
+    color: #e2e8f0;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.4;
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Update Status Animations */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.update-in-progress {
+    animation: pulse 2s infinite;
+}
+
+/* Update Tab Responsive */
+@media (max-width: 768px) {
+    .log-container {
+        max-height: 200px;
+    }
+}

@@ -50,7 +50,8 @@ class PerformanceSettings {
      */
     async loadSettings() {
         try {
-            this.showLoading(true);
+            // Don't show loading spinner when loading settings on page load
+            // this.showLoading(true);
             
             const response = await fetch('/admin/settings/performance', {
                 method: 'GET',
@@ -816,7 +817,7 @@ class PerformanceSettings {
             
             if (response.ok) {
                 // Token should be refreshed automatically by Laravel
-                console.log('CSRF token refreshed');
+                // console.log('CSRF token refreshed'); // Removed debug log
                 return true;
             }
         } catch (error) {
@@ -1279,17 +1280,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // Only initialize if we're on the settings page
     if (document.getElementById('performanceSettingsForm')) {
         if (window.performanceSettings) {
-            console.log('PerformanceSettings already initialized, skipping');
+            // console.log('PerformanceSettings already initialized, skipping'); // Removed debug log
         } else {
             try {
                 window.performanceSettings = new PerformanceSettings();
-                console.log('PerformanceSettings initialized:', window.performanceSettings);
             } catch (error) {
                 console.error('Error initializing PerformanceSettings:', error);
             }
         }
     } else {
-        console.log('PerformanceSettingsForm not found, skipping initialization');
+        // console.log('PerformanceSettingsForm not found, skipping initialization'); // Removed debug log
     }
 });
 

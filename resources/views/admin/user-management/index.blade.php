@@ -4,9 +4,6 @@
 @section('page-title', 'จัดการผู้ใช้')
 @section('page-subtitle', 'จัดการข้อมูลผู้ใช้ บทบาท และสิทธิ์การเข้าถึงระบบ')
 
-@push('styles')
-@vite(['resources/css/settings.css'])
-@endpush
 
 @section('content')
 <!-- Include Navigation -->

@@ -22,6 +22,8 @@ class EmailSettings {
         this.bindEvents();
         this.setupPasswordToggle();
         this.forceUpdateSwitchLabels(); // Force update labels on init
+        this.clearValidationErrors(); // Clear any existing validation errors
+        this.setupInputClearValidation(); // Setup input clear validation
     }
 
     /**
@@ -42,7 +44,8 @@ class EmailSettings {
      */
     async loadSettings() {
         try {
-            this.showLoading(true);
+            // Don't show loading spinner when loading settings on page load
+            // this.showLoading(true);
             
             const response = await fetch('/admin/settings/email', {
                 method: 'GET',
@@ -58,6 +61,7 @@ class EmailSettings {
                 this.populateForm(result.data);
                 // this.showSuccess('โหลดการตั้งค่าอีเมลสำเร็จ'); // Disabled auto success message
             } else {
+                console.error('Failed to load email settings:', result.message);
                 this.showError(result.message || 'ไม่สามารถโหลดการตั้งค่าอีเมลได้');
             }
 
@@ -73,6 +77,10 @@ class EmailSettings {
      * Populate form with settings data
      */
     populateForm(data) {
+        
+        // Clear validation errors first
+        this.clearValidationErrors();
+        
         // Basic email settings
         this.setValue('mailDriver', data.mailDriver);
         this.setValue('mailHost', data.mailHost);
@@ -81,13 +89,19 @@ class EmailSettings {
         this.setValue('mailPassword', data.mailPassword);
         this.setValue('mailEncryption', data.mailEncryption);
         this.setValue('mailFromAddress', data.mailFromAddress);
-        this.setValue('mailFromName', data.mailFromName);
+        this.setValue('mailFromName', data.mailFromName || 'Laravel Backend');
 
         // Boolean settings
         this.setCheckbox('mailEnabled', data.mailEnabled);
 
-        // Update driver-specific settings
-        this.updateDriverSettings(data.mailDriver);
+        // Update password hint based on driver (but don't clear values)
+        this.updatePasswordHint(data.mailDriver);
+        
+        // Force clear validation errors after populating
+        setTimeout(() => {
+            this.clearValidationErrors();
+        }, 100);
+        
     }
 
     /**
@@ -97,6 +111,8 @@ class EmailSettings {
         const element = document.getElementById(id);
         if (element) {
             element.value = value || '';
+        } else {
+            console.warn(`Element with id '${id}' not found`);
         }
     }
 
@@ -145,12 +161,35 @@ class EmailSettings {
     }
 
     /**
+     * Update password hint based on driver (without clearing values)
+     */
+    updatePasswordHint(driver) {
+        const passwordField = document.getElementById('mailPassword');
+        const passwordHint = passwordField ? passwordField.parentNode.querySelector('.form-text') : null;
+
+        const driverHints = {
+            'google': '⚠️ สำหรับ Gmail: ต้องใช้ App Password ไม่ใช่รหัสผ่านปกติ! ดูวิธีสร้าง App Password ที่ <a href="https://support.google.com/accounts/answer/185833" target="_blank">Google Support</a>',
+            'office365': '⚠️ สำหรับ Office 365: ต้องใช้ App Password ไม่ใช่รหัสผ่านปกติ! ดูวิธีสร้าง App Password ที่ <a href="https://support.microsoft.com/en-us/account-billing/using-app-passwords-with-apps-that-don-t-support-two-step-verification-5896ed9b-4263-e681-128a-a6f2979a7944" target="_blank">Microsoft Support</a>',
+            'microsoft': '⚠️ สำหรับ Microsoft (Hotmail/Live/Outlook): ต้องใช้ App Password ไม่ใช่รหัสผ่านปกติ! ดูวิธีสร้าง App Password ที่ <a href="https://support.microsoft.com/en-us/account-billing/using-app-passwords-with-apps-that-don-t-support-two-step-verification-5896ed9b-4263-e681-128a-a6f2979a7944" target="_blank">Microsoft Support</a>',
+            'mailgun': 'Mailgun SMTP Password',
+            'ses': 'SES SMTP Password'
+        };
+
+        if (passwordHint) {
+            passwordHint.innerHTML = driverHints[driver] || 'รหัสผ่านอีเมล';
+        }
+    }
+
+    /**
      * Update driver-specific settings
      */
     updateDriverSettings(driver) {
         const hostField = document.getElementById('mailHost');
         const portField = document.getElementById('mailPort');
         const encryptionField = document.getElementById('mailEncryption');
+        const usernameField = document.getElementById('mailUsername');
+        const passwordField = document.getElementById('mailPassword');
+        const passwordHint = passwordField ? passwordField.parentNode.querySelector('.form-text') : null;
 
         if (!hostField || !portField || !encryptionField) return;
 
@@ -158,25 +197,82 @@ class EmailSettings {
             'smtp': {
                 host: 'smtp.gmail.com',
                 port: '587',
-                encryption: 'tls'
+                encryption: 'tls',
+                usernamePlaceholder: 'your-email@gmail.com',
+                passwordHint: 'รหัสผ่านของอีเมล หรือ App Password สำหรับ Gmail'
+            },
+            'google': {
+                host: 'smtp.gmail.com',
+                port: '587',
+                encryption: 'tls',
+                usernamePlaceholder: 'your-email@gmail.com',
+                passwordHint: '⚠️ สำหรับ Gmail: ต้องใช้ App Password ไม่ใช่รหัสผ่านปกติ! ดูวิธีสร้าง App Password ที่ <a href="https://support.google.com/accounts/answer/185833" target="_blank">Google Support</a>'
+            },
+            'office365': {
+                host: 'smtp.office365.com',
+                port: '587',
+                encryption: 'tls',
+                usernamePlaceholder: 'your-email@yourdomain.com',
+                passwordHint: '⚠️ สำหรับ Office 365: ต้องใช้ App Password ไม่ใช่รหัสผ่านปกติ! ดูวิธีสร้าง App Password ที่ <a href="https://support.microsoft.com/en-us/account-billing/using-app-passwords-with-apps-that-don-t-support-two-step-verification-5896ed9b-4263-e681-128a-a6f2979a7944" target="_blank">Microsoft Support</a>'
+            },
+            'microsoft': {
+                host: 'smtp-mail.outlook.com',
+                port: '587',
+                encryption: 'tls',
+                usernamePlaceholder: 'your-email@hotmail.com หรือ your-email@live.com หรือ your-email@outlook.com',
+                passwordHint: '⚠️ สำหรับ Microsoft (Hotmail/Live/Outlook): ต้องใช้ App Password ไม่ใช่รหัสผ่านปกติ! ดูวิธีสร้าง App Password ที่ <a href="https://support.microsoft.com/en-us/account-billing/using-app-passwords-with-apps-that-don-t-support-two-step-verification-5896ed9b-4263-e681-128a-a6f2979a7944" target="_blank">Microsoft Support</a>'
             },
             'mailgun': {
                 host: 'smtp.mailgun.org',
                 port: '587',
-                encryption: 'tls'
+                encryption: 'tls',
+                usernamePlaceholder: 'postmaster@your-domain.mailgun.org',
+                passwordHint: 'Mailgun SMTP Password'
             },
             'ses': {
                 host: 'email-smtp.us-east-1.amazonaws.com',
                 port: '587',
-                encryption: 'tls'
+                encryption: 'tls',
+                usernamePlaceholder: 'SES SMTP Username',
+                passwordHint: 'SES SMTP Password'
             }
         };
 
         if (driverSettings[driver]) {
             const settings = driverSettings[driver];
+            
+            // Clear and set new values
             hostField.value = settings.host;
             portField.value = settings.port;
             encryptionField.value = settings.encryption;
+            
+            // Clear username and password fields
+            if (usernameField) {
+                usernameField.value = '';
+                usernameField.placeholder = settings.usernamePlaceholder;
+            }
+            
+            if (passwordField) {
+                passwordField.value = '';
+            }
+            
+            if (passwordHint) {
+                passwordHint.innerHTML = settings.passwordHint;
+            }
+        } else {
+            // For SMTP or unknown drivers, clear fields but keep defaults
+            if (usernameField) {
+                usernameField.value = '';
+                usernameField.placeholder = 'your-email@example.com';
+            }
+            
+            if (passwordField) {
+                passwordField.value = '';
+            }
+            
+            if (passwordHint) {
+                passwordHint.innerHTML = 'รหัสผ่านอีเมล';
+            }
         }
     }
 
@@ -184,6 +280,7 @@ class EmailSettings {
      * Bind form events
      */
     bindEvents() {
+        
         // Form submission
         this.form.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -195,6 +292,7 @@ class EmailSettings {
         if (driverSelect) {
             driverSelect.addEventListener('change', (e) => {
                 this.updateDriverSettings(e.target.value);
+                this.clearValidationErrors(); // Clear validation errors when driver changes
             });
         }
 
@@ -217,6 +315,9 @@ class EmailSettings {
 
         // Input validation
         this.setupInputValidation();
+        
+        // Add input event listeners to clear validation errors
+        this.setupInputClearValidation();
     }
 
     /**
@@ -231,7 +332,7 @@ class EmailSettings {
                 field.addEventListener('blur', () => {
                     this.validateEmail(field);
         });
-    }
+}
 });
 
         // Port validation
@@ -249,6 +350,22 @@ class EmailSettings {
                 this.validateHost(hostField);
             });
         }
+    }
+
+    /**
+     * Setup input clear validation
+     */
+    setupInputClearValidation() {
+        // Get all form inputs
+        const inputs = this.form.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            input.addEventListener('input', () => {
+                this.clearFieldError(input);
+            });
+            input.addEventListener('change', () => {
+                this.clearFieldError(input);
+            });
+        });
     }
 
     /**
@@ -336,6 +453,21 @@ class EmailSettings {
     }
 
     /**
+     * Setup input clear validation
+     */
+    setupInputClearValidation() {
+        const inputs = this.form.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            input.addEventListener('input', () => {
+                this.clearFieldError(input);
+            });
+            input.addEventListener('change', () => {
+                this.clearFieldError(input);
+            });
+        });
+    }
+
+    /**
      * Setup password toggle
      */
     setupPasswordToggle() {
@@ -379,7 +511,8 @@ class EmailSettings {
         if (this.isLoading) return;
 
         // Validate form before saving
-        if (!this.validateForm()) {
+        const isValid = this.validateForm();
+        if (!isValid) {
             this.showError('กรุณาแก้ไขข้อมูลที่ไม่ถูกต้องก่อนบันทึก');
             return;
         }
@@ -388,11 +521,31 @@ class EmailSettings {
             this.isLoading = true;
             this.showLoading(true);
 
-            const formData = new FormData(this.form);
-            const data = Object.fromEntries(formData.entries());
+            // Get form data manually to ensure all fields are included
+            const mailDriverEl = document.getElementById('mailDriver');
+            const mailHostEl = document.getElementById('mailHost');
+            const mailPortEl = document.getElementById('mailPort');
+            const mailUsernameEl = document.getElementById('mailUsername');
+            const mailPasswordEl = document.getElementById('mailPassword');
+            const mailEncryptionEl = document.getElementById('mailEncryption');
+            const mailFromAddressEl = document.getElementById('mailFromAddress');
+            const mailFromNameEl = document.getElementById('mailFromName');
+            const mailEnabledEl = document.getElementById('mailEnabled');
+            
+            
+            const data = {
+                mailDriver: mailDriverEl ? mailDriverEl.value : 'smtp',
+                mailHost: mailHostEl ? mailHostEl.value : 'smtp.gmail.com',
+                mailPort: mailPortEl ? parseInt(mailPortEl.value) : 587,
+                mailUsername: mailUsernameEl ? mailUsernameEl.value : '',
+                mailPassword: mailPasswordEl ? mailPasswordEl.value : '',
+                mailEncryption: mailEncryptionEl ? mailEncryptionEl.value : 'tls',
+                mailFromAddress: mailFromAddressEl ? mailFromAddressEl.value : 'noreply@example.com',
+                mailFromName: mailFromNameEl ? mailFromNameEl.value : 'Laravel Backend',
+                mailEnabled: mailEnabledEl ? mailEnabledEl.checked : false
+            };
 
-            // Convert checkbox values to boolean
-            data.mailEnabled = formData.has('mailEnabled');
+            // Debug: Log the data being sent
 
             const response = await fetch('/admin/settings/email', {
                 method: 'POST',
@@ -440,9 +593,30 @@ class EmailSettings {
             this.isTestingEmail = true;
             this.showTestLoading(true);
 
-            const formData = new FormData(this.form);
-            const data = Object.fromEntries(formData.entries());
-            data.mailEnabled = formData.has('mailEnabled');
+            // Get form data manually to ensure all fields are included
+            const mailDriverEl = document.getElementById('mailDriver');
+            const mailHostEl = document.getElementById('mailHost');
+            const mailPortEl = document.getElementById('mailPort');
+            const mailUsernameEl = document.getElementById('mailUsername');
+            const mailPasswordEl = document.getElementById('mailPassword');
+            const mailEncryptionEl = document.getElementById('mailEncryption');
+            const mailFromAddressEl = document.getElementById('mailFromAddress');
+            const mailFromNameEl = document.getElementById('mailFromName');
+            const mailEnabledEl = document.getElementById('mailEnabled');
+            
+            const data = {
+                mailDriver: mailDriverEl ? mailDriverEl.value : 'smtp',
+                mailHost: mailHostEl ? mailHostEl.value : 'smtp.gmail.com',
+                mailPort: mailPortEl ? parseInt(mailPortEl.value) : 587,
+                mailUsername: mailUsernameEl ? mailUsernameEl.value : '',
+                mailPassword: mailPasswordEl ? mailPasswordEl.value : '',
+                mailEncryption: mailEncryptionEl ? mailEncryptionEl.value : 'tls',
+                mailFromAddress: mailFromAddressEl ? mailFromAddressEl.value : 'noreply@example.com',
+                mailFromName: mailFromNameEl ? mailFromNameEl.value : 'Laravel Backend',
+                mailEnabled: mailEnabledEl ? mailEnabledEl.checked : false
+            };
+
+            // Debug: Log the data being sent for test
 
             const response = await fetch('/admin/settings/email/test', {
                 method: 'POST',
@@ -635,6 +809,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Only initialize if we're on the settings page
     if (document.getElementById('emailSettingsForm')) {
         window.emailSettings = new EmailSettings();
+    } else {
     }
 });
 

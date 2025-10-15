@@ -42,7 +42,8 @@ class SecuritySettings {
      */
     async loadSettings() {
         try {
-            this.showLoading(true);
+            // Don't show loading spinner when loading settings on page load
+            // this.showLoading(true);
             
             const response = await fetch('/admin/settings/security', {
                 method: 'GET',

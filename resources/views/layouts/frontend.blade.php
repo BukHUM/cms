@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'หน้าแรก') - {{ config('app.name') }}</title>
+    <title>@yield('title', 'หน้าแรก') - {{ \App\Helpers\SettingsHelper::get('site_name', config('app.name')) }}</title>
     <meta name="description" content="@yield('description', 'ระบบจัดการข้อมูลที่ทันสมัย')">
     
     <!-- Bootstrap CSS -->
@@ -24,7 +24,7 @@
         <div class="container">
             <a class="navbar-brand" href="{{ route('home') }}">
                 <i class="fas fa-rocket me-2"></i>
-                {{ config('app.name') }}
+                {{ \App\Helpers\SettingsHelper::get('site_name', config('app.name')) }}
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -115,7 +115,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-4 mb-4">
-                    <h5><i class="fas fa-rocket me-2"></i>{{ config('app.name') }}</h5>
+                    <h5><i class="fas fa-rocket me-2"></i>{{ \App\Helpers\SettingsHelper::get('site_name', config('app.name')) }}</h5>
                     <p class="text-muted">ระบบจัดการข้อมูลที่ทันสมัยและใช้งานง่าย</p>
                     <div class="social-links">
                         <a href="#" class="me-3"><i class="fab fa-facebook-f"></i></a>
@@ -157,7 +157,7 @@
             <hr class="my-4">
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <p class="mb-0">&copy; {{ date('Y') }} {{ config('app.name') }}. สงวนลิขสิทธิ์.</p>
+                    <p class="mb-0">&copy; {{ date('Y') }} {{ \App\Helpers\SettingsHelper::get('site_name', config('app.name')) }}. สงวนลิขสิทธิ์.</p>
                 </div>
                 <div class="col-md-6 text-md-end">
                     <a href="#" class="me-3">นโยบายความเป็นส่วนตัว</a>

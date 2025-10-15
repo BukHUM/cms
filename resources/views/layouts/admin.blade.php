@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Admin Dashboard') - {{ config('app.name') }}</title>
+    <title>@yield('title', 'Admin Dashboard') - {{ \App\Helpers\SettingsHelper::get('site_name', config('app.name')) }}</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -325,6 +325,26 @@
             display: block !important;
         }
         
+        /* Footer styling */
+        .sidebar-footer {
+            padding: 8px 16px !important;
+        }
+        
+        .sidebar-info {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+        }
+        
+        .sidebar-info i {
+            font-size: 12px !important;
+        }
+        
+        .sidebar-info span {
+            font-size: 11px !important;
+            font-weight: 400 !important;
+        }
+        
     </style>
     
     @stack('styles')
@@ -389,31 +409,14 @@
                         </div>
                     </a>
                 </li>
-                
-                <li class="nav-item">
-                    <a href="{{ route('admin.reports.index') }}" class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
-                        <div class="nav-icon">
-                            <i class="fas fa-chart-bar"></i>
-                        </div>
-                        <div class="nav-text">
-                            <span class="nav-title">รายงาน</span>
-                            <small class="nav-subtitle">Reports & Analytics</small>
-                        </div>
-                    </a>
-                </li>
             </ul>
         </nav>
         
         <!-- Sidebar Footer -->
         <div class="sidebar-footer">
             <div class="sidebar-info">
-                <div class="info-icon">
-                    <i class="fas fa-info-circle"></i>
-                </div>
-                <div class="info-text">
-                    <span class="info-title">Admin Panel</span>
-                    <small class="info-subtitle">Management System</small>
-                </div>
+                <i class="fas fa-info-circle"></i>
+                <span>v.{{ config('app.version', '1.0.0') }}-{{ date('dmY') }}</span>
             </div>
         </div>
     </aside>
@@ -440,11 +443,6 @@
                         <input type="text" placeholder="ค้นหา...">
                     </div>
                     
-                    <!-- Notifications -->
-                    <div class="notification-btn">
-                        <i class="fas fa-bell"></i>
-                        <span class="notification-badge">3</span>
-                    </div>
                     
                     <!-- Frontend App Link -->
                     <a href="{{ route('home') }}" class="frontend-link" title="เปิดหน้าแอพ" target="_blank">

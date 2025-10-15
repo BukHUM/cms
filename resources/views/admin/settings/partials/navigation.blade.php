@@ -33,6 +33,11 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
+                <button class="nav-link" id="update-tab" data-bs-toggle="tab" data-bs-target="#update" type="button" onclick="switchTab('update', 'fas fa-sync-alt', 'อัปเดต')">
+                    <i class="fas fa-sync-alt"></i>อัปเดต
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
                 <button class="nav-link" id="system-info-tab" data-bs-toggle="tab" data-bs-target="#system-info" type="button" onclick="switchTab('system-info', 'fas fa-server', 'ข้อมูลระบบ')">
                     <i class="fas fa-server"></i>ข้อมูลระบบ
                 </button>
@@ -82,6 +87,11 @@
                 <i class="fas fa-tachometer-alt"></i>
                 <span>Performance</span>
                 <small>การตรวจสอบประสิทธิภาพ</small>
+            </div>
+            <div class="dropdown-item" onclick="switchTab('update', 'fas fa-sync-alt', 'อัปเดต')">
+                <i class="fas fa-sync-alt"></i>
+                <span>อัปเดต</span>
+                <small>อัปเดต Laravel Framework</small>
             </div>
             <div class="dropdown-item" onclick="switchTab('system-info', 'fas fa-server', 'ข้อมูลระบบ')">
                 <i class="fas fa-server"></i>

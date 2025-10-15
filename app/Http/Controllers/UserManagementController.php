@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use App\Services\CacheService;
+use App\Services\PaginationService;
 
 class UserManagementController extends Controller
 {
@@ -33,16 +35,18 @@ class UserManagementController extends Controller
         return view('admin.user-management.index', compact('users', 'roles', 'permissions'));
     }
 
-    // Users API Methods
+    // Users API Methods (optimized with pagination)
     public function getUsers(Request $request)
     {
+        $paginationSettings = PaginationService::getPaginationSettings($request, 15);
+        
         $users = User::with(['roles'])
             ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->paginate($paginationSettings['per_page'], ['*'], 'page', $paginationSettings['page']);
 
         return response()->json([
             'success' => true,
-            'data' => $users
+            'data' => PaginationService::formatApiResponse($users)
         ]);
     }
 

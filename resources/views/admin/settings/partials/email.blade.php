@@ -11,25 +11,33 @@
                         <label for="mailDriver" class="form-label">Mail Driver</label>
                         <select class="form-select" id="mailDriver">
                             <option value="smtp" selected>SMTP</option>
+                            <option value="google">Google Mail</option>
+                            <option value="office365">Office 365</option>
+                            <option value="microsoft">Microsoft (Hotmail/Live/Outlook)</option>
                             <option value="mailgun">Mailgun</option>
                             <option value="ses">Amazon SES</option>
                         </select>
+                        <div class="form-text">เลือกวิธีการส่งอีเมล: Google Mail/Microsoft (Hotmail, Live, Outlook) สำหรับผู้ใช้ทั่วไป, SMTP สำหรับเซิร์ฟเวอร์อื่น</div>
                     </div>
                     <div class="col-md-6">
                         <label for="mailHost" class="form-label">Mail Host</label>
-                        <input type="text" class="form-control" id="mailHost" value="smtp.gmail.com">
+                        <input type="text" class="form-control" id="mailHost" value="smtp.gmail.com" placeholder="smtp.gmail.com">
+                        <div class="form-text">ตัวอย่าง: smtp.gmail.com, smtp.outlook.com, mail.yourdomain.com</div>
                     </div>
                     <div class="col-md-6">
                         <label for="mailPort" class="form-label">Mail Port</label>
-                        <input type="number" class="form-control" id="mailPort" value="587">
+                        <input type="number" class="form-control" id="mailPort" value="587" placeholder="587">
+                        <div class="form-text">พอร์ตมาตรฐาน: 587 (TLS), 465 (SSL), 25 (ไม่เข้ารหัส)</div>
                     </div>
                     <div class="col-md-6">
                         <label for="mailUsername" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="mailUsername">
+                        <input type="text" class="form-control" id="mailUsername" placeholder="your-email@gmail.com">
+                        <div class="form-text">อีเมลที่ใช้สำหรับการส่ง หรือ username ของเซิร์ฟเวอร์อีเมล</div>
                     </div>
                     <div class="col-md-6">
                         <label for="mailPassword" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="mailPassword">
+                        <input type="password" class="form-control" id="mailPassword" placeholder="รหัสผ่านอีเมล">
+                        <div class="form-text">⚠️ สำหรับ Gmail: ต้องใช้ App Password ไม่ใช่รหัสผ่านปกติ! ดูวิธีสร้าง App Password ที่ <a href="https://support.google.com/accounts/answer/185833" target="_blank">Google Support</a></div>
                     </div>
                     <div class="col-md-6">
                         <label for="mailEncryption" class="form-label">Encryption</label>
@@ -38,14 +46,17 @@
                             <option value="ssl">SSL</option>
                             <option value="">None</option>
                         </select>
+                        <div class="form-text">แนะนำใช้ TLS สำหรับความปลอดภัย หรือ SSL สำหรับพอร์ต 465</div>
                     </div>
                     <div class="col-md-6">
                         <label for="mailFromAddress" class="form-label">From Address</label>
-                        <input type="email" class="form-control" id="mailFromAddress" value="noreply@example.com">
+                        <input type="email" class="form-control" id="mailFromAddress" value="noreply@example.com" placeholder="noreply@yourdomain.com">
+                        <div class="form-text">อีเมลที่ผู้รับจะเห็นเป็นผู้ส่ง ควรเป็นโดเมนของเว็บไซต์</div>
                     </div>
                     <div class="col-md-6">
                         <label for="mailFromName" class="form-label">From Name</label>
-                        <input type="text" class="form-control" id="mailFromName" value="{{ config('app.name') }}">
+                        <input type="text" class="form-control" id="mailFromName" value="Laravel Backend" placeholder="ชื่อเว็บไซต์ของคุณ">
+                        <div class="form-text">ชื่อที่ผู้รับจะเห็น เช่น "ระบบแจ้งเตือน", "ทีมสนับสนุน"</div>
                     </div>
                     <div class="col-md-6">
                         <label for="mailEnabled" class="form-label">เปิดใช้งานการส่งอีเมล</label>
@@ -55,6 +66,7 @@
                                 เปิดใช้งาน
                             </label>
                         </div>
+                        <div class="form-text">ปิดการใช้งานหากยังไม่ต้องการส่งอีเมล หรือกำลังทดสอบระบบ</div>
                     </div>
                 </div>
                 <!-- Desktop Actions -->
@@ -91,3 +103,4 @@
         </div>
     </div>
 </div>
+

@@ -43,7 +43,8 @@ class GeneralSettings {
      */
     async loadSettings() {
         try {
-            this.showLoading(true);
+            // Don't show loading spinner when loading settings on page load
+            // this.showLoading(true);
             
             const response = await fetch('/admin/settings/general', {
                 method: 'GET',
@@ -66,7 +67,8 @@ class GeneralSettings {
             console.error('Error loading general settings:', error);
             this.showError('เกิดข้อผิดพลาดในการโหลดการตั้งค่า');
         } finally {
-            this.showLoading(false);
+            // Don't hide loading spinner since we didn't show it
+            // this.showLoading(false);
         }
     }
 
@@ -80,17 +82,15 @@ class GeneralSettings {
         this.setValue('timezone', data.timezone);
         this.setValue('language', data.language);
 
-        // Boolean settings
-        this.setCheckbox('siteEnabled', data.siteEnabled);
-        this.setCheckbox('maintenanceMode', data.maintenanceMode);
-        this.setCheckbox('debugMode', data.debugMode);
-        this.setCheckbox('autoSave', data.autoSave);
-        this.setCheckbox('notifications', data.notifications);
-        this.setCheckbox('analytics', data.analytics);
-        this.setCheckbox('updates', data.updates);
+        // Debug level setting
+        this.setValue('debugLevel', data.debugLevel || 'standard');
 
-        // Update auto-save setting
-        this.autoSaveEnabled = data.autoSave;
+        // Boolean settings
+        this.setCheckbox('maintenanceMode', data.maintenanceMode);
+        this.setCheckbox('debugBar', data.debugBar);
+
+        // Update auto-save setting - disabled since autoSave field is removed
+        this.autoSaveEnabled = false;
         this.toggleAutoSave();
     }
 
@@ -122,13 +122,9 @@ class GeneralSettings {
         const label = document.getElementById(id + 'Label');
         if (label) {
             const labels = {
-                'siteEnabled': { true: 'เปิดใช้งาน', false: 'ปิดใช้งาน' },
                 'maintenanceMode': { true: 'เปิดใช้งานโหมดบำรุงรักษา', false: 'ปิดใช้งานโหมดบำรุงรักษา' },
                 'debugMode': { true: 'เปิดใช้งานโหมด Debug', false: 'ปิดใช้งานโหมด Debug' },
-                'autoSave': { true: 'เปิดใช้งาน', false: 'ปิดใช้งาน' },
-                'notifications': { true: 'เปิดใช้งาน', false: 'ปิดใช้งาน' },
-                'analytics': { true: 'เปิดใช้งาน', false: 'ปิดใช้งาน' },
-                'updates': { true: 'เปิดใช้งาน', false: 'ปิดใช้งาน' }
+                'debugBar': { true: 'เปิดใช้งาน Debug Bar', false: 'ปิดใช้งาน Debug Bar' }
             };
 
             if (labels[id]) {
@@ -170,21 +166,19 @@ class GeneralSettings {
             switchElement.addEventListener('change', (e) => {
                 this.updateSwitchLabel(e.target.id, e.target.checked);
                 
-                // Special handling for auto-save toggle
+                // Special handling for auto-save toggle - disabled since field is removed
                 if (e.target.id === 'autoSave') {
-                    this.autoSaveEnabled = e.target.checked;
-                    this.toggleAutoSave();
+                    // Auto-save is disabled, do nothing
+                    return;
                 }
             });
         });
 
-        // Input change events for auto-save
+        // Input change events for auto-save - disabled since autoSave field is removed
         const inputs = this.form.querySelectorAll('input, select');
         inputs.forEach(input => {
             input.addEventListener('change', () => {
-                if (this.autoSaveEnabled && !this.isLoading) {
-                    this.debounceAutoSave();
-                }
+                // Auto-save is disabled, do nothing
             });
         });
     }
@@ -256,13 +250,9 @@ class GeneralSettings {
                 siteUrl: document.getElementById('siteUrl')?.value || '',
                 timezone: document.getElementById('timezone')?.value || 'Asia/Bangkok',
                 language: document.getElementById('language')?.value || 'th',
-                siteEnabled: document.getElementById('siteEnabled')?.checked || false,
                 maintenanceMode: document.getElementById('maintenanceMode')?.checked || false,
-                debugMode: document.getElementById('debugMode')?.checked || false,
-                autoSave: document.getElementById('autoSave')?.checked || false,
-                notifications: document.getElementById('notifications')?.checked || false,
-                analytics: document.getElementById('analytics')?.checked || false,
-                updates: document.getElementById('updates')?.checked || false
+                debugLevel: document.getElementById('debugLevel')?.value || 'standard',
+                debugBar: document.getElementById('debugBar')?.checked || false
             };
 
                 // console.log('Sending data:', data); // Debug log - Hidden

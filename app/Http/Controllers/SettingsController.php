@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Artisan;
 use App\Helpers\SettingsHelper;
+use App\Services\CacheService;
 
 class SettingsController extends Controller
 {
@@ -24,6 +25,7 @@ class SettingsController extends Controller
             ]);
 
             if ($validator->fails()) {
+                \Log::error('Email settings validation failed:', $validator->errors()->toArray());
                 return response()->json([
                     'success' => false,
                     'message' => 'ข้อมูลไม่ถูกต้อง',
@@ -95,16 +97,13 @@ class SettingsController extends Controller
                 'siteUrl' => 'nullable|url|max:255',
                 'timezone' => 'nullable|string|max:50',
                 'language' => 'nullable|string|in:th,en',
-                'siteEnabled' => 'nullable|boolean',
                 'maintenanceMode' => 'nullable|boolean',
-                'debugMode' => 'nullable|boolean',
-                'autoSave' => 'nullable|boolean',
-                'notifications' => 'nullable|boolean',
-                'analytics' => 'nullable|boolean',
-                'updates' => 'nullable|boolean'
+                'debugLevel' => 'nullable|string|in:off,minimal,standard,verbose,development',
+                'debugBar' => 'nullable|boolean'
             ]);
 
             if ($validator->fails()) {
+                \Log::error('Email settings validation failed:', $validator->errors()->toArray());
                 return response()->json([
                     'success' => false,
                     'message' => 'ข้อมูลไม่ถูกต้อง',
@@ -127,26 +126,16 @@ class SettingsController extends Controller
             if ($request->has('language')) {
                 $settings['language'] = $request->language ?: 'th';
             }
-            if ($request->has('siteEnabled')) {
-                $settings['site_enabled'] = $request->siteEnabled;
-            }
             if ($request->has('maintenanceMode')) {
                 $settings['maintenance_mode'] = $request->maintenanceMode;
             }
-            if ($request->has('debugMode')) {
-                $settings['debug_mode'] = $request->debugMode;
+            if ($request->has('debugLevel')) {
+                $settings['debug_level'] = $request->debugLevel;
+                // Also set debug_mode based on debug level
+                $settings['debug_mode'] = $request->debugLevel !== 'off';
             }
-            if ($request->has('autoSave')) {
-                $settings['auto_save'] = $request->autoSave;
-            }
-            if ($request->has('notifications')) {
-                $settings['notifications'] = $request->notifications;
-            }
-            if ($request->has('analytics')) {
-                $settings['analytics'] = $request->analytics;
-            }
-            if ($request->has('updates')) {
-                $settings['updates'] = $request->updates;
+            if ($request->has('debugBar')) {
+                $settings['debug_bar'] = $request->debugBar;
             }
 
             // If no specific settings provided, save defaults
@@ -156,13 +145,10 @@ class SettingsController extends Controller
                     'site_url' => config('app.url'),
                     'timezone' => 'Asia/Bangkok',
                     'language' => 'th',
-                    'site_enabled' => true,
                     'maintenance_mode' => false,
+                    'debug_level' => 'standard',
                     'debug_mode' => config('app.debug'),
-                    'auto_save' => true,
-                    'notifications' => true,
-                    'analytics' => true,
-                    'updates' => true
+                    'debug_bar' => true
                 ];
             }
 
@@ -192,8 +178,7 @@ class SettingsController extends Controller
         try {
             $settings = SettingsHelper::getMultiple([
                 'site_name', 'site_url', 'timezone', 'language', 
-                'site_enabled', 'maintenance_mode', 'debug_mode', 
-                'auto_save', 'notifications', 'analytics', 'updates'
+                'maintenance_mode', 'debug_level', 'debug_mode', 'debug_bar'
             ]);
 
             return response()->json([
@@ -203,13 +188,10 @@ class SettingsController extends Controller
                     'siteUrl' => $settings['site_url'] ?? config('app.url'),
                     'timezone' => $settings['timezone'] ?? 'Asia/Bangkok',
                     'language' => $settings['language'] ?? 'th',
-                    'siteEnabled' => $settings['site_enabled'] ?? true,
                     'maintenanceMode' => $settings['maintenance_mode'] ?? false,
+                    'debugLevel' => $settings['debug_level'] ?? 'standard',
                     'debugMode' => $settings['debug_mode'] ?? config('app.debug'),
-                    'autoSave' => $settings['auto_save'] ?? true,
-                    'notifications' => $settings['notifications'] ?? true,
-                    'analytics' => $settings['analytics'] ?? true,
-                    'updates' => $settings['updates'] ?? true
+                    'debugBar' => $settings['debug_bar'] ?? true
                 ]
             ]);
 
@@ -685,6 +667,7 @@ class SettingsController extends Controller
             ]);
 
             if ($validator->fails()) {
+                \Log::error('Email settings validation failed:', $validator->errors()->toArray());
                 return response()->json([
                     'success' => false,
                     'message' => 'ข้อมูลไม่ถูกต้อง',
@@ -778,6 +761,7 @@ class SettingsController extends Controller
             ]);
 
             if ($validator->fails()) {
+                \Log::error('Email settings validation failed:', $validator->errors()->toArray());
                 return response()->json([
                     'success' => false,
                     'message' => 'ข้อมูลไม่ถูกต้อง',
@@ -965,8 +949,20 @@ class SettingsController extends Controller
     public function saveEmailSettings(Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'mailDriver' => 'required|string|in:smtp,mailgun,ses',
+            // Debug: Log the received data
+            \Log::info('Email settings data received:', $request->all());
+            
+            // Ensure required fields have values
+            $data = $request->all();
+            $data['mailDriver'] = $data['mailDriver'] ?? 'smtp';
+            $data['mailHost'] = $data['mailHost'] ?? 'smtp.gmail.com';
+            $data['mailPort'] = $data['mailPort'] ?? 587;
+            $data['mailEncryption'] = $data['mailEncryption'] ?? 'tls';
+            $data['mailFromAddress'] = $data['mailFromAddress'] ?? 'noreply@example.com';
+            $data['mailFromName'] = $data['mailFromName'] ?? '';
+            
+            $validator = Validator::make($data, [
+                'mailDriver' => 'required|string|in:smtp,google,office365,microsoft,mailgun,ses',
                 'mailHost' => 'required|string|max:255',
                 'mailPort' => 'required|integer|min:1|max:65535',
                 'mailUsername' => 'nullable|string|max:255',
@@ -977,6 +973,7 @@ class SettingsController extends Controller
             ]);
 
             if ($validator->fails()) {
+                \Log::error('Email settings validation failed:', $validator->errors()->toArray());
                 return response()->json([
                     'success' => false,
                     'message' => 'ข้อมูลไม่ถูกต้อง',
@@ -985,14 +982,14 @@ class SettingsController extends Controller
             }
 
             $settings = [
-                'mail_driver' => $request->mailDriver,
-                'mail_host' => $request->mailHost,
-                'mail_port' => $request->mailPort,
-                'mail_username' => $request->mailUsername,
-                'mail_password' => $request->mailPassword,
-                'mail_encryption' => $request->mailEncryption,
-                'mail_from_address' => $request->mailFromAddress,
-                'mail_from_name' => $request->mailFromName
+                'mail_driver' => $data['mailDriver'], // Save the actual driver selected by user
+                'mail_host' => $data['mailHost'],
+                'mail_port' => $data['mailPort'],
+                'mail_username' => $data['mailUsername'] ?? '',
+                'mail_password' => $data['mailPassword'] ?? '',
+                'mail_encryption' => $data['mailEncryption'],
+                'mail_from_address' => $data['mailFromAddress'],
+                'mail_from_name' => $data['mailFromName']
             ];
 
             // Save settings using SettingsHelper
@@ -1019,28 +1016,31 @@ class SettingsController extends Controller
     public function getEmailSettings()
     {
         try {
-            // Email settings should come from .env/config, not database
-            // Only get non-sensitive settings from database
+            // Load all email settings from database
             $settings = SettingsHelper::getMultiple([
-                'mail_from_address', 'mail_from_name', 'mail_enabled'
+                'mail_driver', 'mail_host', 'mail_port', 'mail_username', 'mail_password', 
+                'mail_encryption', 'mail_from_address', 'mail_from_name', 'mail_enabled'
             ]);
+
+            \Log::info('Loaded email settings from database:', $settings);
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'mailDriver' => config('mail.default', 'smtp'),
-                    'mailHost' => config('mail.mailers.smtp.host', 'smtp.gmail.com'),
-                    'mailPort' => config('mail.mailers.smtp.port', 587),
-                    'mailUsername' => config('mail.mailers.smtp.username', ''),
-                    'mailPassword' => config('mail.mailers.smtp.password', ''),
-                    'mailEncryption' => env('MAIL_ENCRYPTION', 'tls'),
-                    'mailFromAddress' => $settings['mail_from_address'] ?? config('mail.from.address'),
-                    'mailFromName' => $settings['mail_from_name'] ?? config('mail.from.name'),
+                    'mailDriver' => $settings['mail_driver'] ?? 'smtp',
+                    'mailHost' => $settings['mail_host'] ?? '',
+                    'mailPort' => $settings['mail_port'] ?? 587,
+                    'mailUsername' => $settings['mail_username'] ?? '',
+                    'mailPassword' => $settings['mail_password'] ?? '',
+                    'mailEncryption' => $settings['mail_encryption'] ?? 'tls',
+                    'mailFromAddress' => $settings['mail_from_address'] ?? '',
+                    'mailFromName' => $settings['mail_from_name'] ?? 'Laravel Backend',
                     'mailEnabled' => $settings['mail_enabled'] ?? true
                 ]
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('Error loading email settings:', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'ไม่สามารถโหลดการตั้งค่าได้: ' . $e->getMessage()
@@ -1054,8 +1054,20 @@ class SettingsController extends Controller
     public function testEmail(Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'mailDriver' => 'required|string|in:smtp,mailgun,ses',
+            // Debug: Log the received test data
+            \Log::info('Test email data received:', $request->all());
+            
+            // Ensure required fields have values
+            $data = $request->all();
+            $data['mailDriver'] = $data['mailDriver'] ?? 'smtp';
+            $data['mailHost'] = $data['mailHost'] ?? 'smtp.gmail.com';
+            $data['mailPort'] = $data['mailPort'] ?? 587;
+            $data['mailEncryption'] = $data['mailEncryption'] ?? 'tls';
+            $data['mailFromAddress'] = $data['mailFromAddress'] ?? 'noreply@example.com';
+            $data['mailFromName'] = $data['mailFromName'] ?? '';
+            
+            $validator = Validator::make($data, [
+                'mailDriver' => 'required|string|in:smtp,google,office365,microsoft,mailgun,ses',
                 'mailHost' => 'required|string|max:255',
                 'mailPort' => 'required|integer|min:1|max:65535',
                 'mailUsername' => 'nullable|string|max:255',
@@ -1066,6 +1078,7 @@ class SettingsController extends Controller
             ]);
 
             if ($validator->fails()) {
+                \Log::error('Email settings validation failed:', $validator->errors()->toArray());
                 return response()->json([
                     'success' => false,
                     'message' => 'ข้อมูลไม่ถูกต้อง',
@@ -1074,31 +1087,46 @@ class SettingsController extends Controller
             }
 
             // Temporarily update mail configuration
+            // Always use 'smtp' as the mailer, regardless of the driver selection
             config([
-                'mail.default' => $request->mailDriver,
-                'mail.mailers.smtp.host' => $request->mailHost,
-                'mail.mailers.smtp.port' => $request->mailPort,
-                'mail.mailers.smtp.username' => $request->mailUsername,
-                'mail.mailers.smtp.password' => $request->mailPassword,
-                'mail.mailers.smtp.encryption' => $request->mailEncryption,
-                'mail.from.address' => $request->mailFromAddress,
-                'mail.from.name' => $request->mailFromName,
+                'mail.default' => 'smtp',
+                'mail.mailers.smtp.host' => $data['mailHost'],
+                'mail.mailers.smtp.port' => $data['mailPort'],
+                'mail.mailers.smtp.username' => $data['mailUsername'] ?? '',
+                'mail.mailers.smtp.password' => $data['mailPassword'] ?? '',
+                'mail.mailers.smtp.encryption' => $data['mailEncryption'],
+                'mail.from.address' => $data['mailFromAddress'],
+                'mail.from.name' => $data['mailFromName'],
             ]);
 
             // Send test email
-            $testEmail = $request->mailFromAddress; // Send to the same address as from
+            $testEmail = $data['mailFromAddress']; // Send to the same address as from
             $subject = 'Test Email - ' . config('app.name');
             $message = 'This is a test email to verify your email configuration.';
 
-            \Mail::raw($message, function ($mail) use ($testEmail, $subject) {
-                $mail->to($testEmail)
-                     ->subject($subject);
-            });
+            try {
+                \Mail::raw($message, function ($mail) use ($testEmail, $subject) {
+                    $mail->to($testEmail)
+                         ->subject($subject);
+                });
 
-            return response()->json([
-                'success' => true,
-                'message' => 'ทดสอบการส่งอีเมลสำเร็จ! ตรวจสอบอีเมลของคุณ'
-            ]);
+                \Log::info('Test email sent successfully to: ' . $testEmail);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'ทดสอบการส่งอีเมลสำเร็จ! ตรวจสอบอีเมลของคุณ'
+                ]);
+            } catch (\Exception $mailError) {
+                \Log::error('Mail sending failed:', [
+                    'error' => $mailError->getMessage(),
+                    'trace' => $mailError->getTraceAsString()
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ไม่สามารถส่งอีเมลทดสอบได้: ' . $mailError->getMessage()
+                ], 500);
+            }
 
         } catch (\Exception $e) {
             return response()->json([
@@ -1128,6 +1156,7 @@ class SettingsController extends Controller
             ]);
 
             if ($validator->fails()) {
+                \Log::error('Email settings validation failed:', $validator->errors()->toArray());
                 return response()->json([
                     'success' => false,
                     'message' => 'ข้อมูลไม่ถูกต้อง',
@@ -1303,13 +1332,14 @@ class SettingsController extends Controller
     }
 
     /**
-     * Get all settings
+     * Get all settings (optimized with caching)
      */
     public function getAllSettings()
     {
         try {
-            $settings = SettingsHelper::getAll();
-
+            // Use cache service for better performance
+            $settings = CacheService::getSystemSettings();
+            
             return response()->json([
                 'success' => true,
                 'data' => $settings
