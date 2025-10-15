@@ -10,7 +10,7 @@ let updateLog = [];
 /**
  * Check for available updates
  */
-function checkForUpdates() {
+async function checkForUpdates() {
     if (updateInProgress) {
         Swal.fire({
             icon: 'warning',
@@ -22,59 +22,171 @@ function checkForUpdates() {
         return;
     }
 
-    const checkBtn = document.querySelector('button[onclick="checkForUpdates()"]');
-    const statusAlert = document.getElementById('updateStatusAlert');
-    const statusText = document.getElementById('updateStatusText');
-    
-    // Show loading state
-    checkBtn.disabled = true;
-    checkBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>กำลังตรวจสอบ...';
-    statusAlert.style.display = 'block';
-    statusText.textContent = 'กำลังตรวจสอบการอัปเดต...';
-    
-    // Simulate API call to check for updates
-    setTimeout(() => {
-        // Mock response - in real implementation, this would be an AJAX call
-        const hasUpdates = Math.random() > 0.5; // Random for demo
+    try {
+        // Wait for required elements to be available
+        const [checkBtn, statusContainer, statusAlert, statusText, updateChannelElement] = await Promise.all([
+            waitForElement('button[onclick="checkForUpdates()"]'),
+            waitForElement('#updateStatusContainer'),
+            waitForElement('#updateStatusAlert'),
+            waitForElement('#updateStatusText'),
+            waitForElement('#updateChannel')
+        ]);
+
+        // Show loading state
+        checkBtn.disabled = true;
+        checkBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>กำลังตรวจสอบ...';
         
-        if (hasUpdates) {
-            statusAlert.className = 'alert alert-success';
-            statusText.innerHTML = '<i class="fas fa-check-circle me-2"></i>พบการอัปเดตใหม่!';
-            
-            // Enable update buttons (both desktop and mobile)
-            const composerBtns = document.querySelectorAll('#updateComposerBtn, #updateComposerBtnMobile');
-            const laravelBtns = document.querySelectorAll('#updateLaravelBtn, #updateLaravelBtnMobile');
-            
-            composerBtns.forEach(btn => btn.disabled = false);
-            laravelBtns.forEach(btn => btn.disabled = false);
-            
-            addToLog('✓ พบการอัปเดตใหม่');
-            
-            // Show success alert
-            Swal.fire({
-                icon: 'success',
-                title: 'พบการอัปเดตใหม่!',
-                text: 'มีเวอร์ชันใหม่ของ Laravel Framework พร้อมให้อัปเดต',
-                confirmButtonText: 'ตกลง'
-            });
-        } else {
-            statusAlert.className = 'alert alert-info';
-            statusText.innerHTML = '<i class="fas fa-info-circle me-2"></i>ระบบของคุณเป็นเวอร์ชันล่าสุดแล้ว';
-            addToLog('✓ ระบบเป็นเวอร์ชันล่าสุด');
-            
-            // Show info alert
-            Swal.fire({
-                icon: 'info',
-                title: 'ระบบเป็นเวอร์ชันล่าสุด',
-                text: 'ระบบของคุณเป็นเวอร์ชันล่าสุดแล้ว ไม่จำเป็นต้องอัปเดต',
-                confirmButtonText: 'ตกลง'
-            });
+        // Show status container with loading state
+        statusContainer.style.display = 'block';
+        statusAlert.className = 'alert alert-info alert-dismissible fade show shadow-sm border-0';
+        
+        // Safely update alert icon and title
+        const alertIcon = statusAlert.querySelector('.alert-icon i');
+        const alertTitle = statusAlert.querySelector('.alert-title');
+        
+        if (alertIcon) {
+            alertIcon.className = 'fas fa-spinner fa-spin fa-lg text-info';
         }
+        if (alertTitle) {
+            alertTitle.textContent = 'กำลังตรวจสอบการอัปเดต...';
+        }
+        statusText.textContent = 'กรุณารอสักครู่ กำลังตรวจสอบเวอร์ชันล่าสุด';
         
+        const updateChannel = updateChannelElement.value;
+    
+    // Make API call to check for updates
+    fetch('/admin/settings/update/check', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({
+            channel: updateChannel
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.hasUpdates) {
+                // Update alert to success state
+                statusAlert.className = 'alert alert-success alert-dismissible fade show shadow-sm border-0';
+                
+                // Safely update alert icon and title
+                const alertIcon = statusAlert.querySelector('.alert-icon i');
+                const alertTitle = statusAlert.querySelector('.alert-title');
+                
+                if (alertIcon) {
+                    alertIcon.className = 'fas fa-check-circle fa-lg text-success';
+                }
+                if (alertTitle) {
+                    alertTitle.textContent = 'พบการอัปเดตใหม่!';
+                }
+                statusText.textContent = `พบเวอร์ชัน ${data.latestVersion} ในช่องทาง ${getChannelDisplayName(data.channel)}`;
+                
+                // Update system info table
+                updateSystemInfoTable(true, data);
+                
+                // Enable update buttons (both desktop and mobile)
+                const composerBtns = document.querySelectorAll('#updateComposerBtn, #updateComposerBtnMobile');
+                const laravelBtns = document.querySelectorAll('#updateLaravelBtn, #updateLaravelBtnMobile');
+                
+                composerBtns.forEach(btn => btn.disabled = false);
+                laravelBtns.forEach(btn => btn.disabled = false);
+                
+                addToLog(`✓ พบการอัปเดตใหม่: ${data.currentVersion} → ${data.latestVersion}`);
+                
+                // Show success alert with more details
+                Swal.fire({
+                    icon: 'success',
+                    title: 'พบการอัปเดตใหม่!',
+                    html: `
+                        <div class="text-start">
+                            <p><strong>เวอร์ชันปัจจุบัน:</strong> ${data.currentVersion}</p>
+                            <p><strong>เวอร์ชันล่าสุด:</strong> ${data.latestVersion}</p>
+                            <p><strong>ช่องทาง:</strong> ${getChannelDisplayName(data.channel)}</p>
+                            <p><strong>แหล่งข้อมูล:</strong> ${data.updateInfo.source || 'ไม่ทราบ'}</p>
+                            <p><strong>รายละเอียด:</strong> ${data.updateInfo.description}</p>
+                            <p><strong>Release Notes:</strong> ${data.updateInfo.releaseNotes}</p>
+                        </div>
+                    `,
+                    confirmButtonText: 'ตกลง'
+                });
+            } else {
+                // Update alert to info state
+                statusAlert.className = 'alert alert-info alert-dismissible fade show shadow-sm border-0';
+                
+                // Safely update alert icon and title
+                const alertIcon = statusAlert.querySelector('.alert-icon i');
+                const alertTitle = statusAlert.querySelector('.alert-title');
+                
+                if (alertIcon) {
+                    alertIcon.className = 'fas fa-info-circle fa-lg text-info';
+                }
+                if (alertTitle) {
+                    alertTitle.textContent = 'ระบบเป็นเวอร์ชันล่าสุด';
+                }
+                statusText.textContent = `ระบบของคุณเป็นเวอร์ชันล่าสุดแล้วในช่องทาง ${getChannelDisplayName(data.channel)}`;
+                
+                // Update system info table
+                updateSystemInfoTable(false, data);
+                
+                addToLog(`✓ ระบบเป็นเวอร์ชันล่าสุดในช่องทาง ${data.channel}`);
+                
+                // Show info alert
+                Swal.fire({
+                    icon: 'info',
+                    title: 'ระบบเป็นเวอร์ชันล่าสุด',
+                    text: `ระบบของคุณเป็นเวอร์ชันล่าสุดแล้วในช่องทาง ${getChannelDisplayName(data.channel)}`,
+                    confirmButtonText: 'ตกลง'
+                });
+            }
+        } else {
+            throw new Error(data.message || 'เกิดข้อผิดพลาดในการตรวจสอบการอัปเดต');
+        }
+    })
+    .catch(error => {
+        console.error('Error checking for updates:', error);
+        
+        // Update alert to error state
+        statusAlert.className = 'alert alert-danger alert-dismissible fade show shadow-sm border-0';
+        
+        // Safely update alert icon and title
+        const alertIcon = statusAlert.querySelector('.alert-icon i');
+        const alertTitle = statusAlert.querySelector('.alert-title');
+        
+        if (alertIcon) {
+            alertIcon.className = 'fas fa-exclamation-triangle fa-lg text-danger';
+        }
+        if (alertTitle) {
+            alertTitle.textContent = 'เกิดข้อผิดพลาด';
+        }
+        statusText.textContent = 'ไม่สามารถตรวจสอบการอัปเดตได้';
+        
+        addToLog('❌ เกิดข้อผิดพลาดในการตรวจสอบการอัปเดต');
+        
+        // Show error alert
+        Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด!',
+            text: error.message || 'ไม่สามารถตรวจสอบการอัปเดตได้ กรุณาลองใหม่อีกครั้ง',
+            confirmButtonText: 'ตกลง'
+        });
+    })
+    .finally(() => {
         // Reset button
         checkBtn.disabled = false;
         checkBtn.innerHTML = '<i class="fas fa-search me-2"></i>ตรวจสอบการอัปเดต';
-    }, 2000);
+    });
+    } catch (error) {
+        console.error('Error in checkForUpdates:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด!',
+            text: 'ไม่สามารถเข้าถึงองค์ประกอบที่จำเป็นได้ กรุณาโหลดหน้าเว็บใหม่',
+            confirmButtonText: 'ตกลง'
+        });
+    }
 }
 
 /**
@@ -114,6 +226,32 @@ function updateComposer() {
 function performComposerUpdate() {
     updateInProgress = true;
     const updateBtns = document.querySelectorAll('#updateComposerBtn, #updateComposerBtnMobile');
+    const statusContainer = document.getElementById('updateStatusContainer');
+    const updateProgress = document.getElementById('updateProgress');
+    const updateProgressBar = document.getElementById('updateProgressBar');
+    const updateProgressText = document.getElementById('updateProgressText');
+    
+    // Check if required elements exist
+    if (!statusContainer || !updateProgress || !updateProgressBar || !updateProgressText) {
+        console.error('Required DOM elements not found for composer update:', {
+            statusContainer: !!statusContainer,
+            updateProgress: !!updateProgress,
+            updateProgressBar: !!updateProgressBar,
+            updateProgressText: !!updateProgressText
+        });
+        Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด!',
+            text: 'ไม่พบองค์ประกอบที่จำเป็นสำหรับการแสดงผล กรุณาโหลดหน้าเว็บใหม่',
+            confirmButtonText: 'ตกลง'
+        });
+        updateInProgress = false;
+        return;
+    }
+    
+    // Show status container and progress
+    statusContainer.style.display = 'block';
+    updateProgress.style.display = 'block';
     
     // Show loading state for all composer buttons
     updateBtns.forEach(btn => {
@@ -123,37 +261,47 @@ function performComposerUpdate() {
     
     addToLog('🔄 เริ่มอัปเดต Composer dependencies...');
     
-    // Show progress alert
-    Swal.fire({
-        title: 'กำลังอัปเดต Composer',
-        text: 'กรุณารอสักครู่...',
-        icon: 'info',
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        showConfirmButton: false,
-        didOpen: () => {
-            Swal.showLoading();
+    // Simulate Composer update process with progress bar
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        progress += Math.random() * 20;
+        if (progress >= 100) {
+            progress = 100;
+            clearInterval(progressInterval);
+            
+            // Update progress bar
+            updateProgressBar.style.width = '100%';
+            updateProgressText.textContent = 'อัปเดตเสร็จสิ้น!';
+            
+            updateBtns.forEach(btn => {
+                btn.innerHTML = '<i class="fas fa-check me-2"></i>อัปเดตเสร็จสิ้น';
+                btn.className = btn.className.replace('btn-outline-success', 'btn-success');
+            });
+            addToLog('✅ อัปเดต Composer เสร็จสิ้น');
+            
+            // Show success alert
+            Swal.fire({
+                icon: 'success',
+                title: 'อัปเดตเสร็จสิ้น!',
+                text: 'Composer dependencies ได้รับการอัปเดตเรียบร้อยแล้ว',
+                confirmButtonText: 'ตกลง'
+            });
+            
+            // Hide progress after 3 seconds
+            setTimeout(() => {
+                updateProgress.style.display = 'none';
+                updateProgressBar.style.width = '0%';
+            }, 3000);
+            
+            updateInProgress = false;
+        } else {
+            // Update progress bar
+            updateProgressBar.style.width = progress + '%';
+            updateProgressText.textContent = `กำลังดาวน์โหลดแพ็กเกจ... ${Math.round(progress)}%`;
         }
-    });
-    
-    // Simulate Composer update process
-    simulateUpdateProcess('composer', () => {
-        updateBtns.forEach(btn => {
-            btn.innerHTML = '<i class="fas fa-check me-2"></i>อัปเดตเสร็จสิ้น';
-            btn.className = btn.className.replace('btn-outline-success', 'btn-success');
-        });
-        addToLog('✅ อัปเดต Composer เสร็จสิ้น');
         
-        // Show success alert
-        Swal.fire({
-            icon: 'success',
-            title: 'อัปเดตเสร็จสิ้น!',
-            text: 'Composer dependencies ได้รับการอัปเดตเรียบร้อยแล้ว',
-            confirmButtonText: 'ตกลง'
-        });
-        
-        updateInProgress = false;
-    });
+        addToLog(`📦 ดาวน์โหลดแพ็กเกจ... ${Math.round(progress)}%`);
+    }, 500);
 }
 
 /**
@@ -193,6 +341,32 @@ function updateLaravel() {
 function performLaravelUpdate() {
     updateInProgress = true;
     const updateBtns = document.querySelectorAll('#updateLaravelBtn, #updateLaravelBtnMobile');
+    const statusContainer = document.getElementById('updateStatusContainer');
+    const updateProgress = document.getElementById('updateProgress');
+    const updateProgressBar = document.getElementById('updateProgressBar');
+    const updateProgressText = document.getElementById('updateProgressText');
+    
+    // Check if required elements exist
+    if (!statusContainer || !updateProgress || !updateProgressBar || !updateProgressText) {
+        console.error('Required DOM elements not found for laravel update:', {
+            statusContainer: !!statusContainer,
+            updateProgress: !!updateProgress,
+            updateProgressBar: !!updateProgressBar,
+            updateProgressText: !!updateProgressText
+        });
+        Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด!',
+            text: 'ไม่พบองค์ประกอบที่จำเป็นสำหรับการแสดงผล กรุณาโหลดหน้าเว็บใหม่',
+            confirmButtonText: 'ตกลง'
+        });
+        updateInProgress = false;
+        return;
+    }
+    
+    // Show status container and progress
+    statusContainer.style.display = 'block';
+    updateProgress.style.display = 'block';
     
     // Show loading state for all laravel buttons
     updateBtns.forEach(btn => {
@@ -202,37 +376,47 @@ function performLaravelUpdate() {
     
     addToLog('🔄 เริ่มอัปเดต Laravel Framework...');
     
-    // Show progress alert
-    Swal.fire({
-        title: 'กำลังอัปเดต Laravel Framework',
-        text: 'กรุณารอสักครู่...',
-        icon: 'info',
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        showConfirmButton: false,
-        didOpen: () => {
-            Swal.showLoading();
+    // Simulate Laravel update process with progress bar
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        progress += Math.random() * 15; // Slower than composer
+        if (progress >= 100) {
+            progress = 100;
+            clearInterval(progressInterval);
+            
+            // Update progress bar
+            updateProgressBar.style.width = '100%';
+            updateProgressText.textContent = 'อัปเดตเสร็จสิ้น!';
+            
+            updateBtns.forEach(btn => {
+                btn.innerHTML = '<i class="fas fa-check me-2"></i>อัปเดตเสร็จสิ้น';
+                btn.className = btn.className.replace('btn-outline-warning', 'btn-success');
+            });
+            addToLog('✅ อัปเดต Laravel Framework เสร็จสิ้น');
+            
+            // Show success alert
+            Swal.fire({
+                icon: 'success',
+                title: 'อัปเดตเสร็จสิ้น!',
+                text: 'Laravel Framework ได้รับการอัปเดตเรียบร้อยแล้ว กรุณาโหลดหน้าเว็บใหม่',
+                confirmButtonText: 'ตกลง'
+            });
+            
+            // Hide progress after 3 seconds
+            setTimeout(() => {
+                updateProgress.style.display = 'none';
+                updateProgressBar.style.width = '0%';
+            }, 3000);
+            
+            updateInProgress = false;
+        } else {
+            // Update progress bar
+            updateProgressBar.style.width = progress + '%';
+            updateProgressText.textContent = `กำลังอัปเดต Laravel Framework... ${Math.round(progress)}%`;
         }
-    });
-    
-    // Simulate Laravel update process
-    simulateUpdateProcess('laravel', () => {
-        updateBtns.forEach(btn => {
-            btn.innerHTML = '<i class="fas fa-check me-2"></i>อัปเดตเสร็จสิ้น';
-            btn.className = btn.className.replace('btn-outline-warning', 'btn-success');
-        });
-        addToLog('✅ อัปเดต Laravel Framework เสร็จสิ้น');
         
-        // Show success alert
-        Swal.fire({
-            icon: 'success',
-            title: 'อัปเดตเสร็จสิ้น!',
-            text: 'Laravel Framework ได้รับการอัปเดตเรียบร้อยแล้ว กรุณาโหลดหน้าเว็บใหม่',
-            confirmButtonText: 'ตกลง'
-        });
-        
-        updateInProgress = false;
-    });
+        addToLog(`🔧 อัปเดต Laravel Framework... ${Math.round(progress)}%`);
+    }, 600);
 }
 
 /**
@@ -278,8 +462,12 @@ function addToLog(message) {
     updateLog.push(logEntry);
     
     const logElement = document.getElementById('updateLog');
-    logElement.textContent = updateLog.join('\n');
-    logElement.scrollTop = logElement.scrollHeight;
+    if (logElement) {
+        logElement.textContent = updateLog.join('\n');
+        logElement.scrollTop = logElement.scrollHeight;
+    } else {
+        console.log('Update log:', logEntry);
+    }
 }
 
 /**
@@ -298,7 +486,10 @@ function clearUpdateLog() {
     }).then((result) => {
         if (result.isConfirmed) {
             updateLog = [];
-            document.getElementById('updateLog').textContent = 'บันทึกการอัปเดตถูกล้างแล้ว...';
+            const logElement = document.getElementById('updateLog');
+            if (logElement) {
+                logElement.textContent = 'บันทึกการอัปเดตถูกล้างแล้ว...';
+            }
             
             Swal.fire({
                 icon: 'success',
@@ -313,50 +504,164 @@ function clearUpdateLog() {
 
 
 /**
- * Test SweetAlert2 functionality
+ * Get display name for update channel
  */
-function testSweetAlert(type) {
-    const messages = {
-        success: {
-            title: 'สำเร็จ!',
-            text: 'การดำเนินการเสร็จสิ้นเรียบร้อยแล้ว',
-            icon: 'success'
-        },
-        warning: {
-            title: 'คำเตือน!',
-            text: 'กรุณาตรวจสอบข้อมูลก่อนดำเนินการต่อ',
-            icon: 'warning'
-        },
-        info: {
-            title: 'ข้อมูล',
-            text: 'นี่คือข้อมูลที่คุณควรทราบ',
-            icon: 'info'
-        },
-        error: {
-            title: 'เกิดข้อผิดพลาด!',
-            text: 'เกิดข้อผิดพลาดในการดำเนินการ กรุณาลองใหม่อีกครั้ง',
-            icon: 'error'
-        }
+function getChannelDisplayName(channel) {
+    const channelNames = {
+        'stable': 'Stable (เสถียร)',
+        'beta': 'Beta (ทดสอบ)',
+        'dev': 'Development (พัฒนา)'
     };
+    return channelNames[channel] || channel;
+}
+
+/**
+ * Update system info table based on update check results
+ */
+function updateSystemInfoTable(hasUpdates, updateData = null) {
+    const laravelUpdateStatus = document.getElementById('laravelUpdateStatus');
+    const composerUpdateStatus = document.getElementById('composerUpdateStatus');
     
-    const config = messages[type];
-    if (config) {
-        Swal.fire(config);
+    if (hasUpdates && updateData) {
+        // Laravel has updates
+        laravelUpdateStatus.innerHTML = `<span class="badge bg-warning"><i class="fas fa-exclamation-triangle me-1"></i>มีอัปเดตใหม่ (${updateData.latestVersion})</span>`;
+        
+        // Composer might have updates
+        composerUpdateStatus.innerHTML = '<span class="badge bg-info"><i class="fas fa-info-circle me-1"></i>ตรวจสอบแล้ว</span>';
+        
+        // Update current version display
+        const currentVersionElement = document.getElementById('currentVersion');
+        if (currentVersionElement) {
+            currentVersionElement.textContent = updateData.currentVersion;
+        }
+    } else {
+        // All up to date
+        laravelUpdateStatus.innerHTML = '<span class="badge bg-success"><i class="fas fa-check me-1"></i>ล่าสุด</span>';
+        composerUpdateStatus.innerHTML = '<span class="badge bg-success"><i class="fas fa-check me-1"></i>ล่าสุด</span>';
+        
+        // Update current version display if available
+        if (updateData && updateData.currentVersion) {
+            const currentVersionElement = document.getElementById('currentVersion');
+            if (currentVersionElement) {
+                currentVersionElement.textContent = updateData.currentVersion;
+            }
+        }
     }
+}
+
+/**
+ * Load update settings from database
+ */
+async function loadUpdateSettings() {
+    try {
+        const response = await fetch('/admin/settings/update', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.settings) {
+                // Update form fields with loaded settings
+                document.getElementById('autoUpdate').checked = data.settings.auto_update !== undefined ? data.settings.auto_update : true;
+                document.getElementById('updateChannel').value = data.settings.update_channel || 'stable';
+                document.getElementById('backupBeforeUpdate').checked = data.settings.backup_before_update !== undefined ? data.settings.backup_before_update : true;
+                document.getElementById('notifyOnUpdate').checked = data.settings.notify_on_update !== undefined ? data.settings.notify_on_update : true;
+                
+                // Update switch labels after setting values
+                setTimeout(() => {
+                    updateSwitchLabels();
+                }, 100);
+                
+                addToLog('📥 โหลดการตั้งค่าอัปเดตเรียบร้อย');
+            }
+        }
+    } catch (error) {
+        console.error('Error loading update settings:', error);
+        addToLog('❌ ไม่สามารถโหลดการตั้งค่าอัปเดตได้');
+    }
+}
+
+/**
+ * Update switch labels based on current state
+ */
+function updateSwitchLabels() {
+    const switches = [
+        { id: 'autoUpdate', labelId: 'autoUpdateLabel' },
+        { id: 'backupBeforeUpdate', labelId: 'backupBeforeUpdateLabel' },
+        { id: 'notifyOnUpdate', labelId: 'notifyOnUpdateLabel' }
+    ];
+    
+    switches.forEach(switchConfig => {
+        const checkbox = document.getElementById(switchConfig.id);
+        const label = document.getElementById(switchConfig.labelId);
+        
+        if (checkbox && label) {
+            if (checkbox.checked) {
+                label.textContent = 'เปิดใช้งาน';
+                label.className = 'form-check-label enabled';
+            } else {
+                label.textContent = 'ปิดใช้งาน';
+                label.className = 'form-check-label disabled';
+            }
+        }
+    });
+}
+
+/**
+ * Wait for DOM elements to be available
+ */
+function waitForElement(selector, timeout = 5000) {
+    return new Promise((resolve, reject) => {
+        const element = document.querySelector(selector);
+        if (element) {
+            resolve(element);
+            return;
+        }
+
+        const observer = new MutationObserver((mutations, obs) => {
+            const element = document.querySelector(selector);
+            if (element) {
+                obs.disconnect();
+                resolve(element);
+            }
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+
+        setTimeout(() => {
+            observer.disconnect();
+            reject(new Error(`Element ${selector} not found within ${timeout}ms`));
+        }, timeout);
+    });
 }
 
 /**
  * Initialize update tab
  */
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize system info
-    updateSystemInfo();
-    
-    // Add event listeners for form controls
-    initializeFormControls();
-    
-    // Add clear log button
-    addClearLogButton();
+    // Wait for update tab elements to be available
+    waitForElement('#update').then(() => {
+        // Initialize system info
+        updateSystemInfo();
+        
+        // Load update settings from database
+        loadUpdateSettings();
+        
+        // Add event listeners for form controls
+        initializeFormControls();
+        
+        // Add clear log button
+        addClearLogButton();
+    }).catch(error => {
+        console.error('Failed to initialize update tab:', error);
+    });
 });
 
 /**
@@ -367,20 +672,12 @@ function initializeFormControls() {
     const switches = document.querySelectorAll('#update input[type="checkbox"]');
     switches.forEach(switchEl => {
         switchEl.addEventListener('change', function() {
-            const label = document.getElementById(this.id + 'Label');
-            if (label) {
-                label.classList.remove('enabled', 'disabled');
-                label.classList.add(this.checked ? 'enabled' : 'disabled');
-            }
+            updateSwitchLabels();
         });
-        
-        // Set initial state
-        const label = document.getElementById(switchEl.id + 'Label');
-        if (label) {
-            label.classList.remove('enabled', 'disabled');
-            label.classList.add(switchEl.checked ? 'enabled' : 'disabled');
-        }
     });
+    
+    // Set initial state for all switches
+    updateSwitchLabels();
     
     // Handle form submission
     const form = document.getElementById('updateSettingsForm');
@@ -422,22 +719,48 @@ function saveUpdateSettings() {
         }
     });
     
-    // Simulate API call
-    setTimeout(() => {
-        addToLog('💾 บันทึกการตั้งค่าอัปเดตเสร็จสิ้น');
+    // Make API call to save update settings
+    fetch('/admin/settings/update', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            addToLog('💾 บันทึกการตั้งค่าอัปเดตเสร็จสิ้น');
+            
+            // Show success alert
+            Swal.fire({
+                icon: 'success',
+                title: 'บันทึกเสร็จสิ้น!',
+                text: data.message || 'การตั้งค่าอัปเดตได้รับการบันทึกเรียบร้อยแล้ว',
+                confirmButtonText: 'ตกลง'
+            });
+        } else {
+            throw new Error(data.message || 'เกิดข้อผิดพลาดในการบันทึก');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving update settings:', error);
+        addToLog('❌ เกิดข้อผิดพลาดในการบันทึกการตั้งค่า');
         
-        // Show success alert
+        // Show error alert
         Swal.fire({
-            icon: 'success',
-            title: 'บันทึกเสร็จสิ้น!',
-            text: 'การตั้งค่าอัปเดตได้รับการบันทึกเรียบร้อยแล้ว',
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด!',
+            text: error.message || 'ไม่สามารถบันทึกการตั้งค่าได้ กรุณาลองใหม่อีกครั้ง',
             confirmButtonText: 'ตกลง'
         });
-        
+    })
+    .finally(() => {
         // Reset button
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
-    }, 1500);
+    });
 }
 
 /**
