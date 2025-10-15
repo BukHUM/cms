@@ -220,6 +220,31 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Show success/error messages if redirected
+    @if(session('success'))
+        Swal.fire({
+            icon: 'success',
+            title: 'สำเร็จ!',
+            text: '{{ session('success') }}',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end'
+        });
+    @endif
+    
+    @if(session('error'))
+        Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด!',
+            text: '{{ session('error') }}',
+            confirmButtonText: 'ตกลง',
+            toast: true,
+            position: 'top-end'
+        });
+    @endif
+    
     // Avatar upload handling
     const avatarInput = document.getElementById('avatarInput');
     const avatarImage = document.getElementById('avatarImage');
@@ -229,14 +254,24 @@ document.addEventListener('DOMContentLoaded', function() {
         if (file) {
             // Validate file size (2MB max)
             if (file.size > 2 * 1024 * 1024) {
-                SwalHelper.error('ขนาดไฟล์ต้องไม่เกิน 2MB');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด!',
+                    text: 'ขนาดไฟล์ต้องไม่เกิน 2MB',
+                    confirmButtonText: 'ตกลง'
+                });
                 return;
             }
             
             // Validate file type
             const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
             if (!allowedTypes.includes(file.type)) {
-                SwalHelper.error('ไฟล์ต้องเป็นรูปภาพ (JPEG, PNG, JPG, GIF)');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด!',
+                    text: 'ไฟล์ต้องเป็นรูปภาพ (JPEG, PNG, JPG, GIF)',
+                    confirmButtonText: 'ตกลง'
+                });
                 return;
             }
             
@@ -270,14 +305,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (data.success) {
                     avatarImage.src = data.avatar_url;
-                    SwalHelper.success(data.message);
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'สำเร็จ!',
+                        text: data.message,
+                        timer: 3000,
+                        timerProgressBar: true,
+                        showConfirmButton: false
+                    });
                 } else {
-                    SwalHelper.error(data.message);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด!',
+                        text: data.message,
+                        confirmButtonText: 'ตกลง'
+                    });
                 }
             })
             .catch(error => {
                 Swal.close();
-                SwalHelper.error('เกิดข้อผิดพลาดในการอัปโหลดไฟล์');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด!',
+                    text: 'เกิดข้อผิดพลาดในการอัปโหลดไฟล์',
+                    confirmButtonText: 'ตกลง'
+                });
                 console.error('Error:', error);
             });
         }

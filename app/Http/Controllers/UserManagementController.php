@@ -90,10 +90,11 @@ class UserManagementController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถเพิ่มผู้ใช้ได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถเพิ่มผู้ใช้ได้ กรุณาลองใหม่อีกครั้ง',
+                'UserManagementController::storeUser'
+            );
         }
     }
 
@@ -151,10 +152,11 @@ class UserManagementController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถอัปเดตผู้ใช้ได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถอัปเดตผู้ใช้ได้ กรุณาลองใหม่อีกครั้ง',
+                'UserManagementController::updateUser'
+            );
         }
     }
 
@@ -179,10 +181,11 @@ class UserManagementController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถลบผู้ใช้ได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถลบผู้ใช้ได้ กรุณาลองใหม่อีกครั้ง',
+                'UserManagementController::deleteUser'
+            );
         }
     }
 
@@ -211,10 +214,11 @@ class UserManagementController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถอัปเดตสถานะได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถอัปเดตสถานะได้ กรุณาลองใหม่อีกครั้ง',
+                'UserManagementController::updateUserStatus'
+            );
         }
     }
 
@@ -244,10 +248,11 @@ class UserManagementController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถอัปเดตบทบาทได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถอัปเดตบทบาทได้ กรุณาลองใหม่อีกครั้ง',
+                'UserManagementController::updateUserRoles'
+            );
         }
     }
 
@@ -322,10 +327,11 @@ class UserManagementController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถเพิ่มบทบาทได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถเพิ่มบทบาทได้ กรุณาลองใหม่อีกครั้ง',
+                'UserManagementController::storeRole'
+            );
         }
     }
 
@@ -387,10 +393,11 @@ class UserManagementController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถอัปเดตบทบาทได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถอัปเดตบทบาทได้ กรุณาลองใหม่อีกครั้ง',
+                'UserManagementController::updateUserRoles'
+            );
         }
     }
 
@@ -415,10 +422,11 @@ class UserManagementController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถลบบทบาทได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถลบบทบาทได้ กรุณาลองใหม่อีกครั้ง',
+                'UserManagementController::deleteRole'
+            );
         }
     }
 
@@ -447,10 +455,11 @@ class UserManagementController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถอัปเดตสถานะได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถอัปเดตสถานะได้ กรุณาลองใหม่อีกครั้ง',
+                'UserManagementController::updateRoleStatus'
+            );
         }
     }
 
@@ -495,10 +504,11 @@ class UserManagementController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถอัปเดตสิทธิ์ได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถอัปเดตสิทธิ์ได้ กรุณาลองใหม่อีกครั้ง',
+                'UserManagementController::updateRolePermissions'
+            );
         }
     }
 
@@ -555,10 +565,11 @@ class UserManagementController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถเพิ่มสิทธิ์ได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถเพิ่มสิทธิ์ได้ กรุณาลองใหม่อีกครั้ง',
+                'UserManagementController::storePermission'
+            );
         }
     }
 
@@ -614,10 +625,11 @@ class UserManagementController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถอัปเดตสิทธิ์ได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถอัปเดตสิทธิ์ได้ กรุณาลองใหม่อีกครั้ง',
+                'UserManagementController::updateRolePermissions'
+            );
         }
     }
 
@@ -642,10 +654,11 @@ class UserManagementController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถลบสิทธิ์ได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถลบสิทธิ์ได้ กรุณาลองใหม่อีกครั้ง',
+                'UserManagementController::deletePermission'
+            );
         }
     }
 
@@ -674,10 +687,11 @@ class UserManagementController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถอัปเดตสถานะได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถอัปเดตสถานะได้ กรุณาลองใหม่อีกครั้ง',
+                'UserManagementController::updateRoleStatus'
+            );
         }
     }
 

@@ -362,9 +362,196 @@
     animation: pulse 2s infinite;
 }
 
+/* Update Status Alert Styles */
+.update-status-container {
+    animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.update-status-container .alert {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.15);
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+}
+
+.update-status-container .alert-icon {
+    background: rgba(40, 167, 69, 0.1);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.update-status-container .alert-title {
+    color: #155724;
+    font-size: 16px;
+}
+
+.update-status-container .alert-message {
+    color: #155724;
+    font-size: 14px;
+}
+
+.update-status-container .btn-close {
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #155724;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.update-status-container .btn-close:hover {
+    opacity: 1;
+}
+
+/* Update Progress Styles */
+.update-progress {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.update-progress .progress {
+    border-radius: 10px;
+    background-color: rgba(40, 167, 69, 0.1);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.update-progress .progress-bar {
+    border-radius: 10px;
+    background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+/* Alert State Variations */
+.update-status-container .alert-info {
+    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.15);
+}
+
+.update-status-container .alert-info .alert-icon {
+    background: rgba(23, 162, 184, 0.1);
+}
+
+.update-status-container .alert-info .alert-title,
+.update-status-container .alert-info .alert-message {
+    color: #0c5460;
+}
+
+.update-status-container .alert-warning {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.15);
+}
+
+.update-status-container .alert-warning .alert-icon {
+    background: rgba(255, 193, 7, 0.1);
+}
+
+.update-status-container .alert-warning .alert-title,
+.update-status-container .alert-warning .alert-message {
+    color: #856404;
+}
+
+.update-status-container .alert-danger {
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.15);
+}
+
+.update-status-container .alert-danger .alert-icon {
+    background: rgba(220, 53, 69, 0.1);
+}
+
+.update-status-container .alert-danger .alert-title,
+.update-status-container .alert-danger .alert-message {
+    color: #721c24;
+}
+
+/* System Info Table Update Column */
+.table th:nth-child(4),
+.table td:nth-child(4) {
+    text-align: center;
+    min-width: 120px;
+}
+
+.table td:nth-child(4) .badge {
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+}
+
+.table td:nth-child(4) .badge i {
+    font-size: 0.7rem;
+}
+
+/* Update Status Badge Colors */
+.badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #000 !important;
+}
+
+.badge.bg-info {
+    background-color: #0dcaf0 !important;
+    color: #000 !important;
+}
+
+.badge.bg-success {
+    background-color: #198754 !important;
+    color: #fff !important;
+}
+
+.badge.bg-secondary {
+    background-color: #6c757d !important;
+    color: #fff !important;
+}
+
+.badge.bg-light {
+    background-color: #f8f9fa !important;
+    color: #6c757d !important;
+}
+
 /* Update Tab Responsive */
 @media (max-width: 768px) {
     .log-container {
         max-height: 200px;
+    }
+    
+    .update-status-container .alert-icon {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .update-status-container .alert-title {
+        font-size: 14px;
+    }
+    
+    .update-status-container .alert-message {
+        font-size: 13px;
+    }
+    
+    .table th:nth-child(4),
+    .table td:nth-child(4) {
+        min-width: 100px;
+    }
+    
+    .table td:nth-child(4) .badge {
+        font-size: 0.7rem;
+        padding: 0.25em 0.5em;
     }
 }

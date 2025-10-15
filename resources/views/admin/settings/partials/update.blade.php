@@ -102,10 +102,29 @@
                 </div>
             </form>
             
-            <!-- Update Status -->
-            <div class="alert alert-info mt-4" id="updateStatusAlert" style="display: none;">
-                <i class="fas fa-info-circle me-2"></i>
-                <span id="updateStatusText">กำลังตรวจสอบการอัปเดต...</span>
+            <!-- Update Status Alert -->
+            <div class="update-status-container mt-5" id="updateStatusContainer" style="display: none;">
+                <div class="alert alert-success alert-dismissible fade show shadow-sm border-0" id="updateStatusAlert">
+                    <div class="d-flex align-items-center">
+                        <div class="alert-icon me-3">
+                            <i class="fas fa-check-circle fa-lg text-success"></i>
+                        </div>
+                        <div class="alert-content flex-grow-1">
+                            <h6 class="alert-title mb-1 fw-semibold">พบการอัปเดตใหม่!</h6>
+                            <p class="alert-message mb-0 text-muted" id="updateStatusText">ระบบพบเวอร์ชันใหม่ที่พร้อมใช้งาน</p>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </div>
+                
+                <!-- Update Progress Bar -->
+                <div class="update-progress mt-3" id="updateProgress" style="display: none;">
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" 
+                             role="progressbar" style="width: 0%" id="updateProgressBar"></div>
+                    </div>
+                    <small class="text-muted mt-2 d-block" id="updateProgressText">กำลังเตรียมการอัปเดต...</small>
+                </div>
             </div>
             
             <!-- System Information -->
@@ -118,6 +137,7 @@
                                 <th>รายการ</th>
                                 <th>ค่า</th>
                                 <th>สถานะ</th>
+                                <th>การอัปเดต</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -125,31 +145,17 @@
                                 <td><i class="fas fa-code me-2"></i>Laravel Version</td>
                                 <td id="currentVersion">{{ app()->version() }}</td>
                                 <td><span class="badge bg-success">ล่าสุด</span></td>
-                            </tr>
-                            <tr>
-                                <td><i class="fas fa-calendar-alt me-2"></i>วันที่ติดตั้ง</td>
-                                <td id="installDate">{{ date('d/m/Y H:i:s') }}</td>
-                                <td><span class="badge bg-info">ปกติ</span></td>
-                            </tr>
-                            <tr>
-                                <td><i class="fas fa-server me-2"></i>PHP Version</td>
-                                <td id="phpVersion">{{ PHP_VERSION }}</td>
-                                <td><span class="badge bg-success">รองรับ</span></td>
-                            </tr>
-                            <tr>
-                                <td><i class="fas fa-memory me-2"></i>Memory Limit</td>
-                                <td id="memoryLimit">{{ ini_get('memory_limit') }}</td>
-                                <td><span class="badge bg-success">เพียงพอ</span></td>
-                            </tr>
-                            <tr>
-                                <td><i class="fas fa-hdd me-2"></i>Disk Space</td>
-                                <td id="diskSpace">กำลังตรวจสอบ...</td>
-                                <td><span class="badge bg-warning">กำลังตรวจสอบ</span></td>
+                                <td id="laravelUpdateStatus">
+                                    <span class="badge bg-secondary">ยังไม่ตรวจสอบ</span>
+                                </td>
                             </tr>
                             <tr>
                                 <td><i class="fas fa-box me-2"></i>Composer</td>
                                 <td id="composerVersion">กำลังตรวจสอบ...</td>
                                 <td><span class="badge bg-warning">กำลังตรวจสอบ</span></td>
+                                <td id="composerUpdateStatus">
+                                    <span class="badge bg-secondary">ยังไม่ตรวจสอบ</span>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -161,33 +167,6 @@
                 <h6>บันทึกการอัปเดต</h6>
                 <div class="log-container">
                     <pre id="updateLog" class="log-content">พร้อมสำหรับการอัปเดต...</pre>
-                </div>
-            </div>
-            
-            <!-- SweetAlert2 Test Buttons (for development) -->
-            <div class="mt-4">
-                <h6>ทดสอบ SweetAlert2</h6>
-                <div class="row g-2">
-                    <div class="col-md-3 col-6">
-                        <button type="button" class="btn btn-sm btn-outline-success w-100" onclick="testSweetAlert('success')">
-                            <i class="fas fa-check me-1"></i>Success
-                        </button>
-                    </div>
-                    <div class="col-md-3 col-6">
-                        <button type="button" class="btn btn-sm btn-outline-warning w-100" onclick="testSweetAlert('warning')">
-                            <i class="fas fa-exclamation-triangle me-1"></i>Warning
-                        </button>
-                    </div>
-                    <div class="col-md-3 col-6">
-                        <button type="button" class="btn btn-sm btn-outline-info w-100" onclick="testSweetAlert('info')">
-                            <i class="fas fa-info-circle me-1"></i>Info
-                        </button>
-                    </div>
-                    <div class="col-md-3 col-6">
-                        <button type="button" class="btn btn-sm btn-outline-danger w-100" onclick="testSweetAlert('error')">
-                            <i class="fas fa-times-circle me-1"></i>Error
-                        </button>
-                    </div>
                 </div>
             </div>
             

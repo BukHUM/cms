@@ -151,6 +151,11 @@ Route::prefix('admin')->middleware(['web'])->group(function () {
         Route::post('/audit/export', [App\Http\Controllers\SettingsController::class, 'exportAuditLogs'])->name('admin.settings.audit.export');
         Route::delete('/audit/clear', [App\Http\Controllers\SettingsController::class, 'clearAuditLogs'])->name('admin.settings.audit.clear');
         
+        // Update Settings
+        Route::get('/update', [App\Http\Controllers\SettingsController::class, 'getUpdateSettings'])->name('admin.settings.update.get');
+        Route::post('/update', [App\Http\Controllers\SettingsController::class, 'saveUpdateSettings'])->name('admin.settings.update.save');
+        Route::post('/update/check', [App\Http\Controllers\SettingsController::class, 'checkForUpdates'])->name('admin.settings.update.check');
+        
         // Performance Settings
         Route::get('/performance', [App\Http\Controllers\SettingsController::class, 'getPerformanceSettings'])->name('admin.settings.performance.get');
         Route::post('/performance', [App\Http\Controllers\SettingsController::class, 'savePerformanceSettings'])->name('admin.settings.performance.save');
@@ -212,14 +217,17 @@ Route::post('/admin/login', function (Illuminate\Http\Request $request) {
         // Regenerate session ID for security
         session()->regenerate();
         
-        // Set session with user data
+        // Set session with user data and security information
         session([
             'admin_logged_in' => true, 
             'admin_user_id' => $user->id,
             'admin_user_email' => $user->email,
             'admin_user_name' => $user->name,
             'admin_user_role' => $user->role,
-            'last_activity' => time()
+            'last_activity' => time(),
+            'user_ip_address' => $request->ip(),
+            'login_time' => time(),
+            'session_fingerprint' => hash('sha256', $request->ip() . $request->userAgent())
         ]);
         
         return redirect()->route('admin.dashboard');
@@ -243,6 +251,14 @@ Route::get('/register', function () {
 })->name('register');
 
 Route::post('/logout', function () {
+    // Log logout activity
+    \Log::info('User logout', [
+        'user_id' => session('admin_user_id'),
+        'user_email' => session('admin_user_email'),
+        'ip_address' => request()->ip(),
+        'session_duration' => time() - (session('login_time') ?? time())
+    ]);
+    
     // Regenerate session ID for security
     session()->regenerate();
     
@@ -253,7 +269,10 @@ Route::post('/logout', function () {
         'admin_user_email',
         'admin_user_name',
         'admin_user_role',
-        'last_activity'
+        'last_activity',
+        'user_ip_address',
+        'login_time',
+        'session_fingerprint'
     ]);
     
     // Invalidate session completely

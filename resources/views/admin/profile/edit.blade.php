@@ -6,6 +6,138 @@
 
 @push('styles')
 @vite(['resources/css/profile.css'])
+<style>
+/* Mobile Responsive Improvements */
+@media (max-width: 767.98px) {
+    .profile-edit-container {
+        padding: 0 10px;
+    }
+    
+    .profile-card {
+        margin-bottom: 1rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .card-header {
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .form-control {
+        padding: 0.75rem;
+        font-size: 1rem;
+        border-radius: 8px;
+        border: 1px solid #ced4da;
+    }
+    
+    .form-control:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+    }
+    
+    .btn {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        border-radius: 8px;
+        font-weight: 500;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        border: none;
+        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+    }
+    
+    .btn-outline-warning {
+        border-color: #f59e0b;
+        color: #f59e0b;
+    }
+    
+    .btn-outline-warning:hover {
+        background-color: #f59e0b;
+        border-color: #f59e0b;
+        color: #fff;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #5a6268;
+        border-color: #545b62;
+    }
+    
+    .form-actions {
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .row.g-2 > * {
+        padding: 0.25rem;
+    }
+    
+    /* Improve spacing for mobile */
+    .mb-3 {
+        margin-bottom: 1rem !important;
+    }
+    
+    /* Better touch targets */
+    .btn {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Responsive text */
+    .card-header h5 {
+        font-size: 1.1rem;
+        margin-bottom: 0;
+    }
+    
+    .page-title h1 {
+        font-size: 1.5rem;
+    }
+    
+    .page-subtitle {
+        font-size: 0.9rem;
+    }
+}
+
+/* Tablet adjustments */
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .profile-edit-container {
+        padding: 0 15px;
+    }
+    
+    .btn {
+        padding: 0.6rem 1rem;
+    }
+}
+
+/* Ensure proper spacing on all devices */
+.form-actions .row.g-2 {
+    margin: 0 -0.25rem;
+}
+
+.form-actions .row.g-2 > * {
+    padding: 0 0.25rem;
+}
+</style>
 @endpush
 
 @section('content')
@@ -126,19 +258,43 @@
                         
                         <!-- Form Actions -->
                         <div class="form-actions">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <a href="{{ route('admin.profile.index') }}" class="btn btn-secondary">
-                                        <i class="fas fa-times me-1"></i>ยกเลิก
-                                    </a>
+                            <!-- Mobile Layout -->
+                            <div class="d-block d-md-none">
+                                <div class="row g-2">
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-primary w-100" id="submitBtn">
+                                            <i class="fas fa-save me-1"></i>บันทึกข้อมูล
+                                        </button>
+                                    </div>
+                                    <div class="col-6">
+                                        <button type="button" class="btn btn-outline-warning w-100" onclick="resetForm()">
+                                            <i class="fas fa-undo me-1"></i>รีเซ็ต
+                                        </button>
+                                    </div>
+                                    <div class="col-6">
+                                        <a href="{{ route('admin.profile.index') }}" class="btn btn-secondary w-100">
+                                            <i class="fas fa-times me-1"></i>ยกเลิก
+                                        </a>
+                                    </div>
                                 </div>
-                                <div>
-                                    <button type="button" class="btn btn-outline-warning me-2" onclick="resetForm()">
-                                        <i class="fas fa-undo me-1"></i>รีเซ็ต
-                                    </button>
-                                    <button type="submit" class="btn btn-primary" id="submitBtn">
-                                        <i class="fas fa-save me-1"></i>บันทึกข้อมูล
-                                    </button>
+                            </div>
+                            
+                            <!-- Desktop Layout -->
+                            <div class="d-none d-md-block">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <a href="{{ route('admin.profile.index') }}" class="btn btn-secondary">
+                                            <i class="fas fa-times me-1"></i>ยกเลิก
+                                        </a>
+                                    </div>
+                                    <div>
+                                        <button type="button" class="btn btn-outline-warning me-2" onclick="resetForm()">
+                                            <i class="fas fa-undo me-1"></i>รีเซ็ต
+                                        </button>
+                                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                                            <i class="fas fa-save me-1"></i>บันทึกข้อมูล
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -146,15 +302,6 @@
                 </div>
             </div>
             
-            <!-- Security Notice -->
-            <div class="card profile-card mt-3">
-                <div class="card-body">
-                    <div class="alert alert-info mb-0">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>หมายเหตุ:</strong> การเปลี่ยนแปลงข้อมูลส่วนตัวจะถูกบันทึกในระบบ Audit Log เพื่อความปลอดภัย
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -167,11 +314,39 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('profileForm');
     const submitBtn = document.getElementById('submitBtn');
     
+    // Show success message if redirected from update
+    @if(session('success'))
+        Swal.fire({
+            icon: 'success',
+            title: 'สำเร็จ!',
+            text: '{{ session('success') }}',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end'
+        });
+    @endif
+    
+    @if(session('error'))
+        Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด!',
+            text: '{{ session('error') }}',
+            confirmButtonText: 'ตกลง',
+            toast: true,
+            position: 'top-end'
+        });
+    @endif
+    
     // Form submission handling
     form.addEventListener('submit', function(e) {
-        // Show loading state
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>กำลังบันทึก...';
-        submitBtn.disabled = true;
+        // Show loading state for both mobile and desktop buttons
+        const submitButtons = document.querySelectorAll('#submitBtn');
+        submitButtons.forEach(btn => {
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>กำลังบันทึก...';
+            btn.disabled = true;
+        });
         
         // Prevent double submission
         form.removeEventListener('submit', arguments.callee);

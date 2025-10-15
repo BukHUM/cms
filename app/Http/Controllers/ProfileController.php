@@ -123,9 +123,11 @@ class ProfileController extends Controller
                 ->with('success', 'อัปเดตข้อมูลส่วนตัวเรียบร้อยแล้ว');
 
         } catch (\Exception $e) {
-            return redirect()->back()
-                ->with('error', 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล: ' . $e->getMessage())
-                ->withInput();
+            return getSafeWebErrorResponse(
+                $e,
+                'เกิดข้อผิดพลาดในการอัปเดตข้อมูล กรุณาลองใหม่อีกครั้ง',
+                'ProfileController::update'
+            );
         }
     }
 
@@ -211,9 +213,11 @@ class ProfileController extends Controller
                 ->with('success', 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว');
 
         } catch (\Exception $e) {
-            return redirect()->back()
-                ->with('error', 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน: ' . $e->getMessage())
-                ->withInput();
+            return getSafeWebErrorResponse(
+                $e,
+                'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน กรุณาลองใหม่อีกครั้ง',
+                'ProfileController::updatePassword'
+            );
         }
     }
 
@@ -313,10 +317,11 @@ class ProfileController extends Controller
             }
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'เกิดข้อผิดพลาดในการอัปเดตรูปภาพ: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'เกิดข้อผิดพลาดในการอัปเดตรูปภาพ กรุณาลองใหม่อีกครั้ง',
+                'ProfileController::updateAvatar'
+            );
         }
     }
 }

@@ -182,7 +182,6 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Activity log functionality
-    console.log('Activity log page loaded');
 });
 </script>
 @endpush

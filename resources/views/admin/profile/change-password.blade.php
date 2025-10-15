@@ -172,15 +172,6 @@
                 </div>
             </div>
             
-            <!-- Security Notice -->
-            <div class="card profile-card mt-3">
-                <div class="card-body">
-                    <div class="alert alert-warning mb-0">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>คำเตือน:</strong> การเปลี่ยนรหัสผ่านจะทำให้คุณต้องเข้าสู่ระบบใหม่ และจะถูกบันทึกในระบบ Audit Log
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -197,6 +188,43 @@ document.addEventListener('DOMContentLoaded', function() {
     const strengthText = document.getElementById('strengthText');
     const passwordMatch = document.getElementById('passwordMatch');
     const passwordMismatch = document.getElementById('passwordMismatch');
+
+    // Show success/error messages if redirected
+    @if(session('success'))
+        Swal.fire({
+            icon: 'success',
+            title: 'สำเร็จ!',
+            text: '{{ session('success') }}',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end'
+        });
+    @endif
+    
+    @if(session('error'))
+        Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด!',
+            text: '{{ session('error') }}',
+            confirmButtonText: 'ตกลง',
+            toast: true,
+            position: 'top-end'
+        });
+    @endif
+    
+    // Show security notice on page load
+    Swal.fire({
+        icon: 'warning',
+        title: 'คำเตือนความปลอดภัย',
+        text: 'การเปลี่ยนรหัสผ่านจะทำให้คุณต้องเข้าสู่ระบบใหม่ และจะถูกบันทึกในระบบ Audit Log',
+        timer: 5000,
+        timerProgressBar: true,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
+    });
 
     // Password strength checker
     function checkPasswordStrength(password) {

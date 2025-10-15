@@ -50,10 +50,11 @@ class SettingsController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถบันทึกการตั้งค่าได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถบันทึกการตั้งค่าได้ กรุณาลองใหม่อีกครั้ง',
+                'SettingsController::saveAuditSettings'
+            );
         }
     }
 
@@ -79,10 +80,11 @@ class SettingsController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถโหลดการตั้งค่าได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถโหลดการตั้งค่าได้ กรุณาลองใหม่อีกครั้ง',
+                'SettingsController::getAuditSettings'
+            );
         }
     }
 
@@ -163,10 +165,11 @@ class SettingsController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถบันทึกการตั้งค่าได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถบันทึกการตั้งค่าได้ กรุณาลองใหม่อีกครั้ง',
+                'SettingsController::saveAuditSettings'
+            );
         }
     }
 
@@ -196,10 +199,11 @@ class SettingsController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถโหลดการตั้งค่าได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถโหลดการตั้งค่าได้ กรุณาลองใหม่อีกครั้ง',
+                'SettingsController::getAuditSettings'
+            );
         }
     }
 
@@ -244,10 +248,11 @@ class SettingsController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถโหลดข้อมูลระบบได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถโหลดข้อมูลระบบได้ กรุณาลองใหม่อีกครั้ง',
+                'SettingsController::getSystemInfo'
+            );
         }
     }
 
@@ -415,10 +420,11 @@ class SettingsController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถส่งออกข้อมูลระบบได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถส่งออกข้อมูลระบบได้ กรุณาลองใหม่อีกครั้ง',
+                'SettingsController::exportSystemInfo'
+            );
         }
     }
 
@@ -449,10 +455,11 @@ class SettingsController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถอ่านไฟล์ log ได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถอ่านไฟล์ log ได้ กรุณาลองใหม่อีกครั้ง',
+                'SettingsController::getLogFile'
+            );
         }
     }
 
@@ -479,10 +486,11 @@ class SettingsController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถล้าง Logs ได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถล้าง Logs ได้ กรุณาลองใหม่อีกครั้ง',
+                'SettingsController::clearLogs'
+            );
         }
     }
 
@@ -499,10 +507,11 @@ class SettingsController extends Controller
             ], 501);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถดาวน์โหลด Logs ได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถดาวน์โหลด Logs ได้ กรุณาลองใหม่อีกครั้ง',
+                'SettingsController::downloadLogs'
+            );
         }
     }
 
@@ -649,6 +658,368 @@ class SettingsController extends Controller
     }
 
     /**
+     * Check for available updates
+     */
+    public function checkForUpdates(Request $request)
+    {
+        try {
+            $updateChannel = $request->input('channel', 'stable');
+            
+            // Validate channel
+            if (!in_array($updateChannel, ['stable', 'beta', 'dev'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ช่องทางการอัปเดตไม่ถูกต้อง'
+                ], 400);
+            }
+
+            // Get current Laravel version
+            $currentVersion = app()->version();
+            
+            // Simulate checking for updates based on channel
+            $updateInfo = $this->getUpdateInfo($currentVersion, $updateChannel);
+            
+            return response()->json([
+                'success' => true,
+                'hasUpdates' => $updateInfo['hasUpdates'],
+                'currentVersion' => $currentVersion,
+                'latestVersion' => $updateInfo['latestVersion'],
+                'channel' => $updateChannel,
+                'updateInfo' => $updateInfo
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Check for updates error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในการตรวจสอบการอัปเดต'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get update information based on channel
+     */
+    private function getUpdateInfo($currentVersion, $channel)
+    {
+        try {
+            switch ($channel) {
+                case 'stable':
+                    return $this->checkStableUpdates($currentVersion);
+                    
+                case 'beta':
+                    return $this->checkBetaUpdates($currentVersion);
+                    
+                case 'dev':
+                    return $this->checkDevUpdates($currentVersion);
+                    
+                default:
+                    return [
+                        'hasUpdates' => false,
+                        'latestVersion' => $currentVersion,
+                        'channel' => $channel,
+                        'description' => 'ไม่ทราบช่องทาง',
+                        'releaseNotes' => 'ไม่มีข้อมูลการอัปเดต'
+                    ];
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error checking updates for channel ' . $channel . ': ' . $e->getMessage());
+            
+            // Fallback to simulation if API fails
+            return $this->getSimulatedUpdateInfo($currentVersion, $channel);
+        }
+    }
+
+    /**
+     * Check stable updates from Packagist
+     */
+    private function checkStableUpdates($currentVersion)
+    {
+        try {
+            $response = \Http::timeout(10)->get('https://packagist.org/packages/laravel/framework.json');
+            
+            if ($response->successful()) {
+                $data = $response->json();
+                $versions = $data['package']['versions'] ?? [];
+                
+                // Get latest stable version (not dev, not alpha, not beta)
+                $stableVersions = array_filter($versions, function($version) {
+                    return !str_contains($version['version'], 'dev') && 
+                           !str_contains($version['version'], 'alpha') && 
+                           !str_contains($version['version'], 'beta') &&
+                           !str_contains($version['version'], 'rc');
+                });
+                
+                if (!empty($stableVersions)) {
+                    $latestVersion = array_key_first($stableVersions);
+                    $hasUpdates = version_compare($currentVersion, $latestVersion, '<');
+                    
+                    return [
+                        'hasUpdates' => $hasUpdates,
+                        'latestVersion' => $latestVersion,
+                        'channel' => 'stable',
+                        'description' => 'เวอร์ชันเสถียรที่แนะนำสำหรับการใช้งานทั่วไป',
+                        'releaseNotes' => $stableVersions[$latestVersion]['description'] ?? 'ปรับปรุงประสิทธิภาพและแก้ไขข้อบกพร่อง',
+                        'source' => 'Packagist API'
+                    ];
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Failed to check stable updates from Packagist: ' . $e->getMessage());
+        }
+        
+        // Fallback to simulation
+        return $this->getSimulatedUpdateInfo($currentVersion, 'stable');
+    }
+
+    /**
+     * Check beta updates from GitHub
+     */
+    private function checkBetaUpdates($currentVersion)
+    {
+        try {
+            $response = \Http::timeout(10)->get('https://api.github.com/repos/laravel/framework/releases?per_page=20');
+            
+            if ($response->successful()) {
+                $releases = $response->json();
+                
+                // Find latest beta/pre-release
+                $betaReleases = array_filter($releases, function($release) {
+                    return $release['prerelease'] === true || 
+                           str_contains($release['tag_name'], 'beta') || 
+                           str_contains($release['tag_name'], 'rc');
+                });
+                
+                if (!empty($betaReleases)) {
+                    $latestRelease = $betaReleases[0];
+                    $latestVersion = ltrim($latestRelease['tag_name'], 'v');
+                    $hasUpdates = version_compare($currentVersion, $latestVersion, '<');
+                    
+                    return [
+                        'hasUpdates' => $hasUpdates,
+                        'latestVersion' => $latestVersion,
+                        'channel' => 'beta',
+                        'description' => 'เวอร์ชันทดสอบที่มีฟีเจอร์ใหม่แต่ยังไม่เสถียร',
+                        'releaseNotes' => $latestRelease['body'] ?? 'ฟีเจอร์ใหม่ที่กำลังทดสอบ',
+                        'source' => 'GitHub API'
+                    ];
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Failed to check beta updates from GitHub: ' . $e->getMessage());
+        }
+        
+        // Fallback to simulation
+        return $this->getSimulatedUpdateInfo($currentVersion, 'beta');
+    }
+
+    /**
+     * Check development updates from GitHub
+     */
+    private function checkDevUpdates($currentVersion)
+    {
+        try {
+            $response = \Http::timeout(10)->get('https://api.github.com/repos/laravel/framework/commits?per_page=1');
+            
+            if ($response->successful()) {
+                $commits = $response->json();
+                
+                if (!empty($commits)) {
+                    $latestCommit = $commits[0];
+                    $latestVersion = 'dev-' . substr($latestCommit['sha'], 0, 7);
+                    
+                    // For dev, we'll consider it as "newer" if the commit is recent
+                    $commitDate = \Carbon\Carbon::parse($latestCommit['commit']['committer']['date']);
+                    $hasUpdates = $commitDate->isAfter(\Carbon\Carbon::now()->subDays(7)); // Updates if commit is within 7 days
+                    
+                    return [
+                        'hasUpdates' => $hasUpdates,
+                        'latestVersion' => $latestVersion,
+                        'channel' => 'dev',
+                        'description' => 'เวอร์ชันพัฒนาที่มีฟีเจอร์ล่าสุดแต่อาจมีข้อบกพร่อง',
+                        'releaseNotes' => $latestCommit['commit']['message'] ?? 'การเปลี่ยนแปลงล่าสุดในโค้ด',
+                        'source' => 'GitHub Commits API'
+                    ];
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Failed to check dev updates from GitHub: ' . $e->getMessage());
+        }
+        
+        // Fallback to simulation
+        return $this->getSimulatedUpdateInfo($currentVersion, 'dev');
+    }
+
+    /**
+     * Fallback simulation when APIs are not available
+     */
+    private function getSimulatedUpdateInfo($currentVersion, $channel)
+    {
+        $baseVersion = '11.0.0';
+        
+        switch ($channel) {
+            case 'stable':
+                $latestVersion = '11.2.0';
+                $hasUpdates = version_compare($currentVersion, $latestVersion, '<');
+                break;
+                
+            case 'beta':
+                $latestVersion = '11.3.0-beta.1';
+                $hasUpdates = version_compare($currentVersion, '11.2.0', '<');
+                break;
+                
+            case 'dev':
+                $latestVersion = '11.4.0-dev';
+                $hasUpdates = version_compare($currentVersion, '11.1.0', '<');
+                break;
+                
+            default:
+                $latestVersion = $currentVersion;
+                $hasUpdates = false;
+        }
+        
+        return [
+            'hasUpdates' => $hasUpdates,
+            'latestVersion' => $latestVersion,
+            'channel' => $channel,
+            'description' => $this->getChannelDescription($channel),
+            'releaseNotes' => $this->getReleaseNotes($latestVersion, $channel),
+            'source' => 'Simulation (API unavailable)'
+        ];
+    }
+
+    /**
+     * Get channel description
+     */
+    private function getChannelDescription($channel)
+    {
+        $descriptions = [
+            'stable' => 'เวอร์ชันเสถียรที่แนะนำสำหรับการใช้งานทั่วไป',
+            'beta' => 'เวอร์ชันทดสอบที่มีฟีเจอร์ใหม่แต่ยังไม่เสถียร',
+            'dev' => 'เวอร์ชันพัฒนาที่มีฟีเจอร์ล่าสุดแต่อาจมีข้อบกพร่อง'
+        ];
+        
+        return $descriptions[$channel] ?? 'ไม่ทราบช่องทาง';
+    }
+
+    /**
+     * Get release notes
+     */
+    private function getReleaseNotes($version, $channel)
+    {
+        $notes = [
+            'stable' => [
+                '11.2.0' => 'ปรับปรุงประสิทธิภาพ, แก้ไขข้อบกพร่อง, เพิ่มฟีเจอร์ใหม่'
+            ],
+            'beta' => [
+                '11.3.0-beta.1' => 'ฟีเจอร์ใหม่ที่กำลังทดสอบ, อาจมีข้อบกพร่อง'
+            ],
+            'dev' => [
+                '11.4.0-dev' => 'ฟีเจอร์ล่าสุดที่กำลังพัฒนา, ไม่แนะนำสำหรับการใช้งานจริง'
+            ]
+        ];
+        
+        return $notes[$channel][$version] ?? 'ไม่มีข้อมูลการอัปเดต';
+    }
+
+    /**
+     * Get update settings
+     */
+    public function getUpdateSettings()
+    {
+        try {
+            $settings = SettingsHelper::getMultiple([
+                'auto_update',
+                'update_channel', 
+                'backup_before_update',
+                'notify_on_update'
+            ]);
+
+            // Set default values if not exists
+            $defaultSettings = [
+                'auto_update' => true,
+                'update_channel' => 'stable',
+                'backup_before_update' => true,
+                'notify_on_update' => true
+            ];
+
+            $settings = array_merge($defaultSettings, $settings);
+
+            return response()->json([
+                'success' => true,
+                'settings' => $settings
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Get update settings error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในการโหลดการตั้งค่าอัปเดต'
+            ], 500);
+        }
+    }
+
+    /**
+     * Save update settings
+     */
+    public function saveUpdateSettings(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'autoUpdate' => 'required|boolean',
+                'updateChannel' => 'required|string|in:stable,beta,dev',
+                'backupBeforeUpdate' => 'required|boolean',
+                'notifyOnUpdate' => 'required|boolean'
+            ]);
+
+            if ($validator->fails()) {
+                \Log::error('Update settings validation failed:', $validator->errors()->toArray());
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ข้อมูลไม่ถูกต้อง',
+                    'errors' => $validator->errors()
+                ], 400);
+            }
+
+            $settings = [
+                'auto_update' => $request->autoUpdate,
+                'update_channel' => $request->updateChannel,
+                'backup_before_update' => $request->backupBeforeUpdate,
+                'notify_on_update' => $request->notifyOnUpdate
+            ];
+
+            // Save each setting to database using SettingsHelper
+            foreach ($settings as $key => $value) {
+                SettingsHelper::set($key, $value);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'บันทึกการตั้งค่าอัปเดตสำเร็จ'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Update settings save error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในการบันทึกการตั้งค่าอัปเดต'
+            ], 500);
+        }
+    }
+
+    /**
      * Save performance settings
      */
     public function savePerformanceSettings(Request $request)
@@ -704,10 +1075,11 @@ class SettingsController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถบันทึกการตั้งค่าได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถบันทึกการตั้งค่าได้ กรุณาลองใหม่อีกครั้ง',
+                'SettingsController::saveAuditSettings'
+            );
         }
     }
 
@@ -738,10 +1110,11 @@ class SettingsController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถโหลดการตั้งค่าได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถโหลดการตั้งค่าได้ กรุณาลองใหม่อีกครั้ง',
+                'SettingsController::getAuditSettings'
+            );
         }
     }
 
@@ -789,10 +1162,11 @@ class SettingsController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถบันทึกการตั้งค่าได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถบันทึกการตั้งค่าได้ กรุณาลองใหม่อีกครั้ง',
+                'SettingsController::saveAuditSettings'
+            );
         }
     }
 
@@ -820,10 +1194,11 @@ class SettingsController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถโหลดการตั้งค่าได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถโหลดการตั้งค่าได้ กรุณาลองใหม่อีกครั้ง',
+                'SettingsController::getAuditSettings'
+            );
         }
     }
 
@@ -1003,10 +1378,11 @@ class SettingsController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถบันทึกการตั้งค่าได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถบันทึกการตั้งค่าได้ กรุณาลองใหม่อีกครั้ง',
+                'SettingsController::saveAuditSettings'
+            );
         }
     }
 
@@ -1188,10 +1564,11 @@ class SettingsController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถบันทึกการตั้งค่าได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถบันทึกการตั้งค่าได้ กรุณาลองใหม่อีกครั้ง',
+                'SettingsController::saveAuditSettings'
+            );
         }
     }
 
@@ -1224,10 +1601,11 @@ class SettingsController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถโหลดการตั้งค่าได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถโหลดการตั้งค่าได้ กรุณาลองใหม่อีกครั้ง',
+                'SettingsController::getAuditSettings'
+            );
         }
     }
 
@@ -1346,10 +1724,11 @@ class SettingsController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่สามารถโหลดการตั้งค่าได้: ' . $e->getMessage()
-            ], 500);
+            return getSafeApiErrorResponse(
+                $e,
+                'ไม่สามารถโหลดการตั้งค่าได้ กรุณาลองใหม่อีกครั้ง',
+                'SettingsController::getAuditSettings'
+            );
         }
     }
 }

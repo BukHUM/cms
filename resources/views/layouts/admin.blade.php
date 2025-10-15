@@ -437,19 +437,6 @@
             
             <div class="header-right">
                 <div class="header-actions">
-                    <!-- Search -->
-                    <div class="search-box">
-                        <i class="fas fa-search"></i>
-                        <input type="text" placeholder="ค้นหา...">
-                    </div>
-                    
-                    
-                    <!-- Frontend App Link -->
-                    <a href="{{ route('home') }}" class="frontend-link" title="เปิดหน้าแอพ" target="_blank">
-                        <i class="fas fa-external-link-alt"></i>
-                        <span class="link-text">หน้าแอพ</span>
-                    </a>
-                    
                     <!-- User Menu -->
                     <div class="user-menu">
                         <div class="user-avatar-small">
@@ -485,23 +472,6 @@
         
         <!-- Page Content -->
         <main class="page-content">
-            <!-- Alerts -->
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="fas fa-check-circle me-2"></i>
-                    {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            @endif
-            
-            @if(session('error'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="fas fa-exclamation-circle me-2"></i>
-                    {{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            @endif
-            
             @yield('content')
         </main>
     </div>
@@ -633,87 +603,6 @@
                 allowOutsideClick: false,
                 allowEscapeKey: false
             });
-            
-            // Auto-show success/error messages with Toast
-            @if(session('success'))
-                // Show toast notification instead of SweetAlert
-                const Toast = Swal.mixin({
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 2000,
-                    timerProgressBar: true,
-                    didOpen: (toast) => {
-                        toast.addEventListener('mouseenter', Swal.stopTimer);
-                        toast.addEventListener('mouseleave', Swal.resumeTimer);
-                    }
-                });
-                
-                Toast.fire({
-                    icon: 'success',
-                    title: '{{ session('success') }}'
-                });
-            @endif
-            
-            @if(session('error'))
-                // Show error toast
-                const ErrorToast = Swal.mixin({
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true,
-                    didOpen: (toast) => {
-                        toast.addEventListener('mouseenter', Swal.stopTimer);
-                        toast.addEventListener('mouseleave', Swal.resumeTimer);
-                    }
-                });
-                
-                ErrorToast.fire({
-                    icon: 'error',
-                    title: '{{ session('error') }}'
-                });
-            @endif
-            
-            @if(session('warning'))
-                // Show warning toast
-                const WarningToast = Swal.mixin({
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 2500,
-                    timerProgressBar: true,
-                    didOpen: (toast) => {
-                        toast.addEventListener('mouseenter', Swal.stopTimer);
-                        toast.addEventListener('mouseleave', Swal.resumeTimer);
-                    }
-                });
-                
-                WarningToast.fire({
-                    icon: 'warning',
-                    title: '{{ session('warning') }}'
-                });
-            @endif
-            
-            @if(session('info'))
-                // Show info toast
-                const InfoToast = Swal.mixin({
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 2000,
-                    timerProgressBar: true,
-                    didOpen: (toast) => {
-                        toast.addEventListener('mouseenter', Swal.stopTimer);
-                        toast.addEventListener('mouseleave', Swal.resumeTimer);
-                    }
-                });
-                
-                InfoToast.fire({
-                    icon: 'info',
-                    title: '{{ session('info') }}'
-                });
-            @endif
             
             // Enhanced logout confirmation
             const logoutLinks = document.querySelectorAll('a[href="{{ route('logout') }}"]');

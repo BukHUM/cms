@@ -120,12 +120,13 @@ class SettingsHelper
     {
         return Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
             $settings = DB::table('laravel_settings')
-                ->pluck('value', 'key')
+                ->select('key', 'value', 'type')
+                ->get()
                 ->toArray();
 
             $result = [];
-            foreach ($settings as $key => $value) {
-                $result[$key] = self::castValue($value);
+            foreach ($settings as $setting) {
+                $result[$setting->key] = self::castValue($setting->value);
             }
 
             return $result;
@@ -164,7 +165,7 @@ class SettingsHelper
             // Handle boolean values more explicitly
             if ($value === '1' || $value === 'true' || $value === 'yes') {
                 return true;
-            } elseif ($value === '0' || $value === 'false' || $value === 'no') {
+            } elseif ($value === '0' || $value === 'false' || $value === 'no' || $value === '') {
                 return false;
             }
             
