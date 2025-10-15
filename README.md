@@ -311,7 +311,8 @@ php artisan cache:manage warm --type=all
 
 - **Repository**: [BukHUM/corebackend](https://github.com/BukHUM/corebackend)
 - **Issues**: [GitHub Issues](https://github.com/BukHUM/corebackend/issues)
+- **Email**: [pairor@gmail.com](mailto:pairor@gmail.com)
 
 ---
 
-<p align="center">สร้างด้วย ❤️ โดยทีมพัฒนา BukHUM</p>
+<p align="center">สร้างด้วย ❤️ โดยทีมพัฒนา ต้นกล้าไอที BukHUM</p>
