@@ -10,7 +10,7 @@
                     <div class="col-md-6">
                         <label for="auditEnabled" class="form-label">เปิดใช้งาน Audit Log</label>
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="auditEnabled" checked>
+                            <input class="form-check-input" type="checkbox" id="auditEnabled" name="auditEnabled" checked>
                             <label class="form-check-label" for="auditEnabled" id="auditEnabledLabel">
                                 บันทึกการใช้งานระบบ
                             </label>
@@ -18,11 +18,18 @@
                     </div>
                     <div class="col-md-6">
                         <label for="auditRetention" class="form-label">เก็บข้อมูล (วัน)</label>
-                        <input type="number" class="form-control" id="auditRetention" value="90" min="7" max="365">
+                        <select class="form-select" id="auditRetention" name="auditRetention">
+                            <option value="3">3 วัน</option>
+                            <option value="7">7 วัน</option>
+                            <option value="15">15 วัน</option>
+                            <option value="30">30 วัน</option>
+                            <option value="60">60 วัน</option>
+                            <option value="90" selected>90 วัน</option>
+                        </select>
                     </div>
                     <div class="col-md-6">
                         <label for="auditLevel" class="form-label">ระดับการบันทึก</label>
-                        <select class="form-select" id="auditLevel">
+                        <select class="form-select" id="auditLevel" name="auditLevel">
                             <option value="basic" selected>พื้นฐาน (Login, Logout, ข้อมูลสำคัญ)</option>
                             <option value="detailed">ละเอียด (ทุกการกระทำ)</option>
                             <option value="comprehensive">ครบถ้วน (รวมการดูข้อมูล)</option>

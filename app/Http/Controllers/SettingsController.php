@@ -19,13 +19,13 @@ class SettingsController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'auditEnabled' => 'required|boolean',
-                'auditRetention' => 'required|integer|min:7|max:365',
-                'auditLevel' => 'required|string|in:basic,detailed,comprehensive'
+                'auditEnabled' => 'nullable|boolean',
+                'auditRetention' => 'nullable|integer|min:3|max:365',
+                'auditLevel' => 'nullable|string|in:basic,detailed,comprehensive'
             ]);
 
             if ($validator->fails()) {
-                \Log::error('Email settings validation failed:', $validator->errors()->toArray());
+                \Log::error('Audit settings validation failed:', $validator->errors()->toArray());
                 return response()->json([
                     'success' => false,
                     'message' => 'ข้อมูลไม่ถูกต้อง',
@@ -34,15 +34,30 @@ class SettingsController extends Controller
             }
 
             $settings = [
-                'audit_enabled' => $request->auditEnabled,
-                'audit_retention' => $request->auditRetention,
-                'audit_level' => $request->auditLevel
+                'audit_enabled' => $request->boolean('auditEnabled', true),
+                'audit_retention' => $request->input('auditRetention', 90),
+                'audit_level' => $request->input('auditLevel', 'basic')
             ];
 
             // Save each setting to database using SettingsHelper
             foreach ($settings as $key => $value) {
                 SettingsHelper::set($key, $value);
             }
+
+            // Log the settings change
+            \App\Models\AuditLog::createLog([
+                'user_id' => session('admin_user_id'),
+                'user_email' => session('admin_user_email'),
+                'action' => 'settings_update',
+                'description' => 'อัปเดตการตั้งค่า Audit Log',
+                'old_values' => [
+                    'audit_enabled' => SettingsHelper::get('audit_enabled', true),
+                    'audit_retention' => SettingsHelper::get('audit_retention', 90),
+                    'audit_level' => SettingsHelper::get('audit_level', 'basic')
+                ],
+                'new_values' => $settings,
+                'status' => 'success'
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -73,8 +88,8 @@ class SettingsController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'auditEnabled' => $settings['audit_enabled'] ?? true,
-                    'auditRetention' => $settings['audit_retention'] ?? 90,
+                    'auditEnabled' => (bool)($settings['audit_enabled'] ?? true),
+                    'auditRetention' => (int)($settings['audit_retention'] ?? 90),
                     'auditLevel' => $settings['audit_level'] ?? 'basic'
                 ]
             ]);
@@ -105,7 +120,7 @@ class SettingsController extends Controller
             ]);
 
             if ($validator->fails()) {
-                \Log::error('Email settings validation failed:', $validator->errors()->toArray());
+                \Log::error('Audit settings validation failed:', $validator->errors()->toArray());
                 return response()->json([
                     'success' => false,
                     'message' => 'ข้อมูลไม่ถูกต้อง',
@@ -221,7 +236,7 @@ class SettingsController extends Controller
                 'serverTime' => now()->format('Y-m-d H:i:s'),
                 
                 // System Resources
-                'memoryUsage' => $this->formatBytes(memory_get_usage(true)),
+                'memoryUsage' => $this->getSystemMemoryUsage(),
                 'memoryUsagePercent' => $this->calculateMemoryUsagePercent(),
                 'diskUsage' => $this->getDiskUsage(),
                 'diskUsagePercent' => $this->calculateDiskUsagePercent(),
@@ -270,17 +285,111 @@ class SettingsController extends Controller
         return round($bytes, $precision) . ' ' . $units[$i];
     }
 
+    private function getSystemMemoryUsage()
+    {
+        try {
+            // Try to get system memory info from /proc/meminfo (Linux)
+            if (is_readable('/proc/meminfo')) {
+                $meminfo = file_get_contents('/proc/meminfo');
+                preg_match('/MemTotal:\s+(\d+)\s+kB/', $meminfo, $total);
+                preg_match('/MemAvailable:\s+(\d+)\s+kB/', $meminfo, $available);
+                
+                if (isset($total[1]) && isset($available[1])) {
+                    $totalKB = (int)$total[1];
+                    $availableKB = (int)$available[1];
+                    $usedKB = $totalKB - $availableKB;
+                    
+                    return $this->formatBytes($usedKB * 1024) . ' / ' . $this->formatBytes($totalKB * 1024);
+                }
+            }
+            
+            // Fallback for Windows or other systems
+            if (function_exists('shell_exec')) {
+                $output = shell_exec('wmic OS get TotalVisibleMemorySize,FreePhysicalMemory /value 2>nul');
+                if ($output) {
+                    preg_match('/TotalVisibleMemorySize=(\d+)/', $output, $total);
+                    preg_match('/FreePhysicalMemory=(\d+)/', $output, $free);
+                    
+                    if (isset($total[1]) && isset($free[1])) {
+                        $totalKB = (int)$total[1];
+                        $freeKB = (int)$free[1];
+                        $usedKB = $totalKB - $freeKB;
+                        
+                        return $this->formatBytes($usedKB * 1024) . ' / ' . $this->formatBytes($totalKB * 1024);
+                    }
+                }
+            }
+            
+            // Final fallback - show PHP memory usage
+            $phpMemory = memory_get_usage(true);
+            $phpPeak = memory_get_peak_usage(true);
+            return 'PHP: ' . $this->formatBytes($phpMemory) . ' (Peak: ' . $this->formatBytes($phpPeak) . ')';
+            
+        } catch (\Exception $e) {
+            // Fallback to PHP memory usage
+            $phpMemory = memory_get_usage(true);
+            return 'PHP: ' . $this->formatBytes($phpMemory);
+        }
+    }
+
     private function calculateMemoryUsagePercent()
     {
-        $memoryLimit = ini_get('memory_limit');
-        $memoryLimitBytes = $this->parseMemoryLimit($memoryLimit);
-        $memoryUsage = memory_get_usage(true);
-        
-        if ($memoryLimitBytes > 0) {
-            return round(($memoryUsage / $memoryLimitBytes) * 100, 1);
+        try {
+            // Try to get system memory info from /proc/meminfo (Linux)
+            if (is_readable('/proc/meminfo')) {
+                $meminfo = file_get_contents('/proc/meminfo');
+                preg_match('/MemTotal:\s+(\d+)\s+kB/', $meminfo, $total);
+                preg_match('/MemAvailable:\s+(\d+)\s+kB/', $meminfo, $available);
+                
+                if (isset($total[1]) && isset($available[1])) {
+                    $totalKB = (int)$total[1];
+                    $availableKB = (int)$available[1];
+                    $usedKB = $totalKB - $availableKB;
+                    
+                    return round(($usedKB / $totalKB) * 100, 1);
+                }
+            }
+            
+            // Fallback for Windows or other systems
+            if (function_exists('shell_exec')) {
+                $output = shell_exec('wmic OS get TotalVisibleMemorySize,FreePhysicalMemory /value 2>nul');
+                if ($output) {
+                    preg_match('/TotalVisibleMemorySize=(\d+)/', $output, $total);
+                    preg_match('/FreePhysicalMemory=(\d+)/', $output, $free);
+                    
+                    if (isset($total[1]) && isset($free[1])) {
+                        $totalKB = (int)$total[1];
+                        $freeKB = (int)$free[1];
+                        $usedKB = $totalKB - $freeKB;
+                        
+                        return round(($usedKB / $totalKB) * 100, 1);
+                    }
+                }
+            }
+            
+            // Final fallback - calculate from PHP memory limit
+            $memoryLimit = ini_get('memory_limit');
+            $memoryLimitBytes = $this->parseMemoryLimit($memoryLimit);
+            $memoryUsage = memory_get_usage(true);
+            
+            if ($memoryLimitBytes > 0) {
+                return round(($memoryUsage / $memoryLimitBytes) * 100, 1);
+            }
+            
+            return 0;
+            
+        } catch (\Exception $e) {
+            // Fallback to PHP memory calculation
+            $memoryLimit = ini_get('memory_limit');
+            $memoryLimitBytes = $this->parseMemoryLimit($memoryLimit);
+            $memoryUsage = memory_get_usage(true);
+            
+            if ($memoryLimitBytes > 0) {
+                return round(($memoryUsage / $memoryLimitBytes) * 100, 1);
+            }
+            
+            return 0;
         }
-        
-        return 0;
     }
 
     private function parseMemoryLimit($memoryLimit)
@@ -303,37 +412,278 @@ class SettingsController extends Controller
 
     private function getDiskUsage()
     {
-        $bytes = disk_free_space(storage_path());
-        return $this->formatBytes($bytes);
+        try {
+            // Get disk usage for the storage directory
+            $storagePath = storage_path();
+            $totalBytes = disk_total_space($storagePath);
+            $freeBytes = disk_free_space($storagePath);
+            
+            if ($totalBytes && $freeBytes) {
+                $usedBytes = $totalBytes - $freeBytes;
+                return $this->formatBytes($usedBytes) . ' / ' . $this->formatBytes($totalBytes);
+            }
+            
+            // Fallback: try to get system disk usage
+            if (function_exists('shell_exec')) {
+                if (PHP_OS_FAMILY === 'Windows') {
+                    // Windows: get disk usage using wmic
+                    $output = shell_exec('wmic logicaldisk get size,freespace,caption /value 2>nul');
+                    if ($output) {
+                        $lines = explode("\n", $output);
+                        $totalSize = 0;
+                        $totalFree = 0;
+                        
+                        foreach ($lines as $line) {
+                            if (strpos($line, 'Size=') === 0) {
+                                $totalSize += (int)substr($line, 5);
+                            } elseif (strpos($line, 'FreeSpace=') === 0) {
+                                $totalFree += (int)substr($line, 10);
+                            }
+                        }
+                        
+                        if ($totalSize > 0) {
+                            $totalUsed = $totalSize - $totalFree;
+                            return $this->formatBytes($totalUsed) . ' / ' . $this->formatBytes($totalSize);
+                        }
+                    }
+                } else {
+                    // Linux: get disk usage using df command
+                    $output = shell_exec('df -h / 2>/dev/null');
+                    if ($output) {
+                        $lines = explode("\n", $output);
+                        if (isset($lines[1])) {
+                            $parts = preg_split('/\s+/', $lines[1]);
+                            if (count($parts) >= 4) {
+                                $total = $parts[1];
+                                $used = $parts[2];
+                                return $used . ' / ' . $total;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return 'Unknown';
+            
+        } catch (\Exception $e) {
+            return 'Unknown';
+        }
     }
 
     private function calculateDiskUsagePercent()
     {
-        $totalBytes = disk_total_space(storage_path());
-        $freeBytes = disk_free_space(storage_path());
-        $usedBytes = $totalBytes - $freeBytes;
-        
-        if ($totalBytes > 0) {
-            return round(($usedBytes / $totalBytes) * 100, 1);
+        try {
+            // Get disk usage for the storage directory
+            $storagePath = storage_path();
+            $totalBytes = disk_total_space($storagePath);
+            $freeBytes = disk_free_space($storagePath);
+            
+            if ($totalBytes && $freeBytes) {
+                $usedBytes = $totalBytes - $freeBytes;
+                return round(($usedBytes / $totalBytes) * 100, 1);
+            }
+            
+            // Fallback: try to get system disk usage percentage
+            if (function_exists('shell_exec')) {
+                if (PHP_OS_FAMILY === 'Windows') {
+                    // Windows: get disk usage using wmic
+                    $output = shell_exec('wmic logicaldisk get size,freespace,caption /value 2>nul');
+                    if ($output) {
+                        $lines = explode("\n", $output);
+                        $totalSize = 0;
+                        $totalFree = 0;
+                        
+                        foreach ($lines as $line) {
+                            if (strpos($line, 'Size=') === 0) {
+                                $totalSize += (int)substr($line, 5);
+                            } elseif (strpos($line, 'FreeSpace=') === 0) {
+                                $totalFree += (int)substr($line, 10);
+                            }
+                        }
+                        
+                        if ($totalSize > 0) {
+                            $totalUsed = $totalSize - $totalFree;
+                            return round(($totalUsed / $totalSize) * 100, 1);
+                        }
+                    }
+                } else {
+                    // Linux: get disk usage using df command
+                    $output = shell_exec('df / 2>/dev/null | tail -1');
+                    if ($output) {
+                        $parts = preg_split('/\s+/', trim($output));
+                        if (count($parts) >= 5) {
+                            $totalKB = (int)$parts[1];
+                            $usedKB = (int)$parts[2];
+                            
+                            if ($totalKB > 0) {
+                                return round(($usedKB / $totalKB) * 100, 1);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return 0;
+            
+        } catch (\Exception $e) {
+            return 0;
         }
-        
-        return 0;
     }
 
     private function getCpuLoad()
     {
-        if (function_exists('sys_getloadavg')) {
-            $load = sys_getloadavg();
-            return round($load[0], 2);
+        try {
+            // Try Linux /proc/loadavg first
+            if (is_readable('/proc/loadavg')) {
+                $loadavg = file_get_contents('/proc/loadavg');
+                $loads = explode(' ', trim($loadavg));
+                if (isset($loads[0])) {
+                    return round((float)$loads[0], 2);
+                }
+            }
+            
+            // Try Windows WMI
+            if (function_exists('shell_exec')) {
+                $output = shell_exec('wmic cpu get loadpercentage /value 2>nul');
+                if ($output) {
+                    preg_match('/LoadPercentage=(\d+)/', $output, $matches);
+                    if (isset($matches[1])) {
+                        return round((float)$matches[1], 2);
+                    }
+                }
+                
+                // Alternative Windows method using PowerShell
+                $psOutput = shell_exec('powershell "Get-WmiObject -Class Win32_Processor | Select-Object -ExpandProperty LoadPercentage" 2>nul');
+                if ($psOutput && is_numeric(trim($psOutput))) {
+                    return round((float)trim($psOutput), 2);
+                }
+            }
+            
+            // Try sys_getloadavg() if available
+            if (function_exists('sys_getloadavg')) {
+                $load = sys_getloadavg();
+                if (isset($load[0])) {
+                    return round($load[0], 2);
+                }
+            }
+            
+            // Fallback - try to estimate from process count
+            if (function_exists('shell_exec')) {
+                if (PHP_OS_FAMILY === 'Windows') {
+                    $processCount = shell_exec('tasklist /fo csv | find /c /v ""');
+                } else {
+                    $processCount = shell_exec('ps aux | wc -l');
+                }
+                
+                if ($processCount) {
+                    $count = (int)trim($processCount);
+                    // Rough estimation: more processes = higher load
+                    if ($count > 200) return 'High';
+                    if ($count > 100) return 'Medium';
+                    return 'Low';
+                }
+            }
+            
+            return 'N/A';
+            
+        } catch (\Exception $e) {
+            return 'N/A';
         }
-        
-        return 'N/A';
     }
 
     private function getActiveUsers()
     {
-        // This is a placeholder - you would implement actual active user counting
-        return rand(5, 25);
+        try {
+            // Method 1: Count database sessions (Laravel sessions)
+            try {
+                $activeUsers = DB::table('sessions')
+                    ->where('last_activity', '>', now()->subMinutes(30)->timestamp)
+                    ->count();
+                
+                if ($activeUsers > 0) {
+                    return $activeUsers;
+                }
+            } catch (\Exception $e) {
+                // Database sessions table might not exist
+            }
+            
+            // Method 2: Count file-based sessions
+            try {
+                $sessionPath = session_save_path();
+                if (empty($sessionPath)) {
+                    $sessionPath = sys_get_temp_dir();
+                }
+                
+                if (is_dir($sessionPath)) {
+                    $sessionFiles = glob($sessionPath . '/sess_*');
+                    $activeCount = 0;
+                    $cutoffTime = time() - (30 * 60); // 30 minutes ago
+                    
+                    foreach ($sessionFiles as $file) {
+                        if (filemtime($file) > $cutoffTime) {
+                            $activeCount++;
+                        }
+                    }
+                    
+                    if ($activeCount > 0) {
+                        return $activeCount;
+                    }
+                }
+            } catch (\Exception $e) {
+                // File sessions might not be accessible
+            }
+            
+            // Method 3: Count system users (Linux/Unix)
+            if (function_exists('shell_exec') && PHP_OS_FAMILY !== 'Windows') {
+                try {
+                    // Count logged-in users
+                    $users = shell_exec('who | wc -l');
+                    if ($users && is_numeric(trim($users))) {
+                        return (int)trim($users);
+                    }
+                    
+                    // Alternative: count unique users
+                    $uniqueUsers = shell_exec('who | cut -d" " -f1 | sort -u | wc -l');
+                    if ($uniqueUsers && is_numeric(trim($uniqueUsers))) {
+                        return (int)trim($uniqueUsers);
+                    }
+                } catch (\Exception $e) {
+                    // System commands might not be available
+                }
+            }
+            
+            // Method 4: Count Windows logged-in users
+            if (function_exists('shell_exec') && PHP_OS_FAMILY === 'Windows') {
+                try {
+                    $users = shell_exec('query user 2>nul');
+                    if ($users) {
+                        $lines = explode("\n", $users);
+                        $userCount = 0;
+                        foreach ($lines as $line) {
+                            if (strpos($line, 'Active') !== false || strpos($line, 'Disc') !== false) {
+                                $userCount++;
+                            }
+                        }
+                        if ($userCount > 0) {
+                            return $userCount;
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Windows commands might not be available
+                }
+            }
+            
+            // Method 5: Cache-based fallback
+            try {
+                $activeUsers = Cache::get('active_users_count', 0);
+                return $activeUsers;
+            } catch (\Exception $e) {
+                return 'Unknown';
+            }
+            
+        } catch (\Exception $e) {
+            return 'Unknown';
+        }
     }
 
     private function getDatabaseSize()
@@ -368,8 +718,33 @@ class SettingsController extends Controller
 
     private function getLastBackup()
     {
-        // This is a placeholder - you would implement actual backup checking
-        return 'Unknown';
+        try {
+            // Check for backup files in storage/backups directory
+            $backupPath = storage_path('backups');
+            if (is_dir($backupPath)) {
+                $files = glob($backupPath . '/*.sql');
+                if (!empty($files)) {
+                    $latestFile = max($files);
+                    $lastModified = filemtime($latestFile);
+                    return date('Y-m-d H:i:s', $lastModified);
+                }
+            }
+            
+            // Check for backup files in storage/app/backups
+            $appBackupPath = storage_path('app/backups');
+            if (is_dir($appBackupPath)) {
+                $files = glob($appBackupPath . '/*');
+                if (!empty($files)) {
+                    $latestFile = max($files);
+                    $lastModified = filemtime($latestFile);
+                    return date('Y-m-d H:i:s', $lastModified);
+                }
+            }
+            
+            return 'ไม่มีการสำรองข้อมูล';
+        } catch (\Exception $e) {
+            return 'Unknown';
+        }
     }
 
     private function getUptime()
@@ -395,8 +770,19 @@ class SettingsController extends Controller
 
     private function getStartTime()
     {
-        // This is a placeholder - you would implement actual start time tracking
-        return time() - rand(3600, 86400); // Random uptime between 1 hour and 1 day
+        try {
+            // Try to get application start time from cache
+            $startTime = Cache::get('app_start_time');
+            if (!$startTime) {
+                // Set start time if not exists
+                $startTime = time();
+                Cache::put('app_start_time', $startTime, now()->addDays(1));
+            }
+            return $startTime;
+        } catch (\Exception $e) {
+            // Fallback to a reasonable default
+            return time() - 3600; // Assume 1 hour uptime
+        }
     }
 
     /**
@@ -405,20 +791,25 @@ class SettingsController extends Controller
     public function exportSystemInfo()
     {
         try {
-            $systemInfo = $this->getSystemInfo();
+            // Get system info data
+            $systemInfoResponse = $this->getSystemInfo();
+            $systemInfoData = json_decode($systemInfoResponse->getContent(), true);
             
-            $exportData = [
-                'filename' => 'system_info_' . date('Y-m-d_H-i-s') . '.json',
-                'download_url' => '/admin/settings/system-info/download/' . uniqid(),
-                'total_records' => 1
-            ];
-
-            return response()->json([
-                'success' => true,
-                'message' => 'ส่งออกข้อมูลระบบสำเร็จ',
-                'data' => $exportData
-            ]);
-
+            if (!$systemInfoData['success']) {
+                throw new \Exception('ไม่สามารถโหลดข้อมูลระบบได้');
+            }
+            
+            $data = $systemInfoData['data'];
+            
+            // Create export filename
+            $filename = 'system_info_' . date('Y-m-d_H-i-s') . '.json';
+            $tempPath = sys_get_temp_dir() . '/' . $filename;
+            
+            // Write data to temporary file
+            file_put_contents($tempPath, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            
+            return response()->download($tempPath, $filename)->deleteFileAfterSend(true);
+            
         } catch (\Exception $e) {
             return getSafeApiErrorResponse(
                 $e,
@@ -434,16 +825,39 @@ class SettingsController extends Controller
     public function getLogFile($filename)
     {
         try {
+            // Validate filename to prevent directory traversal
+            $allowedFiles = ['laravel.log', 'error.log', 'access.log'];
+            if (!in_array($filename, $allowedFiles)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ไฟล์ log ที่ระบุไม่ได้รับอนุญาต'
+                ], 403);
+            }
+
             $logPath = storage_path('logs/' . $filename);
             
             if (!file_exists($logPath)) {
+                // Return empty content for non-existent files instead of 404
                 return response()->json([
-                    'success' => false,
-                    'message' => 'ไม่พบไฟล์ log'
-                ], 404);
+                    'success' => true,
+                    'data' => [
+                        'content' => "ไม่มีไฟล์ {$filename} ในระบบ\n\nไฟล์ log นี้ยังไม่ได้ถูกสร้างขึ้น หรือไม่มีข้อมูลในไฟล์นี้"
+                    ]
+                ]);
             }
 
             $content = file_get_contents($logPath);
+            
+            // Check if file is empty
+            if (empty(trim($content))) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'content' => "ไฟล์ {$filename} ว่างเปล่า\n\nยังไม่มีข้อมูล log ในไฟล์นี้"
+                    ]
+                ]);
+            }
+
             $lines = explode("\n", $content);
             $lastLines = array_slice($lines, -100); // Get last 100 lines
 
@@ -471,18 +885,29 @@ class SettingsController extends Controller
         try {
             $logFiles = ['laravel.log', 'error.log', 'access.log'];
             $clearedFiles = [];
+            $skippedFiles = [];
 
             foreach ($logFiles as $file) {
                 $logPath = storage_path('logs/' . $file);
                 if (file_exists($logPath)) {
                     file_put_contents($logPath, '');
                     $clearedFiles[] = $file;
+                } else {
+                    $skippedFiles[] = $file;
                 }
+            }
+
+            $message = 'ล้าง Logs สำเร็จ';
+            if (count($clearedFiles) > 0) {
+                $message .= ' (' . implode(', ', $clearedFiles) . ')';
+            }
+            if (count($skippedFiles) > 0) {
+                $message .= ' - ข้ามไฟล์ที่ไม่มีอยู่: ' . implode(', ', $skippedFiles);
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'ล้าง Logs สำเร็จ (' . count($clearedFiles) . ' ไฟล์)'
+                'message' => $message
             ]);
 
         } catch (\Exception $e) {
@@ -500,12 +925,41 @@ class SettingsController extends Controller
     public function downloadLogs()
     {
         try {
-            // This is a placeholder - you would implement actual zip creation
-            return response()->json([
-                'success' => false,
-                'message' => 'ฟีเจอร์ดาวน์โหลด Logs ยังไม่พร้อมใช้งาน'
-            ], 501);
-
+            $logFiles = ['laravel.log', 'error.log', 'access.log'];
+            $tempDir = sys_get_temp_dir();
+            $zipFileName = 'system_logs_' . date('Y-m-d_H-i-s') . '.zip';
+            $zipPath = $tempDir . '/' . $zipFileName;
+            
+            // Create ZIP file
+            $zip = new \ZipArchive();
+            if ($zip->open($zipPath, \ZipArchive::CREATE) !== TRUE) {
+                throw new \Exception('ไม่สามารถสร้างไฟล์ ZIP ได้');
+            }
+            
+            $addedFiles = 0;
+            foreach ($logFiles as $file) {
+                $logPath = storage_path('logs/' . $file);
+                if (file_exists($logPath)) {
+                    $zip->addFile($logPath, $file);
+                    $addedFiles++;
+                } else {
+                    // Add empty file with message for non-existent files
+                    $zip->addFromString($file, "ไม่มีไฟล์ {$file} ในระบบ\n\nไฟล์ log นี้ยังไม่ได้ถูกสร้างขึ้น หรือไม่มีข้อมูลในไฟล์นี้");
+                    $addedFiles++;
+                }
+            }
+            
+            $zip->close();
+            
+            if ($addedFiles === 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ไม่พบไฟล์ logs สำหรับดาวน์โหลด'
+                ], 404);
+            }
+            
+            return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
+            
         } catch (\Exception $e) {
             return getSafeApiErrorResponse(
                 $e,
@@ -1038,7 +1492,7 @@ class SettingsController extends Controller
             ]);
 
             if ($validator->fails()) {
-                \Log::error('Email settings validation failed:', $validator->errors()->toArray());
+                \Log::error('Audit settings validation failed:', $validator->errors()->toArray());
                 return response()->json([
                     'success' => false,
                     'message' => 'ข้อมูลไม่ถูกต้อง',
@@ -1134,7 +1588,7 @@ class SettingsController extends Controller
             ]);
 
             if ($validator->fails()) {
-                \Log::error('Email settings validation failed:', $validator->errors()->toArray());
+                \Log::error('Audit settings validation failed:', $validator->errors()->toArray());
                 return response()->json([
                     'success' => false,
                     'message' => 'ข้อมูลไม่ถูกต้อง',
@@ -1348,7 +1802,7 @@ class SettingsController extends Controller
             ]);
 
             if ($validator->fails()) {
-                \Log::error('Email settings validation failed:', $validator->errors()->toArray());
+                \Log::error('Audit settings validation failed:', $validator->errors()->toArray());
                 return response()->json([
                     'success' => false,
                     'message' => 'ข้อมูลไม่ถูกต้อง',
@@ -1454,7 +1908,7 @@ class SettingsController extends Controller
             ]);
 
             if ($validator->fails()) {
-                \Log::error('Email settings validation failed:', $validator->errors()->toArray());
+                \Log::error('Audit settings validation failed:', $validator->errors()->toArray());
                 return response()->json([
                     'success' => false,
                     'message' => 'ข้อมูลไม่ถูกต้อง',
@@ -1532,7 +1986,7 @@ class SettingsController extends Controller
             ]);
 
             if ($validator->fails()) {
-                \Log::error('Email settings validation failed:', $validator->errors()->toArray());
+                \Log::error('Audit settings validation failed:', $validator->errors()->toArray());
                 return response()->json([
                     'success' => false,
                     'message' => 'ข้อมูลไม่ถูกต้อง',
@@ -1610,51 +2064,57 @@ class SettingsController extends Controller
     }
 
     /**
-     * Get audit logs
+     * Get audit logs with pagination
      */
-    public function getAuditLogs()
+    public function getAuditLogs(Request $request)
     {
         try {
-            // This is a placeholder - you would get actual audit logs from database
-            $auditLogs = [
-                [
-                    'id' => 1,
-                    'user_id' => 1,
-                    'user_name' => 'ไพฑูรย์ ไพเราะ',
-                    'action' => 'login',
-                    'description' => 'เข้าสู่ระบบ',
-                    'ip_address' => '192.168.1.100',
-                    'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                    'created_at' => '2024-01-15 10:30:00'
-                ],
-                [
-                    'id' => 2,
-                    'user_id' => 1,
-                    'user_name' => 'ไพฑูรย์ ไพเราะ',
-                    'action' => 'settings_update',
-                    'description' => 'อัปเดตการตั้งค่าระบบ',
-                    'ip_address' => '192.168.1.100',
-                    'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                    'created_at' => '2024-01-15 10:25:00'
-                ],
-                [
-                    'id' => 3,
-                    'user_id' => 2,
-                    'user_name' => 'ผู้ใช้ทดสอบ',
-                    'action' => 'logout',
-                    'description' => 'ออกจากระบบ',
-                    'ip_address' => '192.168.1.101',
-                    'user_agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-                    'created_at' => '2024-01-15 09:45:00'
-                ]
-            ];
+            $page = $request->input('page', 1);
+            $perPage = $request->input('per_page', 20);
+            
+            // Get audit logs from database with pagination
+            $auditLogs = \App\Models\AuditLog::orderBy('created_at', 'desc')
+                ->paginate($perPage, ['*'], 'page', $page);
+            
+            $formattedLogs = $auditLogs->map(function ($log) {
+                // Get user name from user_email if user_id is not available
+                $userName = 'ไม่ทราบ';
+                if ($log->user_id && $log->user) {
+                    $userName = $log->user->name;
+                } elseif ($log->user_email) {
+                    // Try to get user name from email
+                    $user = \App\Models\User::where('email', $log->user_email)->first();
+                    $userName = $user ? $user->name : $log->user_email;
+                }
+
+                return [
+                    'id' => $log->id,
+                    'user_id' => $log->user_id,
+                    'user_name' => $userName,
+                    'action' => $this->getFormattedAction($log->action),
+                    'description' => $log->description,
+                    'ip_address' => $log->ip_address,
+                    'user_agent' => $log->user_agent,
+                    'status' => $log->status,
+                    'created_at' => $log->created_at->format('Y-m-d H:i:s')
+                ];
+            });
 
             return response()->json([
                 'success' => true,
-                'data' => $auditLogs
+                'data' => $formattedLogs,
+                'pagination' => [
+                    'current_page' => $auditLogs->currentPage(),
+                    'last_page' => $auditLogs->lastPage(),
+                    'per_page' => $auditLogs->perPage(),
+                    'total' => $auditLogs->total(),
+                    'from' => $auditLogs->firstItem(),
+                    'to' => $auditLogs->lastItem()
+                ]
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('Error getting audit logs: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'ไม่สามารถโหลด Audit Logs ได้: ' . $e->getMessage()
@@ -1663,25 +2123,90 @@ class SettingsController extends Controller
     }
 
     /**
+     * Get formatted action name
+     */
+    private function getFormattedAction($action)
+    {
+        $actions = [
+            'login' => 'เข้าสู่ระบบ',
+            'logout' => 'ออกจากระบบ',
+            'create' => 'สร้างข้อมูล',
+            'update' => 'แก้ไขข้อมูล',
+            'delete' => 'ลบข้อมูล',
+            'view' => 'ดูข้อมูล',
+            'export' => 'ส่งออกข้อมูล',
+            'import' => 'นำเข้าข้อมูล',
+            'settings_update' => 'แก้ไขการตั้งค่า',
+            'password_change' => 'เปลี่ยนรหัสผ่าน',
+            'profile_update' => 'แก้ไขโปรไฟล์',
+            'audit_clear' => 'ล้าง Audit Logs',
+            'user_create' => 'สร้างผู้ใช้',
+            'user_update' => 'แก้ไขผู้ใช้',
+            'user_delete' => 'ลบผู้ใช้',
+            'role_create' => 'สร้างบทบาท',
+            'role_update' => 'แก้ไขบทบาท',
+            'role_delete' => 'ลบบทบาท',
+            'permission_create' => 'สร้างสิทธิ์',
+            'permission_update' => 'แก้ไขสิทธิ์',
+            'permission_delete' => 'ลบสิทธิ์'
+        ];
+
+        return $actions[$action] ?? $action;
+    }
+
+    /**
      * Export audit logs
      */
     public function exportAuditLogs()
     {
         try {
-            // This is a placeholder - you would implement actual audit log export
-            $exportData = [
-                'filename' => 'audit_logs_' . date('Y-m-d_H-i-s') . '.csv',
-                'download_url' => '/admin/settings/audit/download/' . uniqid(),
-                'total_records' => 150
-            ];
+            // Get audit logs from database
+            $auditLogs = \App\Models\AuditLog::with('user')
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function ($log) {
+                    return [
+                        'id' => $log->id,
+                        'user_name' => $log->user ? $log->user->name : ($log->user_email ?? 'ไม่ทราบ'),
+                        'action' => $log->getFormattedActionAttribute(),
+                        'description' => $log->description,
+                        'ip_address' => $log->ip_address,
+                        'status' => $log->getFormattedStatusAttribute(),
+                        'created_at' => $log->created_at->format('Y-m-d H:i:s')
+                    ];
+                });
 
-            return response()->json([
-                'success' => true,
-                'message' => 'ส่งออก Audit Logs สำเร็จ',
-                'data' => $exportData
-            ]);
+            // Create CSV content with UTF-8 BOM for Thai language support
+            $filename = 'audit_logs_' . date('Y-m-d_H-i-s') . '.csv';
+            
+            // Start CSV content with UTF-8 BOM
+            $csvContent = "\xEF\xBB\xBF";
+            
+            // Add CSV headers
+            $csvContent .= "ID,ผู้ใช้,การกระทำ,รายละเอียด,IP Address,สถานะ,วันที่\n";
+            
+            // Add data rows
+            foreach ($auditLogs as $log) {
+                $csvContent .= sprintf(
+                    "%d,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                    $log['id'],
+                    str_replace('"', '""', $log['user_name']), // Escape quotes
+                    str_replace('"', '""', $log['action']),
+                    str_replace('"', '""', $log['description'] ?? ''),
+                    str_replace('"', '""', $log['ip_address'] ?? ''),
+                    str_replace('"', '""', $log['status']),
+                    str_replace('"', '""', $log['created_at'])
+                );
+            }
+
+            return response($csvContent)
+                ->header('Content-Type', 'text/csv; charset=UTF-8')
+                ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+                ->header('Cache-Control', 'no-cache, must-revalidate')
+                ->header('Pragma', 'no-cache');
 
         } catch (\Exception $e) {
+            \Log::error('Error exporting audit logs: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'ไม่สามารถส่งออก Audit Logs ได้: ' . $e->getMessage()
@@ -1695,13 +2220,32 @@ class SettingsController extends Controller
     public function clearAuditLogs()
     {
         try {
-            // This is a placeholder - you would implement actual audit log clearing
+            // Get retention setting from database
+            $retentionDays = SettingsHelper::get('audit_retention', 90);
+            
+            // Calculate cutoff date
+            $cutoffDate = now()->subDays($retentionDays);
+            
+            // Delete old audit logs
+            $deletedCount = \App\Models\AuditLog::where('created_at', '<', $cutoffDate)->delete();
+            
+            // Log the clearing action
+            \App\Models\AuditLog::createLog([
+                'user_id' => session('admin_user_id'),
+                'user_email' => session('admin_user_email'),
+                'action' => 'audit_clear',
+                'description' => "ล้าง Audit Logs เก่ากว่า {$retentionDays} วัน",
+                'status' => 'success'
+            ]);
+
             return response()->json([
                 'success' => true,
-                'message' => 'ล้าง Audit Logs สำเร็จ'
+                'message' => "ล้าง Audit Logs สำเร็จ (ลบ {$deletedCount} รายการ)",
+                'deleted_count' => $deletedCount
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('Error clearing audit logs: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'ไม่สามารถล้าง Audit Logs ได้: ' . $e->getMessage()

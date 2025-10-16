@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             SettingsSeeder::class,
             NaturalAuditLogSeeder::class,
+            AuditLogSeeder::class,
         ]);
     }
 }

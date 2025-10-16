@@ -10,6 +10,10 @@ class AuditSettings {
         this.isExportingLogs = false;
         this.isClearingLogs = false;
         this.auditLogs = [];
+        this.currentPage = 1;
+        this.perPage = 20;
+        this.totalPages = 1;
+        this.totalLogs = 0;
         
         this.init();
     }
@@ -59,10 +63,11 @@ class AuditSettings {
             const result = await response.json();
 
             if (result.success) {
+                console.log('Settings loaded successfully:', result.data);
                 this.populateForm(result.data);
                 // this.showSuccess('โหลดการตั้งค่า Audit Log สำเร็จ'); // Disabled auto success message
-                this.updateAuditStatistics();
             } else {
+                console.error('Failed to load settings:', result.message);
                 this.showError(result.message || 'ไม่สามารถโหลดการตั้งค่า Audit Log ได้');
             }
 
@@ -78,6 +83,8 @@ class AuditSettings {
      * Populate form with settings data
      */
     populateForm(data) {
+        console.log('Populating form with data:', data);
+        
         // Basic audit settings
         this.setCheckbox('auditEnabled', data.auditEnabled);
         this.setValue('auditRetention', data.auditRetention);
@@ -85,15 +92,21 @@ class AuditSettings {
 
         // Update audit level description
         this.updateAuditLevelDescription(data.auditLevel);
+        
+        console.log('Form populated successfully');
     }
 
     /**
-     * Set input value
+     * Set select value
      */
     setValue(id, value) {
         const element = document.getElementById(id);
         if (element) {
+            console.log(`Setting ${id} to:`, value);
             element.value = value || '';
+            console.log(`Element ${id} value is now:`, element.value);
+        } else {
+            console.error(`Element with id ${id} not found`);
         }
     }
 
@@ -103,8 +116,12 @@ class AuditSettings {
     setCheckbox(id, value) {
         const element = document.getElementById(id);
         if (element) {
+            console.log(`Setting checkbox ${id} to:`, value);
             element.checked = Boolean(value);
+            console.log(`Checkbox ${id} is now:`, element.checked);
             this.updateSwitchLabel(id, Boolean(value));
+        } else {
+            console.error(`Checkbox with id ${id} not found`);
         }
     }
 
@@ -185,7 +202,6 @@ class AuditSettings {
         switches.forEach(switchElement => {
             switchElement.addEventListener('change', (e) => {
                 this.updateSwitchLabel(e.target.id, e.target.checked);
-                this.updateAuditStatistics();
             });
         });
 
@@ -194,7 +210,6 @@ class AuditSettings {
         if (levelSelect) {
             levelSelect.addEventListener('change', (e) => {
                 this.updateAuditLevelDescription(e.target.value);
-                this.updateAuditStatistics();
             });
         }
 
@@ -202,7 +217,6 @@ class AuditSettings {
         const retentionInput = document.getElementById('auditRetention');
         if (retentionInput) {
             retentionInput.addEventListener('change', () => {
-                this.updateAuditStatistics();
             });
         }
 
@@ -241,13 +255,13 @@ class AuditSettings {
     }
 
     /**
-     * Load audit logs
+     * Load audit logs with pagination
      */
-    async loadAuditLogs(silent = false) {
+    async loadAuditLogs(silent = false, page = 1) {
         try {
             if (!silent) this.showAuditLogsLoading(true);
             
-            const response = await fetch('/admin/settings/audit/logs', {
+            const response = await fetch(`/admin/settings/audit/logs?page=${page}&per_page=${this.perPage}`, {
                 method: 'GET',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
@@ -259,9 +273,12 @@ class AuditSettings {
 
             if (result.success) {
                 this.auditLogs = result.data;
+                this.currentPage = result.pagination.current_page;
+                this.totalPages = result.pagination.last_page;
+                this.totalLogs = result.pagination.total;
                 this.displayAuditLogs();
+                this.displayPagination();
             } else {
-                // console.warn('Could not load audit logs:', result.message); // Hidden
                 this.displayAuditLogs(); // Show empty state
             }
 
@@ -297,13 +314,15 @@ class AuditSettings {
             const statusBadge = this.getStatusBadge(log.status);
             const actionIcon = this.getActionIcon(log.action);
             
+            console.log(`Action: ${log.action}, Icon: ${actionIcon}`);
+            
             html += `
                 <tr>
                     <td>${log.created_at}</td>
                     <td>${log.user_name || 'ไม่ทราบ'}</td>
                     <td>
                         <i class="${actionIcon} me-1"></i>
-                        ${log.action}
+                        ${this.getFormattedAction(log.action)}
                     </td>
                     <td>${log.ip_address || '-'}</td>
                     <td>${statusBadge}</td>
@@ -312,6 +331,76 @@ class AuditSettings {
         });
 
         tableBody.innerHTML = html;
+    }
+
+    /**
+     * Display pagination
+     */
+    displayPagination() {
+        const tableContainer = document.querySelector('.audit-logs-table');
+        if (!tableContainer) return;
+
+        // Remove existing pagination
+        const existingPagination = tableContainer.querySelector('.pagination');
+        if (existingPagination) {
+            existingPagination.remove();
+        }
+
+        if (this.totalPages <= 1) return;
+
+        // Create pagination HTML
+        let paginationHTML = `
+            <div class="pagination mt-3 d-flex justify-content-between align-items-center">
+                <div class="pagination-info">
+                    <small class="text-muted">
+                        แสดง ${this.auditLogs.length} รายการ จากทั้งหมด ${this.totalLogs} รายการ
+                    </small>
+                </div>
+                <nav aria-label="Audit logs pagination">
+                    <ul class="pagination pagination-sm mb-0">
+        `;
+
+        // Previous button
+        if (this.currentPage > 1) {
+            paginationHTML += `
+                <li class="page-item">
+                    <a class="page-link" href="#" onclick="window.auditSettings.loadAuditLogs(false, ${this.currentPage - 1})">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            `;
+        }
+
+        // Page numbers
+        const startPage = Math.max(1, this.currentPage - 2);
+        const endPage = Math.min(this.totalPages, this.currentPage + 2);
+
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHTML += `
+                <li class="page-item ${i === this.currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="window.auditSettings.loadAuditLogs(false, ${i})">${i}</a>
+                </li>
+            `;
+        }
+
+        // Next button
+        if (this.currentPage < this.totalPages) {
+            paginationHTML += `
+                <li class="page-item">
+                    <a class="page-link" href="#" onclick="window.auditSettings.loadAuditLogs(false, ${this.currentPage + 1})">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            `;
+        }
+
+        paginationHTML += `
+                    </ul>
+                </nav>
+            </div>
+        `;
+
+        tableContainer.insertAdjacentHTML('beforeend', paginationHTML);
     }
 
     /**
@@ -329,86 +418,118 @@ class AuditSettings {
     }
 
     /**
+     * Get formatted action name
+     */
+    getFormattedAction(action) {
+        const actions = {
+            'login': 'เข้าสู่ระบบ',
+            'logout': 'ออกจากระบบ',
+            'create': 'สร้างข้อมูล',
+            'update': 'แก้ไขข้อมูล',
+            'delete': 'ลบข้อมูล',
+            'view': 'ดูข้อมูล',
+            'search': 'ค้นหา',
+            'export': 'ส่งออกข้อมูล',
+            'import': 'นำเข้าข้อมูล',
+            'settings': 'การตั้งค่า',
+            'settings_update': 'แก้ไขการตั้งค่า',
+            'password_change': 'เปลี่ยนรหัสผ่าน',
+            'profile_update': 'แก้ไขโปรไฟล์',
+            'audit_clear': 'ล้าง Audit Logs',
+            'user_create': 'สร้างผู้ใช้',
+            'user_update': 'แก้ไขผู้ใช้',
+            'user_delete': 'ลบผู้ใช้',
+            'role_create': 'สร้างบทบาท',
+            'role_update': 'แก้ไขบทบาท',
+            'role_delete': 'ลบบทบาท',
+            'permission_create': 'สร้างสิทธิ์',
+            'permission_update': 'แก้ไขสิทธิ์',
+            'permission_delete': 'ลบสิทธิ์',
+            'file_upload': 'อัปโหลดไฟล์',
+            'file_download': 'ดาวน์โหลดไฟล์',
+            'email_send': 'ส่งอีเมล',
+            'backup': 'สำรองข้อมูล',
+            'restore': 'กู้คืนข้อมูล',
+            'system_restart': 'รีสตาร์ทระบบ',
+            'maintenance': 'ซ่อมบำรุง'
+        };
+
+        return actions[action.toLowerCase()] || action;
+    }
+
+    /**
      * Get action icon
      */
     getActionIcon(action) {
         const icons = {
-            'login': 'fas fa-sign-in-alt',
-            'logout': 'fas fa-sign-out-alt',
-            'create': 'fas fa-plus',
-            'update': 'fas fa-edit',
-            'delete': 'fas fa-trash',
-            'view': 'fas fa-eye',
-            'search': 'fas fa-search',
-            'export': 'fas fa-download',
-            'import': 'fas fa-upload',
-            'settings': 'fas fa-cog'
+            // English actions
+            'login': 'fas fa-sign-in-alt text-success',
+            'logout': 'fas fa-sign-out-alt text-warning',
+            'create': 'fas fa-plus text-primary',
+            'update': 'fas fa-edit text-info',
+            'delete': 'fas fa-trash text-danger',
+            'view': 'fas fa-eye text-secondary',
+            'search': 'fas fa-search text-dark',
+            'export': 'fas fa-download text-success',
+            'import': 'fas fa-upload text-primary',
+            'settings': 'fas fa-cog text-warning',
+            'settings_update': 'fas fa-cog text-warning',
+            'password_change': 'fas fa-key text-info',
+            'profile_update': 'fas fa-user-edit text-primary',
+            'audit_clear': 'fas fa-trash-alt text-danger',
+            'user_create': 'fas fa-user-plus text-success',
+            'user_update': 'fas fa-user-edit text-primary',
+            'user_delete': 'fas fa-user-times text-danger',
+            'role_create': 'fas fa-user-tag text-success',
+            'role_update': 'fas fa-user-tag text-primary',
+            'role_delete': 'fas fa-user-tag text-danger',
+            'permission_create': 'fas fa-shield-alt text-success',
+            'permission_update': 'fas fa-shield-alt text-primary',
+            'permission_delete': 'fas fa-shield-alt text-danger',
+            'file_upload': 'fas fa-upload text-primary',
+            'file_download': 'fas fa-download text-success',
+            'email_send': 'fas fa-envelope text-info',
+            'backup': 'fas fa-database text-success',
+            'restore': 'fas fa-undo text-warning',
+            'system_restart': 'fas fa-power-off text-danger',
+            'maintenance': 'fas fa-tools text-warning',
+            
+            // Thai actions
+            'เข้าสู่ระบบ': 'fas fa-sign-in-alt text-success',
+            'ออกจากระบบ': 'fas fa-sign-out-alt text-warning',
+            'สร้างข้อมูล': 'fas fa-plus text-primary',
+            'แก้ไขข้อมูล': 'fas fa-edit text-info',
+            'ลบข้อมูล': 'fas fa-trash text-danger',
+            'ดูข้อมูล': 'fas fa-eye text-secondary',
+            'ค้นหา': 'fas fa-search text-dark',
+            'ส่งออกข้อมูล': 'fas fa-download text-success',
+            'นำเข้าข้อมูล': 'fas fa-upload text-primary',
+            'การตั้งค่า': 'fas fa-cog text-warning',
+            'แก้ไขการตั้งค่า': 'fas fa-cog text-warning',
+            'เปลี่ยนรหัสผ่าน': 'fas fa-key text-info',
+            'แก้ไขโปรไฟล์': 'fas fa-user-edit text-primary',
+            'ล้าง Audit Logs': 'fas fa-trash-alt text-danger',
+            'สร้างผู้ใช้': 'fas fa-user-plus text-success',
+            'แก้ไขผู้ใช้': 'fas fa-user-edit text-primary',
+            'ลบผู้ใช้': 'fas fa-user-times text-danger',
+            'สร้างบทบาท': 'fas fa-user-tag text-success',
+            'แก้ไขบทบาท': 'fas fa-user-tag text-primary',
+            'ลบบทบาท': 'fas fa-user-tag text-danger',
+            'สร้างสิทธิ์': 'fas fa-shield-alt text-success',
+            'แก้ไขสิทธิ์': 'fas fa-shield-alt text-primary',
+            'ลบสิทธิ์': 'fas fa-shield-alt text-danger',
+            'อัปโหลดไฟล์': 'fas fa-upload text-primary',
+            'ดาวน์โหลดไฟล์': 'fas fa-download text-success',
+            'ส่งอีเมล': 'fas fa-envelope text-info',
+            'สำรองข้อมูล': 'fas fa-database text-success',
+            'กู้คืนข้อมูล': 'fas fa-undo text-warning',
+            'รีสตาร์ทระบบ': 'fas fa-power-off text-danger',
+            'ซ่อมบำรุง': 'fas fa-tools text-warning'
         };
 
-        return icons[action.toLowerCase()] || 'fas fa-circle';
+        return icons[action] || 'fas fa-circle text-muted';
     }
 
-    /**
-     * Setup audit statistics
-     */
-    setupAuditStatistics() {
-        // This will be populated when settings are loaded
-    }
-
-    /**
-     * Update audit statistics
-     */
-    updateAuditStatistics() {
-        const enabled = document.getElementById('auditEnabled')?.checked || false;
-        const retention = parseInt(document.getElementById('auditRetention')?.value || 90);
-        const level = document.getElementById('auditLevel')?.value || 'basic';
-
-        let statistics = '';
-        
-        if (enabled) {
-            const levelText = {
-                'basic': 'พื้นฐาน',
-                'detailed': 'ละเอียด',
-                'comprehensive': 'ครบถ้วน'
-            };
-
-            statistics = `
-                <div class="alert alert-info">
-                    <h6><i class="fas fa-chart-bar me-2"></i>สถิติการตั้งค่า Audit Log</h6>
-                    <ul class="mb-0">
-                        <li><strong>สถานะ:</strong> เปิดใช้งาน</li>
-                        <li><strong>ระดับการบันทึก:</strong> ${levelText[level]}</li>
-                        <li><strong>เก็บข้อมูล:</strong> ${retention} วัน</li>
-                        <li><strong>จำนวน Log ทั้งหมด:</strong> ${this.auditLogs.length} รายการ</li>
-                    </ul>
-                </div>
-            `;
-        } else {
-            statistics = `
-                <div class="alert alert-warning">
-                    <h6><i class="fas fa-exclamation-triangle me-2"></i>Audit Log ถูกปิดใช้งาน</h6>
-                    <p class="mb-0">การบันทึกการใช้งานระบบถูกปิดใช้งาน ควรเปิดใช้งานเพื่อความปลอดภัย</p>
-                </div>
-            `;
-        }
-
-        this.displayAuditStatistics(statistics);
-    }
-
-    /**
-     * Display audit statistics
-     */
-    displayAuditStatistics(statistics) {
-        let container = document.getElementById('auditStatistics');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'auditStatistics';
-            container.className = 'mt-3';
-            this.form.appendChild(container);
-        }
-
-        container.innerHTML = statistics;
-    }
 
     /**
      * Export audit logs
@@ -439,28 +560,28 @@ class AuditSettings {
             this.isExportingLogs = true;
             this.showExportLoading(true);
 
-            const response = await fetch('/admin/settings/audit/export', {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            });
+            // Create a form to submit the request
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/admin/settings/audit/export';
+            form.style.display = 'none';
 
-            const result = await response.json();
+            // Add CSRF token
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = '_token';
+            csrfToken.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            form.appendChild(csrfToken);
 
-            if (result.success) {
-                // Download the exported file
-                if (result.data && result.data.download_url) {
-                    window.open(result.data.download_url, '_blank');
-                }
-                this.showSuccess(result.message || 'ส่งออก Audit Log สำเร็จ');
-            } else {
-                this.showError(result.message || 'ไม่สามารถส่งออก Audit Log ได้');
-            }
+            // Add to document and submit
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+
+            this.showSuccess('กำลังส่งออก Audit Log...');
 
         } catch (error) {
-                console.error('Error exporting audit logs:', error);
+            console.error('Error exporting audit logs:', error);
             this.showError('เกิดข้อผิดพลาดในการส่งออก Audit Log');
         } finally {
             this.isExportingLogs = false;
@@ -498,10 +619,10 @@ class AuditSettings {
             this.showClearLoading(true);
 
             const response = await fetch('/admin/settings/audit/clear', {
-            method: 'DELETE',
-            headers: {
+                method: 'DELETE',
+                headers: {
                     'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 }
             });
 
@@ -510,7 +631,7 @@ class AuditSettings {
             if (result.success) {
                 this.showSuccess(result.message || 'ล้าง Audit Log สำเร็จ');
                 this.loadAuditLogs(); // Refresh logs
-                this.updateAuditStatistics(); // Update statistics
+ // Update statistics
             } else {
                 this.showError(result.message || 'ไม่สามารถล้าง Audit Log ได้');
             }
@@ -539,6 +660,8 @@ class AuditSettings {
 
             // Convert checkbox values to boolean
             data.auditEnabled = formData.has('auditEnabled');
+            
+            console.log('Saving settings with data:', data);
 
             const response = await fetch('/admin/settings/audit', {
                 method: 'POST',
@@ -554,7 +677,8 @@ class AuditSettings {
 
             if (result.success) {
                 this.showSuccess(result.message || 'บันทึกการตั้งค่า Audit Log สำเร็จ');
-                this.updateAuditStatistics();
+                // โหลดการตั้งค่าใหม่หลังบันทึกสำเร็จ
+                await this.loadSettings();
             } else {
                 this.showError(result.message || 'ไม่สามารถบันทึกการตั้งค่า Audit Log ได้');
                 if (result.errors) {

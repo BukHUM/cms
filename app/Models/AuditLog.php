@@ -116,6 +116,14 @@ class AuditLog extends Model
      */
     public static function createLog($data)
     {
+        // Check if audit logging is enabled
+        $auditEnabled = \App\Helpers\SettingsHelper::get('audit_enabled', true);
+        
+        if (!$auditEnabled) {
+            // If audit logging is disabled, don't create log entry
+            return null;
+        }
+        
         return self::create([
             'user_id' => $data['user_id'] ?? null,
             'user_email' => $data['user_email'] ?? null,

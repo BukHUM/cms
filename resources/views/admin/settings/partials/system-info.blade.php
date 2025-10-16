@@ -12,7 +12,7 @@
                 window.dbType = '{{ config("database.default") }}';
                 window.appEnv = '{{ config("app.env") }}';
                 window.debugMode = {{ config("app.debug") ? 'true' : 'false' }};
-                window.appKey = '{{ config("app.key") }}';
+                window.appKey = '{{ substr(config("app.key"), 0, 20) }}...';
                 
                 // Real system data
                 window.memoryLimit = '{{ ini_get("memory_limit") }}';
@@ -32,6 +32,10 @@
                 window.appUrl = '{{ config("app.url") }}';
                 window.appTimezone = '{{ config("app.timezone") }}';
                 window.appLocale = '{{ config("app.locale") }}';
+                
+                // Server info
+                window.serverName = '{{ $_SERVER["SERVER_NAME"] ?? "Unknown" }}';
+                window.serverTime = '{{ now()->format("Y-m-d H:i:s") }}';
             </script>
             <!-- Server Information -->
             <div class="row g-3 mb-4">
@@ -225,12 +229,6 @@
                     <div class="d-flex gap-2 flex-wrap">
                         <button type="button" class="btn btn-primary" onclick="refreshSystemInfo()">
                             <i class="fas fa-sync-alt me-2"></i>รีเฟรชข้อมูล
-                        </button>
-                        <button type="button" class="btn btn-success" onclick="exportSystemInfo()">
-                            <i class="fas fa-download me-2"></i>ส่งออกข้อมูล
-                        </button>
-                        <button type="button" class="btn btn-info" onclick="showSystemLogs()">
-                            <i class="fas fa-file-alt me-2"></i>ดู Logs
                         </button>
                     </div>
                 </div>
