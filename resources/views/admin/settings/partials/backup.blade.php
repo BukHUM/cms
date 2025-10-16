@@ -20,8 +20,20 @@
                         <input type="time" class="form-control" id="backupTime" value="02:00">
                     </div>
                     <div class="col-md-6">
-                        <label for="backupRetention" class="form-label">เก็บไฟล์สำรอง (วัน)</label>
-                        <input type="number" class="form-control" id="backupRetention" value="30">
+                        <label for="backupRetention" class="form-label">เก็บไฟล์สำรอง</label>
+                        <select class="form-select" id="backupRetention">
+                            <option value="3">3 วัน</option>
+                            <option value="7">7 วัน</option>
+                            <option value="30" selected>30 วัน</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="backupType" class="form-label">ประเภทการสำรองข้อมูล</label>
+                        <select class="form-select" id="backupType">
+                            <option value="database" selected>สำรองฐานข้อมูล</option>
+                            <option value="files">สำรองไฟล์</option>
+                            <option value="both">สำรองทั้งฐานข้อมูลและไฟล์</option>
+                        </select>
                     </div>
                     <div class="col-md-6">
                         <label for="backupLocation" class="form-label">ตำแหน่งเก็บไฟล์สำรอง</label>
@@ -86,23 +98,19 @@
                                 <th>การดำเนินการ</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <td>2024-01-25 02:00</td>
-                                <td>15.2 MB</td>
-                                <td><span class="badge bg-success">สำเร็จ</span></td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-primary">ดาวน์โหลด</button>
-                                    <button class="btn btn-sm btn-outline-danger">ลบ</button>
+                        <tbody id="backupHistoryBody">
+                            <tr id="backupLoadingRow" style="display: none;">
+                                <td colspan="4" class="text-center">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status">
+                                        <span class="visually-hidden">กำลังโหลด...</span>
+                                    </div>
+                                    กำลังโหลดประวัติการสำรองข้อมูล...
                                 </td>
                             </tr>
-                            <tr>
-                                <td>2024-01-24 02:00</td>
-                                <td>14.8 MB</td>
-                                <td><span class="badge bg-success">สำเร็จ</span></td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-primary">ดาวน์โหลด</button>
-                                    <button class="btn btn-sm btn-outline-danger">ลบ</button>
+                            <tr id="backupEmptyRow" style="display: none;">
+                                <td colspan="4" class="text-center text-muted">
+                                    <i class="fas fa-database me-2"></i>
+                                    ยังไม่มีประวัติการสำรองข้อมูล
                                 </td>
                             </tr>
                         </tbody>
@@ -112,3 +120,4 @@
         </div>
     </div>
 </div>
+

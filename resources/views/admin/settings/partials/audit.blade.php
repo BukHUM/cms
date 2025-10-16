@@ -46,6 +46,10 @@
                         <i class="fas fa-trash me-2"></i>
                         ล้าง Log
                     </button>
+                    <button type="button" class="btn btn-outline-danger me-2" onclick="clearAllAuditLogs()">
+                        <i class="fas fa-trash-alt me-2"></i>
+                        ล้าง Log ทั้งหมด
+                    </button>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save me-2"></i>
                         บันทึกการตั้งค่า
@@ -63,18 +67,25 @@
                         </div>
                         <div class="mobile-secondary-actions">
                             <div class="row g-2">
-                                <div class="col-6">
+                                <div class="col-4">
                                     <button type="button" class="btn btn-warning w-100" onclick="exportAuditLogs()">
                                         <i class="fas fa-download me-1"></i>
                                         <span class="d-none d-sm-inline">ส่งออก Log</span>
                                         <span class="d-sm-none">ส่งออก</span>
                                     </button>
                                 </div>
-                                <div class="col-6">
+                                <div class="col-4">
                                     <button type="button" class="btn btn-danger w-100" onclick="clearAuditLogs()">
                                         <i class="fas fa-trash me-1"></i>
                                         <span class="d-none d-sm-inline">ล้าง Log</span>
                                         <span class="d-sm-none">ล้าง</span>
+                                    </button>
+                                </div>
+                                <div class="col-4">
+                                    <button type="button" class="btn btn-outline-danger w-100" onclick="clearAllAuditLogs()">
+                                        <i class="fas fa-trash-alt me-1"></i>
+                                        <span class="d-none d-sm-inline">ล้างทั้งหมด</span>
+                                        <span class="d-sm-none">ทั้งหมด</span>
                                     </button>
                                 </div>
                             </div>

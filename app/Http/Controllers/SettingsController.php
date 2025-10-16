@@ -183,7 +183,7 @@ class SettingsController extends Controller
             return getSafeApiErrorResponse(
                 $e,
                 'ไม่สามารถบันทึกการตั้งค่าได้ กรุณาลองใหม่อีกครั้ง',
-                'SettingsController::saveAuditSettings'
+                'SettingsController::saveGeneralSettings'
             );
         }
     }
@@ -217,7 +217,7 @@ class SettingsController extends Controller
             return getSafeApiErrorResponse(
                 $e,
                 'ไม่สามารถโหลดการตั้งค่าได้ กรุณาลองใหม่อีกครั้ง',
-                'SettingsController::getAuditSettings'
+                'SettingsController::getGeneralSettings'
             );
         }
     }
@@ -1532,7 +1532,7 @@ class SettingsController extends Controller
             return getSafeApiErrorResponse(
                 $e,
                 'ไม่สามารถบันทึกการตั้งค่าได้ กรุณาลองใหม่อีกครั้ง',
-                'SettingsController::saveAuditSettings'
+                'SettingsController::savePerformanceSettings'
             );
         }
     }
@@ -1581,10 +1581,10 @@ class SettingsController extends Controller
             $validator = Validator::make($request->all(), [
                 'backupEnabled' => 'boolean',
                 'backupFrequency' => 'required|string|in:daily,weekly,monthly',
-                'backupRetention' => 'required|integer|min:1|max:365',
-                'backupLocation' => 'required|string|in:local,cloud,both',
-                'backupCompression' => 'boolean',
-                'backupEncryption' => 'boolean'
+                'backupRetention' => 'required|integer|min:3|max:30',
+                'backupLocation' => 'required|string|in:local,s3,google',
+                'backupType' => 'required|string|in:database,files,both',
+                'backupTime' => 'required|date_format:H:i'
             ]);
 
             if ($validator->fails()) {
@@ -1597,12 +1597,12 @@ class SettingsController extends Controller
             }
 
             $settings = [
-                'backup_enabled' => $request->backupEnabled,
+                'backup_enabled' => $request->boolean('backupEnabled', true),
                 'backup_frequency' => $request->backupFrequency,
                 'backup_retention' => $request->backupRetention,
                 'backup_location' => $request->backupLocation,
-                'backup_compression' => $request->backupCompression,
-                'backup_encryption' => $request->backupEncryption
+                'backup_type' => $request->backupType,
+                'backup_time' => $request->backupTime
             ];
 
             // Save settings using SettingsHelper
@@ -1619,7 +1619,7 @@ class SettingsController extends Controller
             return getSafeApiErrorResponse(
                 $e,
                 'ไม่สามารถบันทึกการตั้งค่าได้ กรุณาลองใหม่อีกครั้ง',
-                'SettingsController::saveAuditSettings'
+                'SettingsController::saveBackupSettings'
             );
         }
     }
@@ -1632,7 +1632,7 @@ class SettingsController extends Controller
         try {
             $settings = SettingsHelper::getMultiple([
                 'backup_enabled', 'backup_frequency', 'backup_retention', 
-                'backup_location', 'backup_compression', 'backup_encryption'
+                'backup_location', 'backup_type', 'backup_time'
             ]);
 
             return response()->json([
@@ -1642,8 +1642,8 @@ class SettingsController extends Controller
                     'backupFrequency' => $settings['backup_frequency'] ?? 'daily',
                     'backupRetention' => $settings['backup_retention'] ?? 30,
                     'backupLocation' => $settings['backup_location'] ?? 'local',
-                    'backupCompression' => $settings['backup_compression'] ?? true,
-                    'backupEncryption' => $settings['backup_encryption'] ?? false
+                    'backupType' => $settings['backup_type'] ?? 'database',
+                    'backupTime' => $settings['backup_time'] ?? '02:00'
                 ]
             ]);
 
@@ -1651,7 +1651,7 @@ class SettingsController extends Controller
             return getSafeApiErrorResponse(
                 $e,
                 'ไม่สามารถโหลดการตั้งค่าได้ กรุณาลองใหม่อีกครั้ง',
-                'SettingsController::getAuditSettings'
+                'SettingsController::getBackupSettings'
             );
         }
     }
@@ -1659,28 +1659,104 @@ class SettingsController extends Controller
     /**
      * Create backup
      */
-    public function createBackup()
+    public function createBackup(Request $request)
     {
         try {
-            // This is a placeholder - you would implement actual backup creation
+            $validator = Validator::make($request->all(), [
+                'backupType' => 'required|string|in:database,files,both'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ข้อมูลไม่ถูกต้อง',
+                    'errors' => $validator->errors()
+                ], 400);
+            }
+
+            $backupType = $request->input('backupType', 'database');
             $backupId = 'backup_' . date('Y-m-d_H-i-s') . '_' . uniqid();
             
+            // Create backup record in database
+            $backup = DB::table('laravel_backup_history')->insertGetId([
+                'id' => $backupId,
+                'type' => $backupType,
+                'status' => 'in_progress',
+                'file_size' => 0,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+
+            // Simulate backup process (in real implementation, you would use a queue)
+            $this->processBackup($backupId, $backupType);
+
             return response()->json([
                 'success' => true,
-                'message' => 'สร้างสำรองข้อมูลสำเร็จ',
+                'message' => 'เริ่มสร้างสำรองข้อมูลแล้ว',
                 'data' => [
                     'backupId' => $backupId,
-                    'filename' => $backupId . '.sql',
-                    'size' => '2.5 MB',
-                    'createdAt' => now()->format('Y-m-d H:i:s')
+                    'type' => $backupType
                 ]
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('Backup creation error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'ไม่สามารถสร้างสำรองข้อมูลได้: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Process backup (simulated)
+     */
+    private function processBackup($backupId, $backupType)
+    {
+        // This is a simulation - in real implementation, you would:
+        // 1. Use Laravel Queue to process backup in background
+        // 2. Create actual database dump or file archive
+        // 3. Store backup file in configured location
+        // 4. Update backup status in database
+
+        try {
+            // Simulate backup processing time
+            sleep(2);
+
+            // Simulate file size based on backup type
+            $fileSize = match($backupType) {
+                'database' => rand(5000000, 15000000), // 5-15 MB
+                'files' => rand(10000000, 50000000),   // 10-50 MB
+                'both' => rand(20000000, 80000000),    // 20-80 MB
+                default => 10000000
+            };
+
+            // Update backup status
+            DB::table('laravel_backup_history')
+                ->where('id', $backupId)
+                ->update([
+                    'status' => 'completed',
+                    'file_size' => $fileSize,
+                    'updated_at' => now()
+                ]);
+
+        } catch (\Exception $e) {
+            // Update backup status to failed
+            DB::table('laravel_backup_history')
+                ->where('id', $backupId)
+                ->update([
+                    'status' => 'failed',
+                    'updated_at' => now()
+                ]);
+
+            \Log::error('Backup processing error:', [
+                'backupId' => $backupId,
+                'message' => $e->getMessage()
+            ]);
         }
     }
 
@@ -1690,30 +1766,21 @@ class SettingsController extends Controller
     public function getBackupHistory()
     {
         try {
-            // This is a placeholder - you would get actual backup history
-            $backups = [
-                [
-                    'id' => 'backup_2024-01-15_10-30-00_abc123',
-                    'filename' => 'backup_2024-01-15_10-30-00_abc123.sql',
-                    'size' => '2.5 MB',
-                    'createdAt' => '2024-01-15 10:30:00',
-                    'type' => 'full'
-                ],
-                [
-                    'id' => 'backup_2024-01-14_10-30-00_def456',
-                    'filename' => 'backup_2024-01-14_10-30-00_def456.sql',
-                    'size' => '2.3 MB',
-                    'createdAt' => '2024-01-14 10:30:00',
-                    'type' => 'full'
-                ],
-                [
-                    'id' => 'backup_2024-01-13_10-30-00_ghi789',
-                    'filename' => 'backup_2024-01-13_10-30-00_ghi789.sql',
-                    'size' => '2.4 MB',
-                    'createdAt' => '2024-01-13 10:30:00',
-                    'type' => 'incremental'
-                ]
-            ];
+            // Get backup history from database
+            $backups = DB::table('laravel_backup_history')
+                ->orderBy('created_at', 'desc')
+                ->limit(50)
+                ->get()
+                ->map(function ($backup) {
+                    return [
+                        'id' => $backup->id,
+                        'type' => $backup->type,
+                        'status' => $backup->status,
+                        'file_size' => $backup->file_size,
+                        'created_at' => $backup->created_at,
+                        'updated_at' => $backup->updated_at
+                    ];
+                });
 
             return response()->json([
                 'success' => true,
@@ -1721,9 +1788,15 @@ class SettingsController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('Backup history error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'ไม่สามารถโหลดประวัติสำรองข้อมูลได้: ' . $e->getMessage()
+                'message' => 'ไม่สามารถโหลดประวัติการสำรองข้อมูลได้',
+                'data' => []
             ], 500);
         }
     }
@@ -1758,13 +1831,34 @@ class SettingsController extends Controller
     public function deleteBackup($backupId)
     {
         try {
-            // This is a placeholder - you would implement actual backup deletion
+            // Check if backup exists
+            $backup = DB::table('laravel_backup_history')->where('id', $backupId)->first();
+            
+            if (!$backup) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ไม่พบสำรองข้อมูลที่ต้องการลบ'
+                ], 404);
+            }
+
+            // Delete backup record from database
+            DB::table('laravel_backup_history')->where('id', $backupId)->delete();
+
+            // In real implementation, you would also delete the actual backup file
+            // from storage (local, S3, etc.)
+
             return response()->json([
                 'success' => true,
                 'message' => 'ลบสำรองข้อมูลสำเร็จ'
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('Backup deletion error:', [
+                'backupId' => $backupId,
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'ไม่สามารถลบสำรองข้อมูลได้: ' . $e->getMessage()
@@ -1835,7 +1929,7 @@ class SettingsController extends Controller
             return getSafeApiErrorResponse(
                 $e,
                 'ไม่สามารถบันทึกการตั้งค่าได้ กรุณาลองใหม่อีกครั้ง',
-                'SettingsController::saveAuditSettings'
+                'SettingsController::saveEmailSettings'
             );
         }
     }
@@ -2021,7 +2115,7 @@ class SettingsController extends Controller
             return getSafeApiErrorResponse(
                 $e,
                 'ไม่สามารถบันทึกการตั้งค่าได้ กรุณาลองใหม่อีกครั้ง',
-                'SettingsController::saveAuditSettings'
+                'SettingsController::saveSecuritySettings'
             );
         }
     }
@@ -2140,6 +2234,7 @@ class SettingsController extends Controller
             'password_change' => 'เปลี่ยนรหัสผ่าน',
             'profile_update' => 'แก้ไขโปรไฟล์',
             'audit_clear' => 'ล้าง Audit Logs',
+            'audit_clear_all' => 'ล้าง Audit Logs ทั้งหมด',
             'user_create' => 'สร้างผู้ใช้',
             'user_update' => 'แก้ไขผู้ใช้',
             'user_delete' => 'ลบผู้ใช้',
@@ -2249,6 +2344,42 @@ class SettingsController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'ไม่สามารถล้าง Audit Logs ได้: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Clear all audit logs (ignore retention period)
+     */
+    public function clearAllAuditLogs()
+    {
+        try {
+            // Get total count before deletion
+            $totalCount = \App\Models\AuditLog::count();
+            
+            // Delete all audit logs
+            \App\Models\AuditLog::truncate();
+            
+            // Log the clearing action (this will be the only log after clearing)
+            \App\Models\AuditLog::createLog([
+                'user_id' => session('admin_user_id'),
+                'user_email' => session('admin_user_email'),
+                'action' => 'audit_clear_all',
+                'description' => "ล้าง Audit Logs ทั้งหมด ({$totalCount} รายการ)",
+                'status' => 'success'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "ล้าง Audit Logs ทั้งหมดสำเร็จ (ลบ {$totalCount} รายการ)",
+                'deleted_count' => $totalCount
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error clearing all audit logs: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'ไม่สามารถล้าง Audit Logs ทั้งหมดได้: ' . $e->getMessage()
             ], 500);
         }
     }

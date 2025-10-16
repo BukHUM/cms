@@ -150,6 +150,7 @@ Route::prefix('admin')->middleware(['web'])->group(function () {
         Route::get('/audit/logs', [App\Http\Controllers\SettingsController::class, 'getAuditLogs'])->name('admin.settings.audit.logs');
         Route::post('/audit/export', [App\Http\Controllers\SettingsController::class, 'exportAuditLogs'])->name('admin.settings.audit.export');
         Route::delete('/audit/clear', [App\Http\Controllers\SettingsController::class, 'clearAuditLogs'])->name('admin.settings.audit.clear');
+        Route::delete('/audit/clear-all', [App\Http\Controllers\SettingsController::class, 'clearAllAuditLogs'])->name('admin.settings.audit.clear-all');
         
         // Update Settings
         Route::get('/update', [App\Http\Controllers\SettingsController::class, 'getUpdateSettings'])->name('admin.settings.update.get');

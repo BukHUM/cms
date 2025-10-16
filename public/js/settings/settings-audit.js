@@ -27,7 +27,6 @@ class AuditSettings {
         this.loadSettings();
         this.bindEvents();
         this.loadAuditLogs();
-        this.setupAuditStatistics();
         this.forceUpdateSwitchLabels(); // Force update labels on init
     }
 
@@ -63,7 +62,7 @@ class AuditSettings {
             const result = await response.json();
 
             if (result.success) {
-                console.log('Settings loaded successfully:', result.data);
+                // Settings loaded successfully
                 this.populateForm(result.data);
                 // this.showSuccess('โหลดการตั้งค่า Audit Log สำเร็จ'); // Disabled auto success message
             } else {
@@ -83,7 +82,7 @@ class AuditSettings {
      * Populate form with settings data
      */
     populateForm(data) {
-        console.log('Populating form with data:', data);
+        // Populate form with loaded data
         
         // Basic audit settings
         this.setCheckbox('auditEnabled', data.auditEnabled);
@@ -93,7 +92,7 @@ class AuditSettings {
         // Update audit level description
         this.updateAuditLevelDescription(data.auditLevel);
         
-        console.log('Form populated successfully');
+        // Form populated successfully
     }
 
     /**
@@ -102,9 +101,8 @@ class AuditSettings {
     setValue(id, value) {
         const element = document.getElementById(id);
         if (element) {
-            console.log(`Setting ${id} to:`, value);
+            // Set element value
             element.value = value || '';
-            console.log(`Element ${id} value is now:`, element.value);
         } else {
             console.error(`Element with id ${id} not found`);
         }
@@ -116,9 +114,8 @@ class AuditSettings {
     setCheckbox(id, value) {
         const element = document.getElementById(id);
         if (element) {
-            console.log(`Setting checkbox ${id} to:`, value);
+            // Set checkbox value
             element.checked = Boolean(value);
-            console.log(`Checkbox ${id} is now:`, element.checked);
             this.updateSwitchLabel(id, Boolean(value));
         } else {
             console.error(`Checkbox with id ${id} not found`);
@@ -314,7 +311,7 @@ class AuditSettings {
             const statusBadge = this.getStatusBadge(log.status);
             const actionIcon = this.getActionIcon(log.action);
             
-            console.log(`Action: ${log.action}, Icon: ${actionIcon}`);
+                    // Debug action and icon
             
             html += `
                 <tr>
@@ -436,6 +433,7 @@ class AuditSettings {
             'password_change': 'เปลี่ยนรหัสผ่าน',
             'profile_update': 'แก้ไขโปรไฟล์',
             'audit_clear': 'ล้าง Audit Logs',
+            'audit_clear_all': 'ล้าง Audit Logs ทั้งหมด',
             'user_create': 'สร้างผู้ใช้',
             'user_update': 'แก้ไขผู้ใช้',
             'user_delete': 'ลบผู้ใช้',
@@ -477,6 +475,7 @@ class AuditSettings {
             'password_change': 'fas fa-key text-info',
             'profile_update': 'fas fa-user-edit text-primary',
             'audit_clear': 'fas fa-trash-alt text-danger',
+            'audit_clear_all': 'fas fa-trash-alt text-danger',
             'user_create': 'fas fa-user-plus text-success',
             'user_update': 'fas fa-user-edit text-primary',
             'user_delete': 'fas fa-user-times text-danger',
@@ -509,6 +508,7 @@ class AuditSettings {
             'เปลี่ยนรหัสผ่าน': 'fas fa-key text-info',
             'แก้ไขโปรไฟล์': 'fas fa-user-edit text-primary',
             'ล้าง Audit Logs': 'fas fa-trash-alt text-danger',
+            'ล้าง Audit Logs ทั้งหมด': 'fas fa-trash-alt text-danger',
             'สร้างผู้ใช้': 'fas fa-user-plus text-success',
             'แก้ไขผู้ใช้': 'fas fa-user-edit text-primary',
             'ลบผู้ใช้': 'fas fa-user-times text-danger',
@@ -646,6 +646,70 @@ class AuditSettings {
     }
 
     /**
+     * Clear all audit logs (ignore retention period)
+     */
+    async clearAllAuditLogs() {
+        if (this.isClearingLogs) return;
+
+        if (typeof Swal !== 'undefined') {
+            const result = await Swal.fire({
+                title: 'ยืนยันการล้าง Log ทั้งหมด',
+                text: 'คุณต้องการล้าง Audit Log ทั้งหมดโดยไม่สนใจระยะเวลาเก็บข้อมูลหรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้!',
+                icon: 'error',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'ใช่, ล้างทั้งหมด',
+                cancelButtonText: 'ยกเลิก',
+                input: 'text',
+                inputLabel: 'พิมพ์ "DELETE ALL" เพื่อยืนยัน',
+                inputValidator: (value) => {
+                    if (value !== 'DELETE ALL') {
+                        return 'กรุณาพิมพ์ "DELETE ALL" เพื่อยืนยัน';
+                    }
+                }
+            });
+
+            if (!result.isConfirmed) return;
+        } else {
+            const confirmText = prompt('กรุณาพิมพ์ "DELETE ALL" เพื่อยืนยันการล้าง Log ทั้งหมด:');
+            if (confirmText !== 'DELETE ALL') {
+                this.showError('การยืนยันไม่ถูกต้อง');
+                return;
+            }
+        }
+
+        try {
+            this.isClearingLogs = true;
+            this.showClearLoading(true);
+
+            const response = await fetch('/admin/settings/audit/clear-all', {
+                method: 'DELETE',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.showSuccess(result.message || 'ล้าง Audit Log ทั้งหมดสำเร็จ');
+                this.loadAuditLogs(); // Refresh logs
+            } else {
+                this.showError(result.message || 'ไม่สามารถล้าง Audit Log ทั้งหมดได้');
+            }
+
+        } catch (error) {
+            console.error('Error clearing all audit logs:', error);
+            this.showError('เกิดข้อผิดพลาดในการล้าง Audit Log ทั้งหมด');
+        } finally {
+            this.isClearingLogs = false;
+            this.showClearLoading(false);
+        }
+    }
+
+    /**
      * Save settings to server
      */
     async saveSettings() {
@@ -661,7 +725,7 @@ class AuditSettings {
             // Convert checkbox values to boolean
             data.auditEnabled = formData.has('auditEnabled');
             
-            console.log('Saving settings with data:', data);
+            // Save settings data
 
             const response = await fetch('/admin/settings/audit', {
                 method: 'POST',
@@ -877,6 +941,13 @@ document.addEventListener('DOMContentLoaded', function() {
         window.auditSettings = new AuditSettings();
     }
 });
+
+// Global functions for onclick handlers
+function clearAllAuditLogs() {
+    if (window.auditSettings) {
+        window.auditSettings.clearAllAuditLogs();
+    }
+}
 
 // Export for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {
