@@ -100,20 +100,39 @@ class UserManagementController extends Controller
 
     public function getUser($id)
     {
-        $user = User::with(['roles'])->findOrFail($id);
-        
-        // Add avatar_url to user data
-        $userData = $user->toArray();
-        $userData['avatar_url'] = $user->getAvatarUrl();
-        
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'user' => $userData,
-                'roles' => $user->roles->pluck('id')->toArray(),
-                'all_roles' => Role::active()->ordered()->get()
-            ]
-        ]);
+        try {
+            $user = User::with(['roles'])->findOrFail($id);
+            
+            // Add avatar_url to user data
+            $userData = $user->toArray();
+            $userData['avatar_url'] = $user->getAvatarUrl();
+            
+            // Ensure proper UTF-8 encoding
+            $userData = array_map(function($value) {
+                if (is_string($value)) {
+                    return mb_convert_encoding($value, 'UTF-8', 'UTF-8');
+                }
+                return $value;
+            }, $userData);
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'user' => $userData,
+                    'roles' => $user->roles->pluck('id')->toArray(),
+                    'all_roles' => Role::active()->ordered()->get()
+                ]
+            ], 200, [], JSON_UNESCAPED_UNICODE);
+        } catch (\Exception $e) {
+            \Log::error('Error in getUser: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้',
+                'error' => $e->getMessage()
+            ], 500, [], JSON_UNESCAPED_UNICODE);
+        }
     }
 
     public function updateUser(Request $request, $id)
