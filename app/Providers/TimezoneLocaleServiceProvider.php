@@ -22,19 +22,24 @@ class TimezoneLocaleServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Set timezone from database settings
-        $timezone = SettingsHelper::get('timezone', config('app.timezone'));
-        if ($timezone) {
-            config(['app.timezone' => $timezone]);
-            date_default_timezone_set($timezone);
-            Carbon::setTestNow(Carbon::now($timezone));
-        }
+        try {
+            // Set timezone from database settings
+            $timezone = SettingsHelper::get('timezone', config('app.timezone'));
+            if ($timezone) {
+                config(['app.timezone' => $timezone]);
+                date_default_timezone_set($timezone);
+                Carbon::setTestNow(Carbon::now($timezone));
+            }
 
-        // Set locale from database settings
-        $locale = SettingsHelper::get('language', config('app.locale'));
-        if ($locale) {
-            config(['app.locale' => $locale]);
-            App::setLocale($locale);
+            // Set locale from database settings
+            $locale = SettingsHelper::get('language', config('app.locale'));
+            if ($locale) {
+                config(['app.locale' => $locale]);
+                App::setLocale($locale);
+            }
+        } catch (\Exception $e) {
+            // If database tables don't exist yet, use default config values
+            // This happens during initial setup before migrations are run
         }
     }
 }
