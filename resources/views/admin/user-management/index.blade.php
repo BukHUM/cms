@@ -4,6 +4,9 @@
 @section('page-title', 'จัดการผู้ใช้')
 @section('page-subtitle', 'จัดการข้อมูลผู้ใช้ บทบาท และสิทธิ์การเข้าถึงระบบ')
 
+@push('styles')
+@vite(['resources/css/user-management.css'])
+@endpush
 
 @section('content')
 <!-- Include Navigation -->
@@ -37,8 +40,18 @@ document.addEventListener('DOMContentLoaded', function() {
         userManagementNavLink.classList.add('active');
     }
     
+    // Remove active class from other menu items
+    const allNavLinks = document.querySelectorAll('.sidebar-nav a');
+    allNavLinks.forEach(link => {
+        if (!link.href.includes('user-management')) {
+            link.classList.remove('active');
+        }
+    });
+    
     // Load last active tab
-    loadLastActiveTab();
+    if (typeof loadLastActiveTab === 'function') {
+        loadLastActiveTab();
+    }
 });
 </script>
 @endpush

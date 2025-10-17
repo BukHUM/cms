@@ -422,6 +422,8 @@ Route::prefix('api/audit')->group(function () {
 Route::prefix('api/settings')->group(function () {
     Route::post('/audit', [App\Http\Controllers\SettingsController::class, 'saveAuditSettings']);
     Route::get('/audit', [App\Http\Controllers\SettingsController::class, 'getAuditSettings']);
+    Route::post('/security', [App\Http\Controllers\SettingsController::class, 'saveSecuritySettings']);
+    Route::get('/security', [App\Http\Controllers\SettingsController::class, 'getSecuritySettings']);
 });
 
 // User Management Routes

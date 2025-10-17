@@ -1,9 +1,14 @@
 /**
- * Backup Settings JavaScript
+ * Backup Settings JavaScript - Version 2.0
  * Handles backup settings form, backup creation, and history management
+ * Updated: 2025-10-16 - Simplified backup system (removed view and restore functions)
  */
 
-class BackupSettings {
+// Check if BackupSettings class already exists
+if (typeof BackupSettings !== 'undefined') {
+    // Skip initialization if already exists
+} else {
+    class BackupSettings {
     constructor() {
         this.init();
     }
@@ -27,10 +32,15 @@ class BackupSettings {
             backupEnabled.addEventListener('change', (e) => this.handleBackupEnabledToggle(e));
         }
 
-        // Create backup button
-        const createBackupBtn = document.querySelector('[onclick="createBackup()"]');
+        // Create backup buttons
+        const createBackupBtn = document.getElementById('createBackupBtn');
+        const createBackupBtnMobile = document.getElementById('createBackupBtnMobile');
+        
         if (createBackupBtn) {
             createBackupBtn.addEventListener('click', (e) => this.createBackup(e));
+        }
+        if (createBackupBtnMobile) {
+            createBackupBtnMobile.addEventListener('click', (e) => this.createBackup(e));
         }
     }
 
@@ -53,7 +63,6 @@ class BackupSettings {
                 this.populateForm(data.data);
             }
         } catch (error) {
-            console.error('Error loading backup settings:', error);
             this.showAlert('ไม่สามารถโหลดการตั้งค่าได้', 'error');
         }
     }
@@ -91,22 +100,62 @@ class BackupSettings {
         }
     }
 
-    handleBackupEnabledToggle(event) {
+    async handleBackupEnabledToggle(event) {
         this.updateBackupEnabledLabel(event.target.checked);
+        
+        // Save the setting immediately when toggled
+        try {
+            const settings = {
+                backupEnabled: event.target.checked
+            };
+            
+            const response = await fetch('/admin/settings/backup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify(settings)
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                this.showAlert(data.message || 'บันทึกการตั้งค่าสำเร็จ', 'success');
+            } else {
+                this.showAlert(data.message || 'ไม่สามารถบันทึกการตั้งค่าได้', 'error');
+                // Revert the toggle if save failed
+                event.target.checked = !event.target.checked;
+                this.updateBackupEnabledLabel(event.target.checked);
+            }
+        } catch (error) {
+            this.showAlert('ไม่สามารถบันทึกการตั้งค่าได้', 'error');
+            // Revert the toggle if save failed
+            event.target.checked = !event.target.checked;
+            this.updateBackupEnabledLabel(event.target.checked);
+        }
     }
 
     async handleFormSubmit(event) {
         event.preventDefault();
 
+        // Use FormData to collect form data
         const formData = new FormData(event.target);
-        const settings = {
-            backupEnabled: document.getElementById('backupEnabled').checked,
-            backupFrequency: document.getElementById('backupFrequency').value,
-            backupRetention: parseInt(document.getElementById('backupRetention').value),
-            backupLocation: document.getElementById('backupLocation').value,
-            backupType: document.getElementById('backupType').value,
-            backupTime: document.getElementById('backupTime').value
-        };
+        
+        // Convert FormData to object for JSON submission
+        const settings = {};
+        for (let [key, value] of formData.entries()) {
+            if (key === 'backupEnabled') {
+                settings[key] = value === 'on';
+            } else if (key === 'backupRetention') {
+                settings[key] = parseInt(value);
+            } else {
+                settings[key] = value;
+            }
+        }
+
+        // Debug: Log the settings being sent
 
         try {
             const response = await fetch('/admin/settings/backup', {
@@ -124,10 +173,18 @@ class BackupSettings {
             if (data.success) {
                 this.showAlert(data.message, 'success');
             } else {
-                this.showAlert(data.message || 'เกิดข้อผิดพลาดในการบันทึกการตั้งค่า', 'error');
+                // Show validation errors if available
+                if (data.errors) {
+                    let errorMessage = 'ข้อมูลไม่ถูกต้อง:\n';
+                    Object.entries(data.errors).forEach(([field, messages]) => {
+                        errorMessage += `- ${field}: ${messages.join(', ')}\n`;
+                    });
+                    this.showAlert(errorMessage, 'error');
+                } else {
+                    this.showAlert(data.message || 'เกิดข้อผิดพลาดในการบันทึกการตั้งค่า', 'error');
+                }
             }
         } catch (error) {
-            console.error('Error saving backup settings:', error);
             this.showAlert('ไม่สามารถบันทึกการตั้งค่าได้', 'error');
         }
     }
@@ -139,11 +196,33 @@ class BackupSettings {
 
         const backupType = document.getElementById('backupType').value;
         
+        // Debug: Log the backup type being sent
+        
+        // Validate backup type
+        if (!backupType) {
+            this.showAlert('กรุณาเลือกประเภทการสำรองข้อมูล', 'error');
+            return;
+        }
+        
         // Show loading state
-        const createBtn = document.querySelector('[onclick="createBackup()"]');
-        const originalText = createBtn.innerHTML;
-        createBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>กำลังสร้างสำรองข้อมูล...';
-        createBtn.disabled = true;
+        const createBackupBtn = document.getElementById('createBackupBtn');
+        const createBackupBtnMobile = document.getElementById('createBackupBtnMobile');
+        
+        // Store original content for restoration
+        let originalText = '';
+        let originalTextMobile = '';
+        
+        // Disable both buttons
+        if (createBackupBtn) {
+            originalText = createBackupBtn.innerHTML;
+            createBackupBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>กำลังสร้างสำรองข้อมูล...';
+            createBackupBtn.disabled = true;
+        }
+        if (createBackupBtnMobile) {
+            originalTextMobile = createBackupBtnMobile.innerHTML;
+            createBackupBtnMobile.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>กำลังสร้างสำรองข้อมูล...';
+            createBackupBtnMobile.disabled = true;
+        }
 
         try {
             const response = await fetch('/admin/settings/backup/create', {
@@ -163,15 +242,29 @@ class BackupSettings {
                 // Reload backup history
                 this.loadBackupHistory();
             } else {
-                this.showAlert(data.message || 'เกิดข้อผิดพลาดในการสร้างสำรองข้อมูล', 'error');
+                // Show validation errors if available
+                if (data.errors) {
+                    let errorMessage = 'ข้อมูลไม่ถูกต้อง:\n';
+                    Object.entries(data.errors).forEach(([field, messages]) => {
+                        errorMessage += `- ${field}: ${messages.join(', ')}\n`;
+                    });
+                    this.showAlert(errorMessage, 'error');
+                } else {
+                    this.showAlert(data.message || 'เกิดข้อผิดพลาดในการสร้างสำรองข้อมูล', 'error');
+                }
             }
         } catch (error) {
-            console.error('Error creating backup:', error);
             this.showAlert('ไม่สามารถสร้างสำรองข้อมูลได้', 'error');
         } finally {
             // Restore button state
-            createBtn.innerHTML = originalText;
-            createBtn.disabled = false;
+            if (createBackupBtn && originalText) {
+                createBackupBtn.innerHTML = originalText;
+                createBackupBtn.disabled = false;
+            }
+            if (createBackupBtnMobile && originalTextMobile) {
+                createBackupBtnMobile.innerHTML = originalTextMobile;
+                createBackupBtnMobile.disabled = false;
+            }
         }
     }
 
@@ -199,6 +292,8 @@ class BackupSettings {
 
             const data = await response.json();
             
+            // Debug: Log the received data
+            
             // Hide loading
             loadingRow.style.display = 'none';
 
@@ -208,7 +303,6 @@ class BackupSettings {
                 emptyRow.style.display = 'table-row';
             }
         } catch (error) {
-            console.error('Error loading backup history:', error);
             loadingRow.style.display = 'none';
             emptyRow.style.display = 'table-row';
             this.showAlert('ไม่สามารถโหลดประวัติการสำรองข้อมูลได้', 'error');
@@ -216,6 +310,7 @@ class BackupSettings {
     }
 
     renderBackupHistory(backups) {
+        
         const historyBody = document.getElementById('backupHistoryBody');
         const emptyRow = document.getElementById('backupEmptyRow');
         
@@ -231,6 +326,11 @@ class BackupSettings {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${this.formatDate(backup.created_at)}</td>
+                <td>
+                    <span class="badge bg-info">
+                        ${this.getBackupTypeText(backup.type)}
+                    </span>
+                </td>
                 <td>${this.formatFileSize(backup.file_size)}</td>
                 <td>
                     <span class="badge ${this.getStatusBadgeClass(backup.status)}">
@@ -238,12 +338,19 @@ class BackupSettings {
                     </span>
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick="backupSettings.downloadBackup('${backup.id}')" ${backup.status !== 'completed' ? 'disabled' : ''}>
-                        <i class="fas fa-download"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="backupSettings.deleteBackup('${backup.id}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <div class="action-buttons">
+                        ${backup.status === 'file_not_found' ? 
+                            `<button class="btn-action btn-delete" onclick="backupSettings.deleteBackup('${backup.id}')" title="ลบประวัติ">
+                                <i class="fas fa-trash"></i>
+                            </button>` :
+                            `<button class="btn-action btn-download" onclick="backupSettings.downloadBackup('${backup.id}')" ${backup.status !== 'completed' ? 'disabled' : ''} title="ดาวน์โหลด">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button class="btn-action btn-delete" onclick="backupSettings.deleteBackup('${backup.id}')" title="ลบ">
+                                <i class="fas fa-trash"></i>
+                            </button>`
+                        }
+                    </div>
                 </td>
             `;
             historyBody.appendChild(row);
@@ -260,24 +367,49 @@ class BackupSettings {
                 }
             });
 
-            const data = await response.json();
+            // Check if response is successful
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'ไม่สามารถดาวน์โหลดสำรองข้อมูลได้');
+            }
 
-            if (data.success) {
-                // Create download link
+            // Check if response is a file download
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                // Handle JSON error response
+                const data = await response.json();
+                if (!data.success) {
+                    throw new Error(data.message || 'ไม่สามารถดาวน์โหลดสำรองข้อมูลได้');
+                }
+            } else {
+                // Handle file download
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
-                link.href = data.data.downloadUrl;
-                link.download = data.data.filename;
+                link.href = url;
+                
+                // Get filename from response headers or use backup ID
+                const contentDisposition = response.headers.get('content-disposition');
+                let filename = `backup_${backupId}.sql`;
+                
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                    if (filenameMatch) {
+                        filename = filenameMatch[1];
+                    }
+                }
+                
+                link.download = filename;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
                 
                 this.showAlert('เริ่มดาวน์โหลดสำรองข้อมูล', 'success');
-            } else {
-                this.showAlert(data.message || 'ไม่สามารถดาวน์โหลดสำรองข้อมูลได้', 'error');
             }
+
         } catch (error) {
-            console.error('Error downloading backup:', error);
-            this.showAlert('ไม่สามารถดาวน์โหลดสำรองข้อมูลได้', 'error');
+            this.showAlert('ไม่สามารถดาวน์โหลดสำรองข้อมูลได้: ' + error.message, 'error');
         }
     }
 
@@ -305,7 +437,6 @@ class BackupSettings {
                 this.showAlert(data.message || 'ไม่สามารถลบสำรองข้อมูลได้', 'error');
             }
         } catch (error) {
-            console.error('Error deleting backup:', error);
             this.showAlert('ไม่สามารถลบสำรองข้อมูลได้', 'error');
         }
     }
@@ -334,9 +465,19 @@ class BackupSettings {
             'completed': 'bg-success',
             'failed': 'bg-danger',
             'in_progress': 'bg-warning',
-            'pending': 'bg-secondary'
+            'pending': 'bg-secondary',
+            'file_not_found': 'bg-danger'
         };
         return statusClasses[status] || 'bg-secondary';
+    }
+
+    getBackupTypeText(type) {
+        const typeTexts = {
+            'database': 'ฐานข้อมูล',
+            'files': 'ไฟล์',
+            'both': 'ทั้งหมด'
+        };
+        return typeTexts[type] || type;
     }
 
     getStatusText(status) {
@@ -344,7 +485,8 @@ class BackupSettings {
             'completed': 'สำเร็จ',
             'failed': 'ล้มเหลว',
             'in_progress': 'กำลังดำเนินการ',
-            'pending': 'รอดำเนินการ'
+            'pending': 'รอดำเนินการ',
+            'file_not_found': 'ไม่พบไฟล์'
         };
         return statusTexts[status] || 'ไม่ทราบสถานะ';
     }
@@ -372,7 +514,8 @@ class BackupSettings {
     }
 }
 
-// Global function for backward compatibility
+// Global function for backward compatibility (deprecated)
+// Use event listeners instead of onclick attributes
 function createBackup() {
     if (window.backupSettings) {
         window.backupSettings.createBackup();
@@ -381,5 +524,8 @@ function createBackup() {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    window.backupSettings = new BackupSettings();
+    if (!window.backupSettings) {
+        window.backupSettings = new BackupSettings();
+    }
 });
+}
