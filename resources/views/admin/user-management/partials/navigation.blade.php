@@ -1,6 +1,6 @@
 <!-- User Management Navigation - Desktop -->
 <div class="d-none d-md-block">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mt-4">
         <ul class="nav nav-tabs" id="userManagementTabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab" aria-controls="users" aria-selected="true" onclick="switchTab('users', 'fas fa-users', 'ผู้ใช้')">
@@ -22,7 +22,7 @@
 </div>
 
 <!-- User Management Navigation - Mobile -->
-<div class="d-md-none mb-4">
+<div class="d-md-none mt-4 mb-4">
     <div class="settings-mobile-nav">
         <div class="current-tab-display" onclick="toggleUserManagementDropdown()">
             <div class="tab-info">

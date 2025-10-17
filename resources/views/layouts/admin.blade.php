@@ -55,6 +55,24 @@
             border-radius: 0 2px 2px 0 !important;
         }
         
+        /* Ensure user management menu stays active when on user management page */
+        body[data-page="user-management"] .admin-sidebar .nav-link[href*="user-management"] {
+            background: linear-gradient(135deg, #667eea 0%, #5a6fd8 100%) !important;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
+        }
+        body[data-page="user-management"] .admin-sidebar .nav-link[href*="user-management"]::before {
+            content: '' !important;
+            position: absolute !important;
+            left: -16px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            width: 4px !important;
+            height: 60% !important;
+            background: #667eea !important;
+            border-radius: 0 2px 2px 0 !important;
+        }
+        
         /* Override Bootstrap btn-outline-secondary hover effects */
         .btn-outline-secondary:hover,
         .btn-outline-secondary:focus,
