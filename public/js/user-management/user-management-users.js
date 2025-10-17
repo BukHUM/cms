@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 status: document.getElementById('status').value,
                 password: document.getElementById('password')?.value || '',
                 password_confirmation: document.getElementById('password_confirmation')?.value || '',
-                roles: Array.from(document.getElementById('roles').selectedOptions).map(option => option.value)
+                roles: Array.from(document.getElementById('userRoles').selectedOptions).map(option => option.value)
             };
             
             // Validate required fields

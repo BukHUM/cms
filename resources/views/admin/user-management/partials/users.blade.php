@@ -277,10 +277,10 @@
                                     <input type="tel" class="form-control" id="phone" placeholder="08x-xxx-xxxx">
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="roles" class="form-label">
+                                    <label for="userRoles" class="form-label">
                                         <i class="fas fa-user-shield me-1"></i>บทบาท *
                                     </label>
-                                    <select class="form-select" id="roles" multiple required>
+                                    <select class="form-select" id="userRoles" multiple required>
                                         @foreach(\App\Models\Role::active()->ordered()->get() as $role)
                                             <option value="{{ $role->id }}">{{ $role->name }}</option>
                                         @endforeach

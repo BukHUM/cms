@@ -1,5 +1,9 @@
 <!-- Roles Tab -->
 <div class="tab-pane fade" id="roles" role="tabpanel" aria-labelledby="roles-tab">
+    <!-- Debug Info -->
+    <div class="alert alert-info">
+        <strong>Debug:</strong> Roles tab loaded. Total roles: {{ $roles->count() }}
+    </div>
     <!-- Action Buttons -->
     <div class="settings-card mb-4">
         <div class="card-body">

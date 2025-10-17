@@ -2,9 +2,15 @@
 let currentTab = 'users';
 
 function switchTab(tabName, iconClass, tabText) {
+    console.log('=== switchTab called ===');
+    console.log('Tab name:', tabName);
+    console.log('Icon class:', iconClass);
+    console.log('Tab text:', tabText);
+    
     // Hide all tab content
     document.querySelectorAll('.tab-pane').forEach(pane => {
         pane.classList.remove('show', 'active');
+        console.log('Removed show/active from:', pane.id);
     });
     
     // Remove active class from all nav links
@@ -14,8 +20,12 @@ function switchTab(tabName, iconClass, tabText) {
     
     // Show selected tab content
     const targetPane = document.getElementById(tabName);
+    console.log('Target pane:', targetPane);
     if (targetPane) {
         targetPane.classList.add('show', 'active');
+        console.log('Added show/active to:', tabName);
+    } else {
+        console.error('Target pane not found:', tabName);
     }
     
     // Add active class to selected nav link
