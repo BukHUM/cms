@@ -50,6 +50,92 @@ class UserManagementController extends Controller
         ]);
     }
 
+    /**
+     * Search users with AJAX
+     */
+    public function searchUsers(Request $request)
+    {
+        try {
+            $query = $request->get('search', '');
+            $status = $request->get('status', '');
+            $role = $request->get('role', '');
+            $page = $request->get('page', 1);
+            $perPage = 15;
+
+            // Build query
+            $usersQuery = User::with(['roles']);
+
+            // Apply search filter
+            if (!empty($query)) {
+                $usersQuery->where(function($q) use ($query) {
+                    $q->where('name', 'LIKE', "%{$query}%")
+                      ->orWhere('email', 'LIKE', "%{$query}%")
+                      ->orWhere('phone', 'LIKE', "%{$query}%");
+                });
+            }
+
+            // Apply status filter
+            if (!empty($status)) {
+                $usersQuery->where('status', $status);
+            }
+
+            // Apply role filter
+            if (!empty($role)) {
+                $usersQuery->whereHas('roles', function($q) use ($role) {
+                    $q->where('laravel_roles.id', $role);
+                });
+            }
+
+            // Get paginated results
+            $users = $usersQuery->orderBy('created_at', 'desc')
+                ->paginate($perPage, ['*'], 'page', $page);
+
+            // Format user data for frontend
+            $formattedUsers = $users->map(function($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'status' => $user->status,
+                    'avatar_url' => $user->avatar ? asset('storage/' . $user->avatar) : 'https://ui-avatars.com/api/?name=' . urlencode($user->name) . '&background=6c757d&color=fff',
+                    'email_verified_at' => $user->email_verified_at,
+                    'last_login_at' => $user->last_login_at,
+                    'last_login_human' => $user->last_login_at ? $user->last_login_at->diffForHumans() : null,
+                    'roles' => $user->roles->map(function($role) {
+                        return [
+                            'id' => $role->id,
+                            'name' => $role->name
+                        ];
+                    }),
+                    'created_at' => $user->created_at,
+                    'updated_at' => $user->updated_at
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'users' => $formattedUsers,
+                'total' => $users->total(),
+                'per_page' => $users->perPage(),
+                'current_page' => $users->currentPage(),
+                'last_page' => $users->lastPage(),
+                'from' => $users->firstItem(),
+                'to' => $users->lastItem(),
+                'has_more_pages' => $users->hasMorePages()
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('User search error: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในการค้นหาข้อมูล',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function storeUser(Request $request)
     {
         $validator = Validator::make($request->all(), [

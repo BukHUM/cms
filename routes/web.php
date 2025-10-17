@@ -435,6 +435,7 @@ Route::prefix('admin')->middleware(['web'])->group(function () {
     Route::prefix('api/user-management')->group(function () {
         // Users API
         Route::get('/users', [App\Http\Controllers\UserManagementController::class, 'getUsers'])->name('user-management.users.api');
+        Route::get('/users/search', [App\Http\Controllers\UserManagementController::class, 'searchUsers'])->name('admin.users.search');
         Route::post('/users', [App\Http\Controllers\UserManagementController::class, 'storeUser'])->name('user-management.users.store');
         Route::get('/users/{user}', [App\Http\Controllers\UserManagementController::class, 'getUser'])->name('user-management.users.show');
         Route::put('/users/{user}', [App\Http\Controllers\UserManagementController::class, 'updateUser'])->name('user-management.users.update');
