@@ -113,6 +113,12 @@ class UserManagementController extends Controller
                 ];
             });
 
+            // Get suggestions for autocomplete
+            $suggestions = [];
+            if (!empty($query) && strlen($query) >= 2) {
+                $suggestions = $this->getSearchSuggestions($query);
+            }
+
             return response()->json([
                 'success' => true,
                 'users' => $formattedUsers,
@@ -122,7 +128,9 @@ class UserManagementController extends Controller
                 'last_page' => $users->lastPage(),
                 'from' => $users->firstItem(),
                 'to' => $users->lastItem(),
-                'has_more_pages' => $users->hasMorePages()
+                'has_more_pages' => $users->hasMorePages(),
+                'suggestions' => $suggestions,
+                'query' => $query
             ]);
 
         } catch (\Exception $e) {
@@ -134,6 +142,77 @@ class UserManagementController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Get search suggestions for autocomplete
+     */
+    private function getSearchSuggestions($query)
+    {
+        try {
+            $suggestions = [];
+
+            // Get name suggestions
+            $nameSuggestions = User::where('name', 'LIKE', "%{$query}%")
+                ->select('name')
+                ->distinct()
+                ->limit(5)
+                ->get()
+                ->pluck('name')
+                ->toArray();
+
+            // Get email suggestions
+            $emailSuggestions = User::where('email', 'LIKE', "%{$query}%")
+                ->select('email')
+                ->distinct()
+                ->limit(5)
+                ->get()
+                ->pluck('email')
+                ->toArray();
+
+            // Get phone suggestions
+            $phoneSuggestions = User::where('phone', 'LIKE', "%{$query}%")
+                ->whereNotNull('phone')
+                ->select('phone')
+                ->distinct()
+                ->limit(5)
+                ->get()
+                ->pluck('phone')
+                ->toArray();
+
+            // Combine and format suggestions
+            $allSuggestions = array_merge($nameSuggestions, $emailSuggestions, $phoneSuggestions);
+            $allSuggestions = array_unique($allSuggestions);
+            $allSuggestions = array_slice($allSuggestions, 0, 8); // Limit to 8 suggestions
+
+            foreach ($allSuggestions as $suggestion) {
+                $suggestions[] = [
+                    'text' => $suggestion,
+                    'highlighted' => $this->highlightKeyword($suggestion, $query)
+                ];
+            }
+
+            return $suggestions;
+
+        } catch (\Exception $e) {
+            \Log::error('Search suggestions error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Highlight keyword in text
+     */
+    private function highlightKeyword($text, $keyword)
+    {
+        if (empty($keyword)) {
+            return $text;
+        }
+
+        $pattern = '/(' . preg_quote($keyword, '/') . ')/i';
+        $replacement = '<mark class="search-highlight">$1</mark>';
+        
+        return preg_replace($pattern, $replacement, $text);
     }
 
     public function storeUser(Request $request)

@@ -20,12 +20,16 @@
                             <!-- Search and Filters -->
                             <div class="search-filters d-flex gap-3 align-items-center w-100">
                                 <!-- Search Input -->
-                                <div class="search-container flex-fill">
+                                <div class="search-container flex-fill position-relative">
                                     <div class="input-group">
                                         <span class="input-group-text">
                                             <i class="fas fa-search"></i>
                                         </span>
-                                        <input type="text" class="form-control" placeholder="ค้นหาผู้ใช้..." id="usersSearchInput">
+                                        <input type="text" class="form-control" placeholder="ค้นหาผู้ใช้..." id="usersSearchInput" autocomplete="off">
+                                    </div>
+                                    <!-- Suggestions Dropdown -->
+                                    <div class="search-suggestions" id="searchSuggestions" style="display: none;">
+                                        <div class="suggestions-list" id="suggestionsList"></div>
                                     </div>
                                 </div>
                                 
@@ -65,12 +69,16 @@
                         <!-- Search and Filters Row -->
                         <div class="search-filters-row">
                             <!-- Search Input -->
-                            <div class="search-container mb-3">
+                            <div class="search-container mb-3 position-relative">
                                 <div class="input-group">
                                     <span class="input-group-text">
                                         <i class="fas fa-search"></i>
                                     </span>
-                                    <input type="text" class="form-control" placeholder="ค้นหาผู้ใช้..." id="usersSearchInputMobile">
+                                    <input type="text" class="form-control" placeholder="ค้นหาผู้ใช้..." id="usersSearchInputMobile" autocomplete="off">
+                                </div>
+                                <!-- Suggestions Dropdown -->
+                                <div class="search-suggestions" id="searchSuggestionsMobile" style="display: none;">
+                                    <div class="suggestions-list" id="suggestionsListMobile"></div>
                                 </div>
                             </div>
                             
@@ -384,28 +392,56 @@
 <script>
 let searchTimeout;
 let currentSearchQuery = '';
+let suggestionsTimeout;
+let currentSuggestions = [];
 
 document.addEventListener('DOMContentLoaded', function() {
     // Add AJAX search functionality to search inputs
     const searchInputs = [
-        document.getElementById('usersSearchInput'),
-        document.getElementById('usersSearchInputMobile')
+        { input: document.getElementById('usersSearchInput'), suggestions: document.getElementById('searchSuggestions'), list: document.getElementById('suggestionsList') },
+        { input: document.getElementById('usersSearchInputMobile'), suggestions: document.getElementById('searchSuggestionsMobile'), list: document.getElementById('suggestionsListMobile') }
     ];
     
-    searchInputs.forEach(input => {
+    searchInputs.forEach(({ input, suggestions, list }) => {
         if (input) {
             input.addEventListener('input', function() {
                 const query = this.value.trim();
                 
-                // Clear previous timeout
+                // Clear previous timeouts
                 if (searchTimeout) {
                     clearTimeout(searchTimeout);
+                }
+                if (suggestionsTimeout) {
+                    clearTimeout(suggestionsTimeout);
+                }
+                
+                // Show suggestions for queries with 2+ characters
+                if (query.length >= 2) {
+                    suggestionsTimeout = setTimeout(() => {
+                        loadSuggestions(query, suggestions, list);
+                    }, 200); // Faster suggestions
+                } else {
+                    hideSuggestions(suggestions);
                 }
                 
                 // Set new timeout for debounced search
                 searchTimeout = setTimeout(() => {
                     performAjaxSearch(query);
                 }, 300); // 300ms delay
+            });
+
+            // Hide suggestions when clicking outside
+            input.addEventListener('blur', function() {
+                setTimeout(() => {
+                    hideSuggestions(suggestions);
+                }, 200);
+            });
+
+            // Show suggestions on focus if there's a query
+            input.addEventListener('focus', function() {
+                if (this.value.trim().length >= 2) {
+                    loadSuggestions(this.value.trim(), suggestions, list);
+                }
             });
         }
     });
@@ -447,6 +483,11 @@ function performAjaxSearch(query) {
         updateUserTable(data);
         updateUserCount(data.total);
         updatePaginationVisibility();
+        
+        // Update suggestions if available
+        if (data.suggestions && data.suggestions.length > 0) {
+            currentSuggestions = data.suggestions;
+        }
     })
     .catch(error => {
         console.error('Search error:', error);
@@ -531,6 +572,11 @@ function updateUserTable(data) {
                     </button>
                 `;
             
+            // Highlight keywords in user data
+            const highlightedName = highlightKeyword(user.name, currentSearchQuery);
+            const highlightedEmail = highlightKeyword(user.email, currentSearchQuery);
+            const highlightedPhone = user.phone ? highlightKeyword(user.phone, currentSearchQuery) : '';
+            
             html += `
                 <tr class="user-row" data-user-id="${user.id}" data-status="${user.status}">
                     <td>
@@ -543,15 +589,15 @@ function updateUserTable(data) {
                                 ${statusIndicator}
                             </div>
                             <div>
-                                <div class="fw-medium">${user.name}</div>
-                                ${phone}
+                                <div class="fw-medium">${highlightedName}</div>
+                                ${highlightedPhone ? `<small class="text-muted"><i class="fas fa-phone me-1"></i>${highlightedPhone}</small>` : ''}
                                 ${lastLogin}
                             </div>
                         </div>
                     </td>
                     <td class="d-none d-md-table-cell">
                         <div class="d-flex align-items-center">
-                            <span class="me-2">${user.email}</span>
+                            <span class="me-2">${highlightedEmail}</span>
                             ${emailVerified}
                         </div>
                     </td>
@@ -638,7 +684,90 @@ function clearSearch() {
         }
     });
     
+    // Hide suggestions
+    hideSuggestions(document.getElementById('searchSuggestions'));
+    hideSuggestions(document.getElementById('searchSuggestionsMobile'));
+    
     // Reload the page to show all users
     window.location.reload();
+}
+
+// Suggestion Functions
+function loadSuggestions(query, suggestionsContainer, suggestionsList) {
+    if (currentSuggestions.length > 0) {
+        displaySuggestions(currentSuggestions, suggestionsContainer, suggestionsList);
+    } else {
+        // Load suggestions from server
+        fetch(`{{ route('admin.users.search') }}?search=${encodeURIComponent(query)}&suggestions_only=1`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.suggestions) {
+                displaySuggestions(data.suggestions, suggestionsContainer, suggestionsList);
+            }
+        })
+        .catch(error => {
+            console.error('Suggestions error:', error);
+        });
+    }
+}
+
+function displaySuggestions(suggestions, suggestionsContainer, suggestionsList) {
+    if (!suggestions || suggestions.length === 0) {
+        hideSuggestions(suggestionsContainer);
+        return;
+    }
+
+    let html = '';
+    suggestions.forEach(suggestion => {
+        html += `
+            <div class="suggestion-item" onclick="selectSuggestion('${suggestion.text.replace(/'/g, "\\'")}')">
+                ${suggestion.highlighted}
+            </div>
+        `;
+    });
+
+    suggestionsList.innerHTML = html;
+    suggestionsContainer.style.display = 'block';
+}
+
+function hideSuggestions(suggestionsContainer) {
+    if (suggestionsContainer) {
+        suggestionsContainer.style.display = 'none';
+    }
+}
+
+function selectSuggestion(text) {
+    const searchInputs = [
+        document.getElementById('usersSearchInput'),
+        document.getElementById('usersSearchInputMobile')
+    ];
+    
+    searchInputs.forEach(input => {
+        if (input) {
+            input.value = text;
+            input.focus();
+        }
+    });
+    
+    // Hide all suggestion dropdowns
+    hideSuggestions(document.getElementById('searchSuggestions'));
+    hideSuggestions(document.getElementById('searchSuggestionsMobile'));
+    
+    // Perform search with selected suggestion
+    performAjaxSearch(text);
+}
+
+// Highlighting Functions
+function highlightKeyword(text, keyword) {
+    if (!keyword) return text;
+    
+    const regex = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return text.replace(regex, '<mark class="search-highlight">$1</mark>');
 }
 </script>
