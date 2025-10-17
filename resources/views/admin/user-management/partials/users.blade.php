@@ -6,9 +6,11 @@
         <div class="card-body">
             <div class="row g-3">
                 <div class="col-12">
-                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
-                        <div class="left-section d-flex gap-3 align-items-center flex-wrap">
-                            <div class="action-buttons d-flex gap-2 flex-wrap">
+                    <!-- Desktop Layout -->
+                    <div class="desktop-layout d-none d-md-block">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <!-- Action Buttons -->
+                            <div class="action-buttons d-flex gap-2">
                                 <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addUserModal">
                                     <i class="fas fa-plus me-1"></i>
                                     เพิ่มผู้ใช้ใหม่
@@ -18,37 +20,89 @@
                                     ส่งออก
                                 </button>
                             </div>
+                            
+                            <!-- Search and Filters -->
+                            <div class="search-filters d-flex gap-3 align-items-center w-100">
+                                <!-- Search Input -->
+                                <div class="search-container flex-fill">
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-search"></i>
+                                        </span>
+                                        <input type="text" class="form-control" placeholder="ค้นหาผู้ใช้..." id="usersSearchInput">
+                                    </div>
+                                </div>
+                                
+                                <!-- Status Filter -->
+                                <div class="filter-dropdown">
+                                    <select class="form-select form-select-sm" id="statusFilter" onchange="filterByStatus(this.value)">
+                                        <option value="">ทุกสถานะ</option>
+                                        <option value="active">ใช้งาน</option>
+                                        <option value="inactive">ไม่ใช้งาน</option>
+                                        <option value="pending">รอการยืนยัน</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Role Filter -->
+                                <div class="filter-dropdown">
+                                    <select class="form-select form-select-sm" id="roleFilter" onchange="filterByRole(this.value)">
+                                        <option value="">ทุกบทบาท</option>
+                                        @foreach(\App\Models\Role::active()->ordered()->get() as $role)
+                                        <option value="{{ $role->id }}">{{ $role->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Mobile Layout -->
+                    <div class="mobile-layout d-md-none">
+                        <!-- Action Buttons Row -->
+                        <div class="action-buttons-row d-flex gap-2 mb-3">
+                            <button class="btn btn-primary btn-sm flex-fill" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                                <i class="fas fa-plus me-1"></i>
+                                เพิ่มผู้ใช้ใหม่
+                            </button>
+                            <button class="btn btn-outline-success btn-sm flex-fill" onclick="exportUsers()">
+                                <i class="fas fa-download me-1"></i>
+                                ส่งออก
+                            </button>
                         </div>
                         
-                        <div class="right-section d-flex gap-3 align-items-center flex-wrap">
+                        <!-- Search and Filters Row -->
+                        <div class="search-filters-row">
                             <!-- Search Input -->
-                            <div class="search-container">
-                                <div class="input-group" style="min-width: 250px;">
+                            <div class="search-container mb-3">
+                                <div class="input-group">
                                     <span class="input-group-text">
                                         <i class="fas fa-search"></i>
                                     </span>
-                                    <input type="text" class="form-control" placeholder="ค้นหาผู้ใช้..." id="usersSearchInput">
+                                    <input type="text" class="form-control" placeholder="ค้นหาผู้ใช้..." id="usersSearchInputMobile">
                                 </div>
                             </div>
                             
-                            <!-- Status Filter -->
-                            <div class="filter-dropdown">
-                                <select class="form-select form-select-sm" id="statusFilter" onchange="filterByStatus(this.value)">
-                                    <option value="">ทุกสถานะ</option>
-                                    <option value="active">ใช้งาน</option>
-                                    <option value="inactive">ไม่ใช้งาน</option>
-                                    <option value="pending">รอการยืนยัน</option>
-                                </select>
-                            </div>
-                            
-                            <!-- Role Filter -->
-                            <div class="filter-dropdown">
-                                <select class="form-select form-select-sm" id="roleFilter" onchange="filterByRole(this.value)">
-                                    <option value="">ทุกบทบาท</option>
-                                    @foreach(\App\Models\Role::active()->ordered()->get() as $role)
-                                    <option value="{{ $role->id }}">{{ $role->name }}</option>
-                                    @endforeach
-                                </select>
+                            <!-- Filters Row -->
+                            <div class="filters-row d-flex gap-2">
+                                <!-- Status Filter -->
+                                <div class="filter-dropdown flex-fill">
+                                    <select class="form-select form-select-sm" id="statusFilterMobile" onchange="filterByStatus(this.value)">
+                                        <option value="">ทุกสถานะ</option>
+                                        <option value="active">ใช้งาน</option>
+                                        <option value="inactive">ไม่ใช้งาน</option>
+                                        <option value="pending">รอการยืนยัน</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Role Filter -->
+                                <div class="filter-dropdown flex-fill">
+                                    <select class="form-select form-select-sm" id="roleFilterMobile" onchange="filterByRole(this.value)">
+                                        <option value="">ทุกบทบาท</option>
+                                        @foreach(\App\Models\Role::active()->ordered()->get() as $role)
+                                        <option value="{{ $role->id }}">{{ $role->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -60,6 +114,9 @@
     <!-- Users Table -->
     <div class="settings-card">
         <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">รายการผู้ใช้ (<span id="userCount">{{ $users->count() }}</span>)</h6>
+            </div>
             <div class="table-responsive">
                 <table class="table table-hover user-management-table">
                     <thead>
@@ -76,7 +133,7 @@
                     </thead>
                     <tbody>
                         @forelse($users as $user)
-                        <tr data-user-id="{{ $user->id }}" data-status="{{ $user->status }}">
+                        <tr class="user-row" data-user-id="{{ $user->id }}" data-status="{{ $user->status }}">
                             <td>
                                 <input type="checkbox" class="form-check-input user-checkbox" value="{{ $user->id }}" onchange="updateBulkActions()">
                             </td>
@@ -121,7 +178,7 @@
                             <td class="d-none d-lg-table-cell">
                                 <div class="d-flex flex-wrap gap-1">
                                     @forelse($user->roles as $role)
-                                    <span class="badge bg-primary">{{ $role->name }}</span>
+                                    <span class="badge bg-primary role-badge" data-role-id="{{ $role->id }}">{{ $role->name }}</span>
                                     @empty
                                     <span class="text-muted">ไม่มีบทบาท</span>
                                     @endforelse
@@ -129,23 +186,26 @@
                             </td>
                             <td>
                                 @if($user->status === 'active')
-                                <span class="badge bg-success">ใช้งาน</span>
+                                <span class="badge bg-success status-badge">ใช้งาน</span>
                                 @elseif($user->status === 'pending')
-                                <span class="badge bg-warning">รอการยืนยัน</span>
+                                <span class="badge bg-warning status-badge">รอการยืนยัน</span>
                                 @elseif($user->status === 'suspended')
-                                <span class="badge bg-danger">ระงับการใช้งาน</span>
+                                <span class="badge bg-danger status-badge">ระงับการใช้งาน</span>
                                 @else
-                                <span class="badge bg-secondary">ไม่ใช้งาน</span>
+                                <span class="badge bg-secondary status-badge">ไม่ใช้งาน</span>
                                 @endif
                             </td>
                             <td>
-                                <div class="btn-group" role="group">
-                                    <button class="btn btn-sm btn-outline-primary" onclick="viewUser({{ $user->id }})" title="ดูข้อมูล">
+                                <div class="action-buttons-inline">
+                                    <button class="btn-action btn-view" onclick="viewUser({{ $user->id }})" title="ดูข้อมูล">
                                         <i class="fas fa-eye"></i>
                                     </button>
                                     @if($user->id !== auth()->id())
-                                    <button class="btn btn-sm btn-outline-warning" onclick="editUser({{ $user->id }})" title="แก้ไข">
+                                    <button class="btn-action btn-edit" onclick="editUser({{ $user->id }})" title="แก้ไข">
                                         <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn-action btn-delete" onclick="deleteUser({{ $user->id }})" title="ลบ">
+                                        <i class="fas fa-trash"></i>
                                     </button>
                                     @endif
                                 </div>
@@ -174,7 +234,7 @@
 
     <!-- Pagination -->
     @if($users->hasPages())
-    <div class="d-flex justify-content-center mt-4">
+    <div class="pagination-container">
         {{ $users->links() }}
     </div>
     @endif
@@ -196,17 +256,12 @@
                     <div class="row g-3">
                         <div class="col-md-8">
                             <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="firstName" class="form-label">
-                                        <i class="fas fa-user me-1"></i>ชื่อ *
+                                <div class="col-md-12">
+                                    <label for="fullName" class="form-label">
+                                        <i class="fas fa-user me-1"></i>ชื่อ-นามสกุล *
                                     </label>
-                                    <input type="text" class="form-control" id="firstName" required placeholder="กรอกชื่อ">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="lastName" class="form-label">
-                                        <i class="fas fa-user me-1"></i>นามสกุล *
-                                    </label>
-                                    <input type="text" class="form-control" id="lastName" required placeholder="กรอกนามสกุล">
+                                    <input type="text" class="form-control" id="fullName" required placeholder="กรอกชื่อ-นามสกุล">
+                                    <div class="form-text">กรอกชื่อและนามสกุลในช่องเดียวกัน</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="email" class="form-label">
@@ -242,12 +297,25 @@
                                         <option value="inactive">ไม่ใช้งาน</option>
                                     </select>
                                 </div>
+                                <div class="col-md-6">
+                                    <label for="password" class="form-label">
+                                        <i class="fas fa-lock me-1"></i>รหัสผ่าน *
+                                    </label>
+                                    <input type="password" class="form-control" id="password" required placeholder="กรอกรหัสผ่าน">
+                                    <div class="form-text">รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="password_confirmation" class="form-label">
+                                        <i class="fas fa-lock me-1"></i>ยืนยันรหัสผ่าน *
+                                    </label>
+                                    <input type="password" class="form-control" id="password_confirmation" required placeholder="ยืนยันรหัสผ่าน">
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="text-center">
                                 <div class="mb-3">
-                                    <img id="avatarPreview" src="https://ui-avatars.com/api/?name=New+User&background=6c757d&color=fff" 
+                                    <img id="avatarPreview" src="https://ui-avatars.com/api/?name=ผู้ใช้ใหม่&background=6c757d&color=fff" 
                                          alt="Avatar Preview" class="rounded-circle" width="120" height="120">
                                 </div>
                                 <div class="form-text">
@@ -318,3 +386,32 @@
         </div>
     </div>
 </div>
+
+<script src="{{ asset('js/user-management/filter-functions.js') }}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add search functionality to search inputs
+    const searchInputs = [
+        document.getElementById('usersSearchInput'),
+        document.getElementById('usersSearchInputMobile')
+    ];
+    
+    searchInputs.forEach(input => {
+        if (input) {
+            input.addEventListener('input', function() {
+                searchUsers(this.value);
+            });
+        }
+    });
+    
+    // Initialize pagination visibility
+    const paginationContainer = document.querySelector('.pagination-container');
+    if (paginationContainer) {
+        const visibleRows = document.querySelectorAll('.user-row:not([style*="display: none"])');
+        if (visibleRows.length === 0) {
+            paginationContainer.style.display = 'none';
+        }
+    }
+});
+</script>

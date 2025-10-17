@@ -100,14 +100,20 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Get form data
             const formData = {
-                name: document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value,
+                name: document.getElementById('fullName').value,
                 email: document.getElementById('email').value,
                 phone: document.getElementById('phone').value,
                 status: document.getElementById('status').value,
-                password: document.getElementById('password').value,
-                password_confirmation: document.getElementById('password_confirmation').value,
+                password: document.getElementById('password')?.value || '',
+                password_confirmation: document.getElementById('password_confirmation')?.value || '',
                 roles: Array.from(document.getElementById('roles').selectedOptions).map(option => option.value)
             };
+            
+            // Validate required fields
+            if (!formData.name || !formData.email || !formData.password || !formData.password_confirmation) {
+                SwalHelper.error('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return;
+            }
             
             // Validate password confirmation
             if (formData.password !== formData.password_confirmation) {
@@ -115,8 +121,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
+            // Validate password length
+            if (formData.password.length < 8) {
+                SwalHelper.error('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
+                return;
+            }
+            
             // Send data to backend
-            fetch('{{ route("user-management.users.store") }}', {
+            fetch('/admin/api/user-management/users', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -124,16 +136,43 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify(formData)
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                if (!response.ok) {
+                    // Try to get error message from response
+                    return response.text().then(text => {
+                        console.error('Error response:', text);
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    });
+                }
+                
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json();
+                } else {
+                    throw new Error('Response is not JSON');
+                }
+            })
             .then(data => {
+                console.log('Response data:', data);
                 if (data.success) {
-                    SwalHelper.success('เพิ่มผู้ใช้เรียบร้อยแล้ว');
+                    SwalHelper.success(data.message || 'เพิ่มผู้ใช้เรียบร้อยแล้ว');
+                    
+                    // Clear form
+                    if (typeof clearAddUserForm === 'function') {
+                        clearAddUserForm();
+                    }
+                    
                     // Close modal
                     const modal = bootstrap.Modal.getInstance(document.getElementById('addUserModal'));
-                    modal.hide();
-                    // Reset form
-                    this.reset();
-                    // Reload page
+                    if (modal) {
+                        modal.hide();
+                    }
+                    
+                    // Reload page after delay
                     setTimeout(() => {
                         location.reload();
                     }, 1500);
@@ -143,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error:', error);
-                SwalHelper.error('เกิดข้อผิดพลาดในการเพิ่มผู้ใช้');
+                SwalHelper.error('เกิดข้อผิดพลาดในการเพิ่มผู้ใช้: ' + error.message);
             });
         });
     }
@@ -1032,7 +1071,10 @@ function filterUsers() {
     });
     
     // Update count
-    document.getElementById('userCount').textContent = visibleCount;
+    const userCountElement = document.getElementById('userCount');
+    if (userCountElement) {
+        userCountElement.textContent = visibleCount;
+    }
 }
 
 function toggleSelectAll() {
@@ -1248,7 +1290,8 @@ function previewAvatar(input) {
     }
 }
 
-// Filter functions for dropdowns
+// Filter functions for dropdowns - MOVED TO filter-functions.js
+/*
 function filterByStatus(status) {
     console.log('=== filterByStatus called ===');
     console.log('Status parameter:', status);
@@ -1417,6 +1460,7 @@ function filterByRole(roleId) {
         console.error('Error in filterByRole:', error);
     }
 }
+*/
 
 function getRoleNameById(roleId) {
     // Map role IDs to names based on the actual data
@@ -1497,9 +1541,220 @@ document.addEventListener('DOMContentLoaded', function() {
     window.filterByStatus = filterByStatus;
     window.filterByRole = filterByRole;
     
+// Delete User Function
+function deleteUser(userId) {
+    // Get user data for confirmation
+    fetch(`/admin/api/user-management/users/${userId}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(response => {
+        if (response.success) {
+            const user = response.data.user;
+            
+            // Show confirmation dialog
+            Swal.fire({
+                title: 'ยืนยันการลบผู้ใช้',
+                html: `
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+                        <p>คุณต้องการลบผู้ใช้ <strong>${user.name}</strong> หรือไม่?</p>
+                        <p class="text-muted">การดำเนินการนี้ไม่สามารถยกเลิกได้</p>
+                    </div>
+                `,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: '<i class="fas fa-trash me-1"></i>ลบผู้ใช้',
+                cancelButtonText: '<i class="fas fa-times me-1"></i>ยกเลิก',
+                reverseButtons: true,
+                customClass: {
+                    popup: 'swal-wide',
+                    confirmButton: 'btn btn-danger',
+                    cancelButton: 'btn btn-secondary'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Proceed with deletion
+                    performUserDeletion(userId);
+                }
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error loading user for deletion:', error);
+        Swal.fire({
+            title: 'เกิดข้อผิดพลาด',
+            text: 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้',
+            icon: 'error',
+            confirmButtonText: 'ตกลง'
+        });
+    });
+}
+
+// Perform User Deletion
+function performUserDeletion(userId) {
+    // Show loading
+    Swal.fire({
+        title: 'กำลังลบผู้ใช้...',
+        text: 'กรุณารอสักครู่',
+        icon: 'info',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    // Make delete request
+    fetch(`/admin/api/user-management/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(response => {
+        if (response.success) {
+            // Remove user row from table
+            const userRow = document.querySelector(`tr[data-user-id="${userId}"]`);
+            if (userRow) {
+                userRow.remove();
+            }
+
+            // Show success message
+            Swal.fire({
+                title: 'ลบผู้ใช้สำเร็จ',
+                text: response.message || 'ผู้ใช้ถูกลบออกจากระบบแล้ว',
+                icon: 'success',
+                confirmButtonText: 'ตกลง',
+                timer: 3000,
+                timerProgressBar: true
+            });
+
+            // Refresh user count if exists
+            updateUserCount();
+        } else {
+            throw new Error(response.message || 'เกิดข้อผิดพลาดในการลบผู้ใช้');
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting user:', error);
+        Swal.fire({
+            title: 'เกิดข้อผิดพลาด',
+            text: error.message || 'ไม่สามารถลบผู้ใช้ได้',
+            icon: 'error',
+            confirmButtonText: 'ตกลง'
+        });
+    });
+}
+
+// Update User Count (if exists)
+function updateUserCount() {
+    const userCountElement = document.querySelector('.user-count');
+    if (userCountElement) {
+        const currentCount = parseInt(userCountElement.textContent) || 0;
+        userCountElement.textContent = Math.max(0, currentCount - 1);
+    }
+}
+
+    // Update avatar preview when name changes
+    const fullNameInput = document.getElementById('fullName');
+    const avatarPreview = document.getElementById('avatarPreview');
+    
+    if (fullNameInput && avatarPreview) {
+        fullNameInput.addEventListener('input', function() {
+            const name = this.value.trim();
+            if (name) {
+                const encodedName = encodeURIComponent(name);
+                avatarPreview.src = `https://ui-avatars.com/api/?name=${encodedName}&background=6c757d&color=fff`;
+            } else {
+                avatarPreview.src = 'https://ui-avatars.com/api/?name=ผู้ใช้ใหม่&background=6c757d&color=fff';
+            }
+        });
+    }
+
+    // Clear Add User Form
+    function clearAddUserForm() {
+        const form = document.getElementById('addUserForm');
+        if (form) {
+            form.reset();
+            // Reset avatar preview
+            const avatarPreview = document.getElementById('avatarPreview');
+            if (avatarPreview) {
+                avatarPreview.src = 'https://ui-avatars.com/api/?name=ผู้ใช้ใหม่&background=6c757d&color=fff';
+            }
+        }
+    }
+
+    // Make clearAddUserForm globally available
+    window.clearAddUserForm = clearAddUserForm;
+
+    // Mobile filters synchronization
+    function syncMobileFilters() {
+        const desktopSearch = document.getElementById('usersSearchInput');
+        const mobileSearch = document.getElementById('usersSearchInputMobile');
+        const desktopStatus = document.getElementById('statusFilter');
+        const mobileStatus = document.getElementById('statusFilterMobile');
+        const desktopRole = document.getElementById('roleFilter');
+        const mobileRole = document.getElementById('roleFilterMobile');
+
+        // Sync search inputs
+        if (desktopSearch && mobileSearch) {
+            desktopSearch.addEventListener('input', function() {
+                mobileSearch.value = this.value;
+            });
+            mobileSearch.addEventListener('input', function() {
+                desktopSearch.value = this.value;
+            });
+        }
+
+        // Sync status filters
+        if (desktopStatus && mobileStatus) {
+            desktopStatus.addEventListener('change', function() {
+                mobileStatus.value = this.value;
+            });
+            mobileStatus.addEventListener('change', function() {
+                desktopStatus.value = this.value;
+            });
+        }
+
+        // Sync role filters
+        if (desktopRole && mobileRole) {
+            desktopRole.addEventListener('change', function() {
+                mobileRole.value = this.value;
+            });
+            mobileRole.addEventListener('change', function() {
+                desktopRole.value = this.value;
+            });
+        }
+    }
+
+    // Initialize mobile filters sync
+    syncMobileFilters();
+
     console.log('All functions available:', {
         testFilter: typeof window.testFilter,
         filterByStatus: typeof window.filterByStatus,
-        filterByRole: typeof window.filterByRole
+        filterByRole: typeof window.filterByRole,
+        deleteUser: typeof window.deleteUser
     });
 });

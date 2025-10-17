@@ -201,22 +201,26 @@ class UserManagementController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'ไม่สามารถลบบัญชีของตัวเองได้'
-                ], 400);
+                ], 400, [], JSON_UNESCAPED_UNICODE);
             }
 
+            $userName = $user->name;
             $user->delete();
 
             return response()->json([
                 'success' => true,
-                'message' => 'ลบผู้ใช้เรียบร้อยแล้ว'
-            ]);
+                'message' => "ผู้ใช้ {$userName} ถูกลบออกจากระบบแล้ว"
+            ], 200, [], JSON_UNESCAPED_UNICODE);
 
         } catch (\Exception $e) {
-            return getSafeApiErrorResponse(
-                $e,
-                'ไม่สามารถลบผู้ใช้ได้ กรุณาลองใหม่อีกครั้ง',
-                'UserManagementController::deleteUser'
-            );
+            \Log::error('Error in deleteUser: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'ไม่สามารถลบผู้ใช้ได้',
+                'error' => $e->getMessage()
+            ], 500, [], JSON_UNESCAPED_UNICODE);
         }
     }
 

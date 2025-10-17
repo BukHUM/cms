@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             SettingsSeeder::class,
             NaturalAuditLogSeeder::class,
             AuditLogSeeder::class,
+            UserSeeder::class, // Add UserSeeder after roles are created
         ]);
     }
 }
