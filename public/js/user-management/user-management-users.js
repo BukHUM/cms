@@ -1,5 +1,37 @@
 // Users Tab JavaScript
 document.addEventListener('DOMContentLoaded', function() {
+    // Modal event listeners
+    const viewModal = document.getElementById('viewUserModal');
+    const editModal = document.getElementById('editUserModal');
+    
+    if (viewModal) {
+        viewModal.addEventListener('hidden.bs.modal', function() {
+            // Clear modal content when closed
+            document.getElementById('viewUserModalBody').innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">กำลังโหลด...</span>
+                    </div>
+                    <p class="mt-2">กำลังโหลดข้อมูลผู้ใช้...</p>
+                </div>
+            `;
+        });
+    }
+    
+    if (editModal) {
+        editModal.addEventListener('hidden.bs.modal', function() {
+            // Clear modal content when closed
+            document.getElementById('editUserModalBody').innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">กำลังโหลด...</span>
+                    </div>
+                    <p class="mt-2">กำลังโหลดข้อมูลผู้ใช้...</p>
+                </div>
+            `;
+        });
+    }
+    
     // Search functionality
     const usersSearchInput = document.getElementById('usersSearchInput');
     if (usersSearchInput) {
@@ -31,6 +63,34 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleSelectAll();
         });
     }
+
+    // Edit user form
+    const editUserForm = document.getElementById('editUserForm');
+    if (editUserForm) {
+        editUserForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const userId = window.currentEditingUserId;
+            if (!userId) {
+                Swal.fire({
+                    title: 'ข้อผิดพลาด',
+                    text: 'ไม่พบข้อมูลผู้ใช้ที่ต้องการแก้ไข',
+                    icon: 'error',
+                    customClass: {
+                container: 'swal2-container-high-zindex'
+            },
+            confirmButtonText: 'ตกลง'
+                });
+                return;
+            }
+            
+            // Call the proper save function
+            saveUserChanges(userId);
+        });
+    }
+
+    // Initialize bulk actions state
+    updateBulkActions();
 
     // Add user form
     const addUserForm = document.getElementById('addUserForm');
@@ -92,14 +152,281 @@ document.addEventListener('DOMContentLoaded', function() {
 // User actions
 function editUser(userId) {
     console.log('Edit user:', userId);
-    // Redirect to edit page
-    window.location.href = `{{ route('user-management.users.show') }}/${userId}/edit`;
+    
+    // Debug modal state
+    console.log('Modal element:', document.getElementById('editUserModal'));
+    console.log('Modal classes:', document.getElementById('editUserModal').className);
+    
+    // Force remove any existing modal instances
+    const existingModal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
+    if (existingModal) {
+        console.log('Disposing existing modal');
+        existingModal.dispose();
+    }
+    
+    // Show edit modal with proper options
+    const editModal = new bootstrap.Modal(document.getElementById('editUserModal'), {
+        backdrop: false,
+        keyboard: true,
+        focus: true
+    });
+    
+    // Store current user ID for form submission
+    window.currentEditingUserId = userId;
+    
+    // Show modal
+    editModal.show();
+    
+    // Force modal z-index and check navigation
+    setTimeout(() => {
+        const modalElement = document.getElementById('editUserModal');
+        
+        // Check navigation bar z-index
+        const navbars = document.querySelectorAll('.navbar, .nav, .navigation, .header, .top-bar');
+        navbars.forEach(nav => {
+            console.log('Navigation element:', nav, 'z-index:', window.getComputedStyle(nav).zIndex);
+            nav.style.zIndex = '1000';
+        });
+        
+        // Force modal z-index
+        modalElement.style.zIndex = '999999';
+        modalElement.style.position = 'fixed';
+        modalElement.style.top = '0';
+        modalElement.style.left = '0';
+        modalElement.style.width = '100%';
+        modalElement.style.height = '100%';
+        
+        const modalDialog = modalElement.querySelector('.modal-dialog');
+        if (modalDialog) {
+            modalDialog.style.zIndex = '1000000';
+            modalDialog.style.position = 'relative';
+        }
+        const modalContent = modalElement.querySelector('.modal-content');
+        if (modalContent) {
+            modalContent.style.zIndex = '1000001';
+            modalContent.style.position = 'relative';
+        }
+        
+        console.log('Forced edit modal z-index and checked navigation');
+    }, 50);
+    
+    // Remove any existing backdrop
+    setTimeout(() => {
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => {
+            backdrop.remove();
+        });
+        console.log('Removed existing backdrops');
+    }, 100);
+    
+    // Debug after show
+    setTimeout(() => {
+        console.log('Modal shown, classes:', document.getElementById('editUserModal').className);
+        console.log('Modal display:', window.getComputedStyle(document.getElementById('editUserModal')).display);
+        console.log('Modal z-index:', window.getComputedStyle(document.getElementById('editUserModal')).zIndex);
+    }, 200);
+    
+    // Load user data after modal is shown
+    setTimeout(() => {
+        loadUserForEdit(userId);
+    }, 100);
 }
 
 function viewUser(userId) {
     console.log('View user:', userId);
-    // Redirect to view page
-    window.location.href = `{{ route('user-management.users.show') }}/${userId}`;
+    
+    // Check if Bootstrap is loaded
+    if (typeof bootstrap === 'undefined') {
+        console.error('Bootstrap is not loaded!');
+        Swal.fire({
+            title: 'ข้อผิดพลาด',
+            text: 'Bootstrap is not loaded. Please refresh the page.',
+            icon: 'error',
+            customClass: {
+                container: 'swal2-container-high-zindex'
+            },
+            confirmButtonText: 'ตกลง'
+        });
+        return;
+    }
+    
+    // Check if modal element exists
+    const modalElement = document.getElementById('viewUserModal');
+    if (!modalElement) {
+        console.error('Modal element not found!');
+        Swal.fire({
+            title: 'ข้อผิดพลาด',
+            text: 'Modal element not found. Please refresh the page.',
+            icon: 'error',
+            customClass: {
+                container: 'swal2-container-high-zindex'
+            },
+            confirmButtonText: 'ตกลง'
+        });
+        return;
+    }
+    
+    console.log('View Modal element:', modalElement);
+    console.log('View Modal classes:', modalElement.className);
+    
+    // Force remove any existing modal instances
+    const existingModal = bootstrap.Modal.getInstance(modalElement);
+    if (existingModal) {
+        console.log('Disposing existing view modal');
+        existingModal.dispose();
+    }
+    
+    // Try simple modal creation first
+    try {
+        const viewModal = new bootstrap.Modal(modalElement, {
+            backdrop: false,
+            keyboard: true,
+            focus: true
+        });
+        
+        console.log('Modal instance created:', viewModal);
+        
+        // Store current user ID for edit button
+        window.currentViewingUserId = userId;
+        
+        // Show modal
+        viewModal.show();
+        
+        console.log('Modal.show() called');
+        
+        // Force modal z-index and check navigation
+        setTimeout(() => {
+            // Check navigation bar z-index
+            const navbars = document.querySelectorAll('.navbar, .nav, .navigation, .header, .top-bar');
+            navbars.forEach(nav => {
+                console.log('Navigation element:', nav, 'z-index:', window.getComputedStyle(nav).zIndex);
+                nav.style.zIndex = '1000';
+            });
+            
+            // Force modal z-index
+            modalElement.style.zIndex = '999999';
+            modalElement.style.position = 'fixed';
+            modalElement.style.top = '0';
+            modalElement.style.left = '0';
+            modalElement.style.width = '100%';
+            modalElement.style.height = '100%';
+            
+            const modalDialog = modalElement.querySelector('.modal-dialog');
+            if (modalDialog) {
+                modalDialog.style.zIndex = '1000000';
+                modalDialog.style.position = 'relative';
+            }
+            const modalContent = modalElement.querySelector('.modal-content');
+            if (modalContent) {
+                modalContent.style.zIndex = '1000001';
+                modalContent.style.position = 'relative';
+            }
+            
+            console.log('Forced modal z-index and checked navigation');
+        }, 50);
+        
+        // Remove any existing backdrop
+        setTimeout(() => {
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(backdrop => {
+                backdrop.remove();
+            });
+            console.log('Removed existing backdrops');
+        }, 100);
+        
+        // Debug after show
+        setTimeout(() => {
+            console.log('View Modal shown, classes:', modalElement.className);
+            console.log('View Modal display:', window.getComputedStyle(modalElement).display);
+            console.log('View Modal z-index:', window.getComputedStyle(modalElement).zIndex);
+            console.log('View Modal opacity:', window.getComputedStyle(modalElement).opacity);
+            console.log('View Modal visibility:', window.getComputedStyle(modalElement).visibility);
+            console.log('Modal backdrop:', document.querySelector('.modal-backdrop'));
+            
+            // Check if modal is actually visible
+            const modalRect = modalElement.getBoundingClientRect();
+            console.log('Modal position:', modalRect);
+            console.log('Modal width:', modalRect.width);
+            console.log('Modal height:', modalRect.height);
+            
+            // Force show modal if not visible
+            if (modalRect.width === 0 || modalRect.height === 0) {
+                console.log('Modal not visible, forcing display');
+                modalElement.style.display = 'block';
+                modalElement.style.opacity = '1';
+                modalElement.style.visibility = 'visible';
+                modalElement.style.zIndex = '9999';
+            }
+            
+            // Force enable pointer events for all modal elements
+            console.log('Enabling pointer events for modal elements');
+            modalElement.style.pointerEvents = 'auto';
+            const modalContent = modalElement.querySelector('.modal-content');
+            if (modalContent) {
+                modalContent.style.pointerEvents = 'auto';
+            }
+            
+            // Enable pointer events for all child elements
+            const allElements = modalElement.querySelectorAll('*');
+            allElements.forEach(element => {
+                element.style.pointerEvents = 'auto';
+            });
+            
+            // Test click events
+            console.log('Testing click events...');
+            const closeBtn = modalElement.querySelector('.btn-close');
+            const cancelBtn = modalElement.querySelector('.btn-secondary');
+            const editBtn = modalElement.querySelector('#editUserFromViewBtn');
+            
+            if (closeBtn) {
+                console.log('Close button found:', closeBtn);
+                closeBtn.addEventListener('click', function(e) {
+                    console.log('Close button clicked!');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    bootstrap.Modal.getInstance(modalElement).hide();
+                });
+            }
+            
+            if (cancelBtn) {
+                console.log('Cancel button found:', cancelBtn);
+                cancelBtn.addEventListener('click', function(e) {
+                    console.log('Cancel button clicked!');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    bootstrap.Modal.getInstance(modalElement).hide();
+                });
+            }
+            
+            if (editBtn) {
+                console.log('Edit button found:', editBtn);
+                editBtn.addEventListener('click', function(e) {
+                    console.log('Edit button clicked!');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    bootstrap.Modal.getInstance(modalElement).hide();
+                    editUser(userId);
+                });
+            }
+        }, 200);
+        
+        // Load user data after modal is shown
+        setTimeout(() => {
+            loadUserForView(userId);
+        }, 100);
+        
+    } catch (error) {
+        console.error('Error creating modal:', error);
+        Swal.fire({
+            title: 'ข้อผิดพลาด',
+            text: 'Error creating modal: ' + error.message,
+            icon: 'error',
+            customClass: {
+                container: 'swal2-container-high-zindex'
+            },
+            confirmButtonText: 'ตกลง'
+        });
+    }
 }
 
 function manageUserRoles(userId) {
@@ -188,28 +515,441 @@ function manageUserRoles(userId) {
 }
 
 function deleteUser(userId) {
-    SwalHelper.confirmDelete('คุณแน่ใจหรือไม่ที่จะลบผู้ใช้นี้?', function() {
-        fetch(`{{ route('user-management.users.delete') }}/${userId}`, {
+    Swal.fire({
+        title: 'ยืนยันการลบ',
+        text: 'คุณแน่ใจหรือไม่ที่จะลบผู้ใช้นี้?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'ลบ',
+        cancelButtonText: 'ยกเลิก',
+        customClass: {
+            container: 'swal2-container-high-zindex'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            console.log('Delete user:', userId);
+            
+            // Show loading
+            Swal.fire({
+                title: 'กำลังลบ...',
+                text: 'กรุณารอสักครู่',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                customClass: {
+                    container: 'swal2-container-high-zindex'
+                },
+                willOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // Make API call
+            fetch(`/admin/api/user-management/users/${userId}`, {
             method: 'DELETE',
             headers: {
+                    'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             }
         })
         .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                SwalHelper.success('ลบผู้ใช้เรียบร้อยแล้ว');
-                setTimeout(() => {
-                    location.reload();
-                }, 1500);
+            .then(response => {
+                console.log('Delete response:', response);
+                
+                if (response.success) {
+                    // Show success message
+                    Swal.fire({
+                        title: 'สำเร็จ',
+                        text: 'ลบผู้ใช้เรียบร้อยแล้ว',
+                        icon: 'success',
+                        customClass: {
+                container: 'swal2-container-high-zindex'
+            },
+            confirmButtonText: 'ตกลง',
+                        customClass: {
+                            container: 'swal2-container-high-zindex'
+                        }
+                    }).then(() => {
+                        // Reload page to show updated data
+                        window.location.reload();
+                    });
             } else {
-                SwalHelper.error(data.message || 'ไม่สามารถลบผู้ใช้ได้');
+                    throw new Error(response.message || 'เกิดข้อผิดพลาดในการลบ');
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            SwalHelper.error('เกิดข้อผิดพลาดในการลบผู้ใช้');
+                console.error('Error deleting user:', error);
+                Swal.fire({
+                    title: 'ข้อผิดพลาด',
+                    text: 'เกิดข้อผิดพลาดในการลบ: ' + error.message,
+                    icon: 'error',
+                    customClass: {
+                container: 'swal2-container-high-zindex'
+            },
+            confirmButtonText: 'ตกลง',
+                    customClass: {
+                        container: 'swal2-container-high-zindex'
+                    }
+                });
+            });
+        }
+    });
+}
+
+// Load user data for view modal
+function loadUserForView(userId) {
+    const modalBody = document.getElementById('viewUserModalBody');
+    
+    // Show loading
+    modalBody.innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">กำลังโหลด...</span>
+            </div>
+            <p class="mt-2">กำลังโหลดข้อมูลผู้ใช้...</p>
+        </div>
+    `;
+    
+    // Make actual API call
+    fetch(`/admin/api/user-management/users/${userId}`, {
+        method: 'GET',
+            headers: {
+            'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+    .then(response => response.json())
+    .then(response => {
+        console.log('API Response:', response);
+        
+        if (!response.success) {
+            throw new Error(response.message || 'API Error');
+        }
+        
+        const user = response.data.user;
+        console.log('User data loaded:', user);
+        
+        modalBody.innerHTML = `
+            <div class="row g-3">
+                <div class="col-md-4 text-center">
+                    <div class="mb-3">
+                        ${user.avatar_url ? 
+                            `<img src="${user.avatar_url}" alt="Avatar" class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover;">` :
+                            `<div class="rounded-circle bg-primary d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                <i class="fas fa-user text-white fa-2x"></i>
+                            </div>`
+                        }
+                    </div>
+                    <h5 id="viewUserName">${user.name || 'ไม่ระบุ'}</h5>
+                    <span class="badge ${user.status === 'active' ? 'bg-success' : 'bg-danger'}" id="viewUserStatus">
+                        ${user.status === 'active' ? 'ใช้งาน' : 'ไม่ใช้งาน'}
+                    </span>
+                </div>
+                <div class="col-md-8">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-bold">ชื่อ-นามสกุล</label>
+                            <p id="viewUserName">${user.name || 'ไม่ระบุ'}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">อีเมล</label>
+                            <p id="viewUserEmail">${user.email || 'ไม่ระบุ'}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">เบอร์โทรศัพท์</label>
+                            <p id="viewUserPhone">${user.phone || 'ไม่ระบุ'}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">สถานะ</label>
+                             <p id="viewUserStatusDetail">
+                                 ${user.status === 'active' ? 'ใช้งาน' : 
+                                   user.status === 'inactive' ? 'ไม่ใช้งาน' : 
+                                   user.status === 'pending' ? 'รอการยืนยัน' : 'ไม่ระบุ'}
+                             </p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">บทบาท</label>
+                            <div id="viewUserRoles">
+                                ${user.roles && user.roles.length > 0 ? user.roles.map(role => `<span class="badge bg-primary me-1">${role.name}</span>`).join('') : '<span class="badge bg-secondary">ไม่มีบทบาท</span>'}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">วันที่สมัคร</label>
+                            <p id="viewUserCreatedAt">${user.created_at ? new Date(user.created_at).toLocaleDateString('th-TH') : 'ไม่ระบุ'}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">อัปเดตล่าสุด</label>
+                            <p id="viewUserUpdatedAt">${user.updated_at ? new Date(user.updated_at).toLocaleDateString('th-TH') : 'ไม่ระบุ'}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Set edit button click handler
+        document.getElementById('editUserFromViewBtn').onclick = () => {
+            bootstrap.Modal.getInstance(document.getElementById('viewUserModal')).hide();
+            editUser(userId);
+        };
+    })
+    .catch(error => {
+        console.error('Error loading user:', error);
+        Swal.fire({
+            title: 'ข้อผิดพลาด',
+            text: 'เกิดข้อผิดพลาดในการโหลดข้อมูลผู้ใช้',
+            icon: 'error',
+            customClass: {
+                container: 'swal2-container-high-zindex'
+            },
+            confirmButtonText: 'ตกลง'
+        }).then(() => {
+            // Close modal
+            const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewUserModal'));
+            viewModal.hide();
         });
+    });
+}
+
+// Load user data for edit modal
+function loadUserForEdit(userId) {
+    const modalBody = document.getElementById('editUserModalBody');
+    
+    // Show loading
+    modalBody.innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">กำลังโหลด...</span>
+            </div>
+            <p class="mt-2">กำลังโหลดข้อมูลผู้ใช้...</p>
+        </div>
+    `;
+    
+    // Make actual API call
+    fetch(`/admin/api/user-management/users/${userId}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(response => {
+        console.log('API Response for edit:', response);
+        
+        if (!response.success) {
+            throw new Error(response.message || 'API Error');
+        }
+        
+        const user = response.data.user;
+        const allRoles = response.data.all_roles;
+        console.log('User data loaded for edit:', user);
+        
+        modalBody.innerHTML = `
+            <div class="row g-3">
+                <div class="col-12">
+                    <label for="editName" class="form-label">ชื่อ-นามสกุล *</label>
+                    <input type="text" class="form-control" id="editName" value="${user.name || ''}" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="editEmail" class="form-label">อีเมล *</label>
+                    <input type="email" class="form-control" id="editEmail" value="${user.email || ''}" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="editPhone" class="form-label">เบอร์โทรศัพท์</label>
+                    <input type="tel" class="form-control" id="editPhone" value="${user.phone || ''}">
+                </div>
+                <div class="col-md-6">
+                    <label for="editStatus" class="form-label">สถานะ</label>
+                     <select class="form-select" id="editStatus">
+                         <option value="active" ${user.status === 'active' ? 'selected' : ''}>ใช้งาน</option>
+                         <option value="inactive" ${user.status === 'inactive' ? 'selected' : ''}>ไม่ใช้งาน</option>
+                         <option value="pending" ${user.status === 'pending' ? 'selected' : ''}>รอการยืนยัน</option>
+                     </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="editRoles" class="form-label">บทบาท</label>
+                    <select class="form-select" id="editRoles" multiple>
+                        ${allRoles ? allRoles.map(role => `<option value="${role.id}" ${user.roles && user.roles.some(userRole => userRole.id === role.id) ? 'selected' : ''}>${role.name}</option>`).join('') : '<option value="">ไม่มีบทบาท</option>'}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="editChangePassword">
+                        <label class="form-check-label" for="editChangePassword">
+                            เปลี่ยนรหัสผ่าน
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-6" id="editPasswordFields" style="display: none;">
+                    <label for="editPassword" class="form-label">รหัสผ่านใหม่</label>
+                    <input type="password" class="form-control" id="editPassword">
+                </div>
+                <div class="col-md-6" id="editPasswordConfirmFields" style="display: none;">
+                    <label for="editPasswordConfirm" class="form-label">ยืนยันรหัสผ่าน</label>
+                    <input type="password" class="form-control" id="editPasswordConfirm">
+                </div>
+            </div>
+        `;
+        
+        // Handle password change checkbox
+        document.getElementById('editChangePassword').addEventListener('change', function() {
+            const passwordFields = document.getElementById('editPasswordFields');
+            const passwordConfirmFields = document.getElementById('editPasswordConfirmFields');
+            
+            if (this.checked) {
+                passwordFields.style.display = 'block';
+                passwordConfirmFields.style.display = 'block';
+                document.getElementById('editPassword').required = true;
+                document.getElementById('editPasswordConfirm').required = true;
+            } else {
+                passwordFields.style.display = 'none';
+                passwordConfirmFields.style.display = 'none';
+                document.getElementById('editPassword').required = false;
+                document.getElementById('editPasswordConfirm').required = false;
+            }
+        });
+        
+        // Form submission is handled globally
+        })
+        .catch(error => {
+        console.error('Error loading user for edit:', error);
+        Swal.fire({
+            title: 'ข้อผิดพลาด',
+            text: 'เกิดข้อผิดพลาดในการโหลดข้อมูลผู้ใช้',
+            icon: 'error',
+            customClass: {
+                container: 'swal2-container-high-zindex'
+            },
+            confirmButtonText: 'ตกลง'
+        }).then(() => {
+            // Close modal
+            const editModal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
+            editModal.hide();
+        });
+    });
+}
+
+// Save user changes
+function saveUserChanges(userId) {
+    console.log('Saving user changes for ID:', userId);
+    
+    // Get form data
+    const formData = {
+        name: document.getElementById('editName').value,
+        email: document.getElementById('editEmail').value,
+        phone: document.getElementById('editPhone').value,
+        status: document.getElementById('editStatus').value,
+        roles: Array.from(document.getElementById('editRoles').selectedOptions).map(option => option.value)
+    };
+    
+    // Add password if change password is checked
+    const changePassword = document.getElementById('editChangePassword').checked;
+    if (changePassword) {
+        const password = document.getElementById('editPassword').value;
+        const passwordConfirm = document.getElementById('editPasswordConfirm').value;
+        
+        if (password !== passwordConfirm) {
+            Swal.fire({
+                title: 'ข้อผิดพลาด',
+                text: 'รหัสผ่านไม่ตรงกัน',
+                icon: 'error',
+                customClass: {
+                container: 'swal2-container-high-zindex'
+            },
+            confirmButtonText: 'ตกลง',
+                customClass: {
+                    container: 'swal2-container-high-zindex'
+                }
+            });
+            return;
+        }
+        
+        if (password.length < 6) {
+            Swal.fire({
+                title: 'ข้อผิดพลาด',
+                text: 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร',
+                icon: 'error',
+                customClass: {
+                container: 'swal2-container-high-zindex'
+            },
+            confirmButtonText: 'ตกลง',
+                customClass: {
+                    container: 'swal2-container-high-zindex'
+                }
+            });
+            return;
+        }
+        
+        formData.password = password;
+    }
+    
+    console.log('Form data:', formData);
+    
+    // Show loading
+    const submitBtn = document.querySelector('#editUserForm button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'กำลังบันทึก...';
+    submitBtn.disabled = true;
+    
+    // Make API call
+    fetch(`/admin/api/user-management/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(response => {
+        console.log('Save response:', response);
+        
+        if (response.success) {
+            // Show success message
+            Swal.fire({
+                title: 'สำเร็จ',
+                text: 'บันทึกข้อมูลเรียบร้อยแล้ว',
+                icon: 'success',
+                customClass: {
+                container: 'swal2-container-high-zindex'
+            },
+            confirmButtonText: 'ตกลง',
+                customClass: {
+                    container: 'swal2-container-high-zindex'
+                }
+            }).then(() => {
+                // Close modal
+                const editModal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
+                editModal.hide();
+                
+                // Reload page to show updated data
+                window.location.reload();
+            });
+        } else {
+            throw new Error(response.message || 'เกิดข้อผิดพลาดในการบันทึก');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving user:', error);
+        Swal.fire({
+            title: 'ข้อผิดพลาด',
+            text: 'เกิดข้อผิดพลาดในการบันทึก: ' + error.message,
+            icon: 'error',
+            customClass: {
+                container: 'swal2-container-high-zindex'
+            },
+            confirmButtonText: 'ตกลง',
+            customClass: {
+                container: 'swal2-container-high-zindex'
+            },
+            confirmButtonText: 'ตกลง'
+        });
+    })
+    .finally(() => {
+        // Restore button
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
     });
 }
 
@@ -308,11 +1048,22 @@ function clearSelection() {
 
 function updateBulkActions() {
     const selectedCheckboxes = document.querySelectorAll('.user-checkbox:checked');
-    const bulkActions = document.querySelectorAll('[onclick*="bulkStatusUpdate"]');
+    const bulkActions = document.querySelectorAll('[onclick*="bulkStatusUpdate"], [onclick*="bulkDeleteUsers"]');
     
     bulkActions.forEach(action => {
-        action.style.opacity = selectedCheckboxes.length > 0 ? '1' : '0.5';
-        action.style.pointerEvents = selectedCheckboxes.length > 0 ? 'auto' : 'none';
+        if (selectedCheckboxes.length > 0) {
+            // Enable actions
+            action.style.opacity = '1';
+            action.style.pointerEvents = 'auto';
+            action.style.cursor = 'pointer';
+            action.classList.remove('disabled');
+        } else {
+            // Disable actions
+            action.style.opacity = '0.5';
+            action.style.pointerEvents = 'none';
+            action.style.cursor = 'not-allowed';
+            action.classList.add('disabled');
+        }
     });
 }
 
@@ -354,6 +1105,48 @@ function bulkStatusUpdate(status) {
             UserManagementUtils.hideLoading();
             console.error('Error:', error);
             SwalHelper.error('เกิดข้อผิดพลาดในการอัปเดตสถานะ');
+        });
+    });
+}
+
+function bulkDeleteUsers() {
+    const selectedCheckboxes = document.querySelectorAll('.user-checkbox:checked');
+    if (selectedCheckboxes.length === 0) {
+        SwalHelper.error('กรุณาเลือกผู้ใช้ที่ต้องการลบ');
+        return;
+    }
+    
+    const userIds = Array.from(selectedCheckboxes).map(cb => cb.value);
+    
+    // Check if trying to delete current user
+    const currentUserId = document.querySelector('meta[name="user-id"]')?.content;
+    if (currentUserId && userIds.includes(currentUserId)) {
+        SwalHelper.error('ไม่สามารถลบบัญชีของตัวเองได้');
+        return;
+    }
+    
+    SwalHelper.confirmDelete(`คุณแน่ใจหรือไม่ที่จะลบผู้ใช้ ${userIds.length} คน?\n\nการดำเนินการนี้ไม่สามารถย้อนกลับได้`, function() {
+        UserManagementUtils.showLoading('กำลังลบผู้ใช้...');
+        
+        Promise.all(userIds.map(userId => 
+            UserManagementUtils.apiRequest(`/admin/api/user-management/users/${userId}`, {
+                method: 'DELETE'
+            })
+        ))
+        .then(responses => Promise.all(responses.map(r => r.json())))
+        .then(results => {
+            UserManagementUtils.hideLoading();
+            if (results.every(r => r.success)) {
+                SwalHelper.success(`ลบผู้ใช้ ${userIds.length} คนเรียบร้อยแล้ว`);
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                SwalHelper.error('เกิดข้อผิดพลาดในการลบบางรายการ');
+            }
+        })
+        .catch(error => {
+            UserManagementUtils.hideLoading();
+            console.error('Error:', error);
+            SwalHelper.error('เกิดข้อผิดพลาดในการลบผู้ใช้');
         });
     });
 }

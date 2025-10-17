@@ -6,6 +6,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Admin Dashboard') - {{ \App\Helpers\SettingsHelper::get('site_name', config('app.name')) }}</title>
     
+    @stack('head')
+    
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -316,14 +318,7 @@
             margin: 8px 0;
         }
         
-        /* Force dropdown to be visible */
-        .user-menu .dropdown-menu {
-            display: block !important;
-        }
-        
-        .user-menu.active .dropdown-menu {
-            display: block !important;
-        }
+        /* Remove conflicting CSS */
         
         /* Footer styling */
         .sidebar-footer {

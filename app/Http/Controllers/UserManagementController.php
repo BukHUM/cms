@@ -57,7 +57,7 @@ class UserManagementController extends Controller
             'email' => 'required|email|unique:laravel_users,email',
             'phone' => 'nullable|string|max:20',
             'password' => 'required|string|min:8|confirmed',
-            'status' => 'required|in:active,inactive,pending,suspended',
+                'status' => 'required|in:active,inactive,pending',
             'roles' => 'array',
             'roles.*' => 'exists:laravel_roles,id',
         ]);
@@ -102,10 +102,14 @@ class UserManagementController extends Controller
     {
         $user = User::with(['roles'])->findOrFail($id);
         
+        // Add avatar_url to user data
+        $userData = $user->toArray();
+        $userData['avatar_url'] = $user->getAvatarUrl();
+        
         return response()->json([
             'success' => true,
             'data' => [
-                'user' => $user,
+                'user' => $userData,
                 'roles' => $user->roles->pluck('id')->toArray(),
                 'all_roles' => Role::active()->ordered()->get()
             ]
@@ -120,7 +124,8 @@ class UserManagementController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:laravel_users,email,' . $id,
             'phone' => 'nullable|string|max:20',
-            'status' => 'required|in:active,inactive,pending,suspended',
+                'status' => 'required|in:active,inactive,pending',
+            'password' => 'nullable|string|min:6',
             'roles' => 'array',
             'roles.*' => 'exists:laravel_roles,id',
         ]);
@@ -134,12 +139,19 @@ class UserManagementController extends Controller
         }
 
         try {
-            $user->update([
+            $updateData = [
                 'name' => $request->name,
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'status' => $request->status,
-            ]);
+            ];
+
+            // Add password if provided
+            if ($request->has('password') && !empty($request->password)) {
+                $updateData['password'] = Hash::make($request->password);
+            }
+
+            $user->update($updateData);
 
             if ($request->has('roles')) {
                 $user->syncRoles($request->roles);
@@ -192,7 +204,7 @@ class UserManagementController extends Controller
     public function updateUserStatus(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'status' => 'required|in:active,inactive,pending,suspended',
+                'status' => 'required|in:active,inactive,pending',
         ]);
 
         if ($validator->fails()) {

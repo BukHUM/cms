@@ -26,11 +26,11 @@ class SecurityHeadersMiddleware
         
         // Content Security Policy
         $csp = "default-src 'self'; " .
-               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; " .
-               "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; " .
+               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com http://localhost:5173; " .
+               "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com http://localhost:5173; " .
                "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; " .
                "img-src 'self' data: https:; " .
-               "connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
+               "connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com http://localhost:5173 ws://localhost:5173; " .
                "frame-ancestors 'none';";
         
         $response->headers->set('Content-Security-Policy', $csp);

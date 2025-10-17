@@ -15,12 +15,112 @@
                                     เพิ่มผู้ใช้ใหม่
                                 </button>
                                 @endcan
+
+<!-- View User Modal -->
+<div class="modal fade" id="viewUserModal" tabindex="-1" aria-labelledby="viewUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewUserModalLabel">รายละเอียดผู้ใช้</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="viewUserModalBody">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">กำลังโหลด...</span>
+                    </div>
+                    <p class="mt-2">กำลังโหลดข้อมูลผู้ใช้...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                <button type="button" class="btn btn-primary" id="editUserFromViewBtn">แก้ไขข้อมูล</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editUserModalLabel">แก้ไขข้อมูลผู้ใช้</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editUserForm">
+                <div class="modal-body" id="editUserModalBody">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">กำลังโหลด...</span>
+                        </div>
+                        <p class="mt-2">กำลังโหลดข้อมูลผู้ใช้...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary">บันทึกการเปลี่ยนแปลง</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
                                 @can('users.view')
                                 <button class="btn btn-outline-success btn-sm" onclick="exportUsers()">
                                     <i class="fas fa-download me-1"></i>
                                     ส่งออก
                                 </button>
                                 @endcan
+
+<!-- View User Modal -->
+<div class="modal fade" id="viewUserModal" tabindex="-1" aria-labelledby="viewUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewUserModalLabel">รายละเอียดผู้ใช้</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="viewUserModalBody">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">กำลังโหลด...</span>
+                    </div>
+                    <p class="mt-2">กำลังโหลดข้อมูลผู้ใช้...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                <button type="button" class="btn btn-primary" id="editUserFromViewBtn">แก้ไขข้อมูล</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editUserModalLabel">แก้ไขข้อมูลผู้ใช้</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editUserForm">
+                <div class="modal-body" id="editUserModalBody">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">กำลังโหลด...</span>
+                        </div>
+                        <p class="mt-2">กำลังโหลดข้อมูลผู้ใช้...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary">บันทึกการเปลี่ยนแปลง</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
                             </div>
                             <!-- Search Input -->
                             <div class="search-container">
@@ -41,7 +141,6 @@
                                     <option value="active">ใช้งาน</option>
                                     <option value="inactive">ไม่ใช้งาน</option>
                                     <option value="pending">รอการยืนยัน</option>
-                                    <option value="suspended">ระงับการใช้งาน</option>
                                 </select>
                             </div>
                             
@@ -89,6 +188,10 @@
                             <li><a class="dropdown-item" href="#" onclick="bulkStatusUpdate('inactive')">
                                 <i class="fas fa-times me-2"></i>เปลี่ยนเป็นไม่ใช้งาน
                             </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#" onclick="bulkDeleteUsers()">
+                                <i class="fas fa-trash me-2"></i>ลบผู้ใช้ที่เลือก
+                            </a></li>
                         </ul>
                     </div>
                 </div>
@@ -106,7 +209,6 @@
                             <th class="d-none d-md-table-cell">อีเมล</th>
                             <th class="d-none d-lg-table-cell">บทบาท</th>
                             <th>สถานะ</th>
-                            <th class="d-none d-lg-table-cell">วันที่สมัคร</th>
                             <th width="120">การดำเนินการ</th>
                         </tr>
                     </thead>
@@ -114,7 +216,7 @@
                         @forelse($users as $user)
                         <tr data-user-id="{{ $user->id }}" data-status="{{ $user->status }}">
                             <td>
-                                <input type="checkbox" class="form-check-input" value="{{ $user->id }}" onchange="updateBulkActions()">
+                                <input type="checkbox" class="form-check-input user-checkbox" value="{{ $user->id }}" onchange="updateBulkActions()">
                             </td>
                             <td>
                                 <div class="d-flex align-items-center">
@@ -157,80 +259,59 @@
                             </td>
                             <td class="d-none d-lg-table-cell">
                                 <div class="d-flex flex-wrap gap-1">
-                                    @foreach($user->roles as $role)
+                                    @forelse($user->roles as $role)
                                         <span class="badge bg-primary" title="{{ $role->description }}">
                                             {{ $role->name }}
                                         </span>
-                                    @endforeach
+                                    @empty
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-user me-1"></i>ไม่มีบทบาท
+                                        </span>
+                                    @endforelse
                                 </div>
                             </td>
                             <td>
-                                <div class="dropdown">
-                                    <button class="btn btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" 
-                                            @if($user->status === 'active') class="btn btn-sm btn-success dropdown-toggle"
-                                            @elseif($user->status === 'inactive') class="btn btn-sm btn-secondary dropdown-toggle"
-                                            @elseif($user->status === 'pending') class="btn btn-sm btn-warning dropdown-toggle"
-                                            @elseif($user->status === 'suspended') class="btn btn-sm btn-danger dropdown-toggle"
-                                            @endif>
-                                        {{ $user->getStatusDisplayName() }}
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="#" onclick="updateUserStatus({{ $user->id }}, 'active')">
-                                            <i class="fas fa-check me-2"></i>ใช้งาน
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="updateUserStatus({{ $user->id }}, 'inactive')">
-                                            <i class="fas fa-times me-2"></i>ไม่ใช้งาน
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="updateUserStatus({{ $user->id }}, 'pending')">
-                                            <i class="fas fa-clock me-2"></i>รอการยืนยัน
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="updateUserStatus({{ $user->id }}, 'suspended')">
-                                            <i class="fas fa-ban me-2"></i>ระงับการใช้งาน
-                                        </a></li>
-                                    </ul>
-                                </div>
-                            </td>
-                            <td class="d-none d-lg-table-cell">
-                                <small class="text-muted">
-                                    {{ $user->created_at->format('d/m/Y') }}<br>
-                                    <i class="fas fa-clock me-1"></i>{{ $user->created_at->diffForHumans() }}
-                                </small>
+                                @if($user->status === 'active')
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>ใช้งาน
+                                    </span>
+                                @elseif($user->status === 'inactive')
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-times me-1"></i>ไม่ใช้งาน
+                                    </span>
+                                @elseif($user->status === 'pending')
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-clock me-1"></i>รอการยืนยัน
+                                    </span>
+                                @elseif($user->status === 'suspended')
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-times-circle me-1"></i>ไม่ใช้งาน
+                                    </span>
+                                @else
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-question me-1"></i>{{ $user->getStatusDisplayName() }}
+                                    </span>
+                                @endif
                             </td>
                             <td>
                                 <div class="action-buttons" style="display: flex; gap: 4px; align-items: center;">
-                                    <!-- Test Button - Always Show -->
-                                    <button class="btn-action btn-download" onclick="alert('Test Button - User ID: {{ $user->id }}')" title="ทดสอบ" 
-                                            style="width: 32px; height: 32px; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; font-size: 14px; background-color: #fff3e0; color: #f57c00;"
-                                            onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'; this.style.backgroundColor='#ffe0b2';"
-                                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'; this.style.backgroundColor='#fff3e0';">
+                                    <!-- View Button -->
+                                    <button class="btn-action btn-view" onclick="viewUser({{ $user->id }})" title="ดูรายละเอียด" 
+                                            style="width: 32px; height: 32px; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; font-size: 14px; background-color: #e3f2fd; color: #1976d2;"
+                                            onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'; this.style.backgroundColor='#bbdefb';"
+                                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'; this.style.backgroundColor='#e3f2fd';">
                                         <i class="fas fa-eye"></i>
                                     </button>
                                     
-                                    @can('users.view')
-                                    <button class="btn-action btn-download" onclick="viewUser({{ $user->id }})" title="ดูรายละเอียด" 
-                                            style="width: 32px; height: 32px; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; font-size: 14px; background-color: #fff3e0; color: #f57c00;"
-                                            onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'; this.style.backgroundColor='#ffe0b2';"
-                                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'; this.style.backgroundColor='#fff3e0';">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    @endcan
-                                    @can('users.update')
-                                    <button class="btn-action btn-download" onclick="editUser({{ $user->id }})" title="แก้ไข" 
+                                    <!-- Edit Button -->
+                                    <button class="btn-action btn-edit" onclick="editUser({{ $user->id }})" title="แก้ไข" 
                                             style="width: 32px; height: 32px; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; font-size: 14px; background-color: #fff3e0; color: #f57c00;"
                                             onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'; this.style.backgroundColor='#ffe0b2';"
                                             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'; this.style.backgroundColor='#fff3e0';">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    @endcan
-                                    @can('users.roles')
-                                    <button class="btn-action btn-download" onclick="manageUserRoles({{ $user->id }})" title="จัดการบทบาท" 
-                                            style="width: 32px; height: 32px; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; font-size: 14px; background-color: #fff3e0; color: #f57c00;"
-                                            onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'; this.style.backgroundColor='#ffe0b2';"
-                                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'; this.style.backgroundColor='#fff3e0';">
-                                        <i class="fas fa-user-shield"></i>
-                                    </button>
-                                    @endcan
-                                    @can('users.delete')
+                                    
+                                    <!-- Delete Button -->
                                     @if($user->id !== auth()->id())
                                     <button class="btn-action btn-delete" onclick="deleteUser({{ $user->id }})" title="ลบผู้ใช้" 
                                             style="width: 32px; height: 32px; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; font-size: 14px; background-color: #ffebee; color: #d32f2f;"
@@ -239,42 +320,72 @@
                                         <i class="fas fa-trash"></i>
                                     </button>
                                     @endif
-                                    @endcan
                                 </div>
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="text-center py-5">
+                            <td colspan="6" class="text-center py-5">
                                 <div class="text-muted">
                                     <i class="fas fa-users fa-3x mb-3"></i>
                                     <h5>ไม่พบข้อมูลผู้ใช้</h5>
                                     <p>ยังไม่มีผู้ใช้ในระบบ หรือไม่ตรงกับเงื่อนไขการค้นหา</p>
-                                    
-                                    <!-- Test Action Buttons -->
-                                    <div class="mt-3">
-                                        <h6>ทดสอบปุ่ม Action:</h6>
-                                        <div class="action-buttons" style="display: flex; gap: 4px; align-items: center; justify-content: center;">
-                                            <button class="btn-action btn-download" onclick="alert('Test Button 1')" title="ทดสอบ 1" 
-                                                    style="width: 32px; height: 32px; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; font-size: 14px; background-color: #fff3e0; color: #f57c00;">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="btn-action btn-download" onclick="alert('Test Button 2')" title="ทดสอบ 2" 
-                                                    style="width: 32px; height: 32px; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; font-size: 14px; background-color: #fff3e0; color: #f57c00;">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn-action btn-delete" onclick="alert('Test Button 3')" title="ทดสอบ 3" 
-                                                    style="width: 32px; height: 32px; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; font-size: 14px; background-color: #ffebee; color: #d32f2f;">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </div>
                                     
                                     @can('users.create')
                                     <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addUserModal">
                                         <i class="fas fa-plus me-2"></i>เพิ่มผู้ใช้คนแรก
                                     </button>
                                     @endcan
+
+<!-- View User Modal -->
+<div class="modal fade" id="viewUserModal" tabindex="-1" aria-labelledby="viewUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewUserModalLabel">รายละเอียดผู้ใช้</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="viewUserModalBody">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">กำลังโหลด...</span>
+                    </div>
+                    <p class="mt-2">กำลังโหลดข้อมูลผู้ใช้...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                <button type="button" class="btn btn-primary" id="editUserFromViewBtn">แก้ไขข้อมูล</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editUserModalLabel">แก้ไขข้อมูลผู้ใช้</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editUserForm">
+                <div class="modal-body" id="editUserModalBody">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">กำลังโหลด...</span>
+                        </div>
+                        <p class="mt-2">กำลังโหลดข้อมูลผู้ใช้...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary">บันทึกการเปลี่ยนแปลง</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
                                 </div>
                             </td>
                         </tr>
@@ -354,7 +465,6 @@
                                         <option value="active">ใช้งาน</option>
                                         <option value="inactive">ไม่ใช้งาน</option>
                                         <option value="pending">รอการยืนยัน</option>
-                                        <option value="suspended">ระงับการใช้งาน</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6">
@@ -427,6 +537,56 @@
 </div>
 @endcan
 
+<!-- View User Modal -->
+<div class="modal fade" id="viewUserModal" tabindex="-1" aria-labelledby="viewUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewUserModalLabel">รายละเอียดผู้ใช้</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="viewUserModalBody">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">กำลังโหลด...</span>
+                    </div>
+                    <p class="mt-2">กำลังโหลดข้อมูลผู้ใช้...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                <button type="button" class="btn btn-primary" id="editUserFromViewBtn">แก้ไขข้อมูล</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editUserModalLabel">แก้ไขข้อมูลผู้ใช้</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editUserForm">
+                <div class="modal-body" id="editUserModalBody">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">กำลังโหลด...</span>
+                        </div>
+                        <p class="mt-2">กำลังโหลดข้อมูลผู้ใช้...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary">บันทึกการเปลี่ยนแปลง</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Manage User Roles Modal -->
 @can('users.roles')
 <div class="modal fade" id="manageUserRolesModal" tabindex="-1" aria-labelledby="manageUserRolesModalLabel" aria-hidden="true">
@@ -455,3 +615,53 @@
     </div>
 </div>
 @endcan
+
+<!-- View User Modal -->
+<div class="modal fade" id="viewUserModal" tabindex="-1" aria-labelledby="viewUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewUserModalLabel">รายละเอียดผู้ใช้</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="viewUserModalBody">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">กำลังโหลด...</span>
+                    </div>
+                    <p class="mt-2">กำลังโหลดข้อมูลผู้ใช้...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                <button type="button" class="btn btn-primary" id="editUserFromViewBtn">แก้ไขข้อมูล</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editUserModalLabel">แก้ไขข้อมูลผู้ใช้</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editUserForm">
+                <div class="modal-body" id="editUserModalBody">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">กำลังโหลด...</span>
+                        </div>
+                        <p class="mt-2">กำลังโหลดข้อมูลผู้ใช้...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary">บันทึกการเปลี่ยนแปลง</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

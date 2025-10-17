@@ -8,6 +8,10 @@
 @vite(['resources/css/user-management.css'])
 @endpush
 
+@push('head')
+<meta name="user-id" content="{{ auth()->id() }}">
+@endpush
+
 @section('content')
 <!-- Include Navigation -->
 @include('admin.user-management.partials.navigation')
@@ -51,6 +55,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load last active tab
     if (typeof loadLastActiveTab === 'function') {
         loadLastActiveTab();
+    }
+    
+    // Just ensure user menu has proper z-index for user management page
+    const userMenu = document.querySelector('.user-menu');
+    if (userMenu) {
+        console.log('User menu found for user management page');
+        userMenu.style.zIndex = '1000007';
     }
 });
 </script>
