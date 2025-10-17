@@ -197,52 +197,49 @@
                                 </small>
                             </td>
                             <td>
-                                <div class="btn-group" role="group">
+                                <div class="action-buttons" style="display: flex; gap: 4px; align-items: center;">
+                                    <!-- Test Button - Always Show -->
+                                    <button class="btn-action btn-download" onclick="alert('Test Button - User ID: {{ $user->id }}')" title="ทดสอบ" 
+                                            style="width: 32px; height: 32px; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; font-size: 14px; background-color: #fff3e0; color: #f57c00;"
+                                            onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'; this.style.backgroundColor='#ffe0b2';"
+                                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'; this.style.backgroundColor='#fff3e0';">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    
                                     @can('users.view')
-                                    <button class="btn btn-outline-info btn-sm" onclick="viewUser({{ $user->id }})" title="ดูรายละเอียด">
+                                    <button class="btn-action btn-download" onclick="viewUser({{ $user->id }})" title="ดูรายละเอียด" 
+                                            style="width: 32px; height: 32px; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; font-size: 14px; background-color: #fff3e0; color: #f57c00;"
+                                            onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'; this.style.backgroundColor='#ffe0b2';"
+                                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'; this.style.backgroundColor='#fff3e0';">
                                         <i class="fas fa-eye"></i>
                                     </button>
                                     @endcan
                                     @can('users.update')
-                                    <button class="btn btn-outline-primary btn-sm" onclick="editUser({{ $user->id }})" title="แก้ไข">
+                                    <button class="btn-action btn-download" onclick="editUser({{ $user->id }})" title="แก้ไข" 
+                                            style="width: 32px; height: 32px; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; font-size: 14px; background-color: #fff3e0; color: #f57c00;"
+                                            onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'; this.style.backgroundColor='#ffe0b2';"
+                                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'; this.style.backgroundColor='#fff3e0';">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                     @endcan
                                     @can('users.roles')
-                                    <button class="btn btn-outline-warning btn-sm" onclick="manageUserRoles({{ $user->id }})" title="จัดการบทบาท">
+                                    <button class="btn-action btn-download" onclick="manageUserRoles({{ $user->id }})" title="จัดการบทบาท" 
+                                            style="width: 32px; height: 32px; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; font-size: 14px; background-color: #fff3e0; color: #f57c00;"
+                                            onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'; this.style.backgroundColor='#ffe0b2';"
+                                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'; this.style.backgroundColor='#fff3e0';">
                                         <i class="fas fa-user-shield"></i>
                                     </button>
                                     @endcan
-                                    <div class="dropdown">
-                                        <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="dropdown">
-                                            <i class="fas fa-ellipsis-v"></i>
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            @can('users.view')
-                                            <li><a class="dropdown-item" href="#" onclick="viewUser({{ $user->id }})">
-                                                <i class="fas fa-eye me-2"></i>ดูรายละเอียด
-                                            </a></li>
-                                            @endcan
-                                            @can('users.update')
-                                            <li><a class="dropdown-item" href="#" onclick="editUser({{ $user->id }})">
-                                                <i class="fas fa-edit me-2"></i>แก้ไขข้อมูล
-                                            </a></li>
-                                            @endcan
-                                            @can('users.roles')
-                                            <li><a class="dropdown-item" href="#" onclick="manageUserRoles({{ $user->id }})">
-                                                <i class="fas fa-user-shield me-2"></i>จัดการบทบาท
-                                            </a></li>
-                                            @endcan
-                                            @can('users.delete')
-                                            @if($user->id !== auth()->id())
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteUser({{ $user->id }})">
-                                                <i class="fas fa-trash me-2"></i>ลบผู้ใช้
-                                            </a></li>
-                                            @endif
-                                            @endcan
-                                        </ul>
-                                    </div>
+                                    @can('users.delete')
+                                    @if($user->id !== auth()->id())
+                                    <button class="btn-action btn-delete" onclick="deleteUser({{ $user->id }})" title="ลบผู้ใช้" 
+                                            style="width: 32px; height: 32px; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; font-size: 14px; background-color: #ffebee; color: #d32f2f;"
+                                            onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'; this.style.backgroundColor='#ffcdd2';"
+                                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'; this.style.backgroundColor='#ffebee';">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    @endif
+                                    @endcan
                                 </div>
                             </td>
                         </tr>
@@ -253,8 +250,28 @@
                                     <i class="fas fa-users fa-3x mb-3"></i>
                                     <h5>ไม่พบข้อมูลผู้ใช้</h5>
                                     <p>ยังไม่มีผู้ใช้ในระบบ หรือไม่ตรงกับเงื่อนไขการค้นหา</p>
+                                    
+                                    <!-- Test Action Buttons -->
+                                    <div class="mt-3">
+                                        <h6>ทดสอบปุ่ม Action:</h6>
+                                        <div class="action-buttons" style="display: flex; gap: 4px; align-items: center; justify-content: center;">
+                                            <button class="btn-action btn-download" onclick="alert('Test Button 1')" title="ทดสอบ 1" 
+                                                    style="width: 32px; height: 32px; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; font-size: 14px; background-color: #fff3e0; color: #f57c00;">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn-action btn-download" onclick="alert('Test Button 2')" title="ทดสอบ 2" 
+                                                    style="width: 32px; height: 32px; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; font-size: 14px; background-color: #fff3e0; color: #f57c00;">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn-action btn-delete" onclick="alert('Test Button 3')" title="ทดสอบ 3" 
+                                                    style="width: 32px; height: 32px; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; font-size: 14px; background-color: #ffebee; color: #d32f2f;">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
                                     @can('users.create')
-                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                                    <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addUserModal">
                                         <i class="fas fa-plus me-2"></i>เพิ่มผู้ใช้คนแรก
                                     </button>
                                     @endcan

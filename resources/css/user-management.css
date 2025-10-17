@@ -106,53 +106,51 @@ body[data-page="user-management"] .sidebar-nav a[href*="user-management"]:hover 
 /* Action Buttons */
 .action-buttons {
     display: flex;
-    gap: 6px;
+    gap: 4px;
     align-items: center;
-    flex-wrap: nowrap;
-    flex-shrink: 0;
 }
 
-/* Force single line on desktop */
-@media (min-width: 993px) {
-    .action-buttons {
-        flex-wrap: nowrap !important;
-    }
-}
-
-.action-buttons .btn {
+.btn-action {
+    width: 32px;
+    height: 32px;
+    border: none;
     border-radius: 6px;
-    font-weight: 500;
-    font-size: 13px;
-    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
     transition: all 0.2s ease;
-    border-width: 1px;
+    font-size: 14px;
 }
 
-.action-buttons .btn:hover {
+.btn-action:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.action-buttons .btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-color: #667eea;
+.btn-action:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
-.action-buttons .btn-primary:hover {
-    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
-    border-color: #5a6fd8;
+.btn-download {
+    background-color: #fff3e0;
+    color: #f57c00;
 }
 
-.action-buttons .btn-outline-success {
-    color: #10b981;
-    border-color: #10b981;
+.btn-download:hover:not(:disabled) {
+    background-color: #ffe0b2;
 }
 
-.action-buttons .btn-outline-success:hover {
-    background-color: #10b981;
-    border-color: #10b981;
-    color: white;
+.btn-delete {
+    background-color: #ffebee;
+    color: #d32f2f;
 }
+
+.btn-delete:hover:not(:disabled) {
+    background-color: #ffcdd2;
+}
+
 
 
 /* Left and Right Sections */
