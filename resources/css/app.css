@@ -1,0 +1,296 @@
+/* Font Prompt */
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+/* Font Awesome */
+@import '@fortawesome/fontawesome-free/css/all.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles */
+body {
+    font-family: 'Prompt', sans-serif;
+    overflow-x: hidden; /* Prevent horizontal scrollbar */
+}
+
+/* Fix for min-h-screen causing scrollbar */
+.min-h-screen {
+    min-height: 100vh;
+    height: auto;
+}
+
+/* Layout fixes */
+.main-content {
+    transition: margin-left 0.3s ease-in-out;
+}
+
+/* Mobile layout - sidebar is fixed and hidden by default */
+@media (max-width: 1023px) {
+    .main-content {
+        margin-left: 0;
+    }
+}
+
+/* Responsive Utilities */
+@layer utilities {
+    .responsive-grid {
+        @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+    }
+    
+    .responsive-text {
+        @apply text-sm md:text-base lg:text-lg;
+    }
+    
+    .responsive-padding {
+        @apply p-4 md:p-6 lg:p-8;
+    }
+    
+    .responsive-margin {
+        @apply m-4 md:m-6 lg:m-8;
+    }
+}
+
+/* Custom Components */
+@layer components {
+    /* Loading Spinner */
+    .spinner {
+        @apply animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600;
+    }
+    
+    /* Badge */
+    .badge {
+        @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    }
+    
+    .badge-primary { @apply bg-blue-100 text-blue-800; }
+    .badge-secondary { @apply bg-gray-100 text-gray-800; }
+    .badge-success { @apply bg-green-100 text-green-800; }
+    .badge-warning { @apply bg-yellow-100 text-yellow-800; }
+    .badge-danger { @apply bg-red-100 text-red-800; }
+    
+    /* Mobile-friendly buttons */
+    .btn-mobile {
+        @apply w-full sm:w-auto px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200;
+    }
+    
+    /* Touch-friendly interactive elements */
+    .touch-target {
+        @apply min-h-[44px] min-w-[44px];
+    }
+    
+    /* Responsive table */
+    .table-responsive {
+        @apply overflow-x-auto;
+    }
+    
+    .table-responsive table {
+        @apply min-w-full;
+    }
+    
+    /* Mobile card */
+    .card-mobile {
+        @apply bg-white rounded-lg shadow-sm border border-gray-200 p-4;
+    }
+    
+    /* Responsive form */
+    .form-responsive {
+        @apply space-y-4;
+    }
+    
+    .form-responsive .form-group {
+        @apply space-y-2;
+    }
+    
+    /* Mobile navigation */
+    .nav-mobile {
+        @apply flex flex-col space-y-1;
+    }
+    
+    .nav-mobile a {
+        @apply flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200;
+    }
+    
+    /* Responsive grid */
+    .grid-responsive {
+        @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4;
+    }
+    
+    /* Mobile-first spacing */
+    .space-mobile {
+        @apply space-y-4 sm:space-y-6 lg:space-y-8;
+    }
+    
+    /* Responsive text sizes */
+    .text-responsive-sm {
+        @apply text-xs sm:text-sm;
+    }
+    
+    .text-responsive-base {
+        @apply text-sm sm:text-base;
+    }
+    
+    .text-responsive-lg {
+        @apply text-base sm:text-lg;
+    }
+    
+    .text-responsive-xl {
+        @apply text-lg sm:text-xl;
+    }
+    
+    .text-responsive-2xl {
+        @apply text-xl sm:text-2xl;
+    }
+    
+    /* Table Classes */
+    .table-cell {
+        @apply px-4 py-2 border-b border-gray-200;
+    }
+    
+    .table-row {
+        @apply hover:bg-gray-50;
+    }
+    
+    /* Card Footer */
+    .card-footer {
+        @apply border-t border-gray-200 pt-4 mt-4 px-6 py-4;
+    }
+}
+
+/* Mobile-specific styles */
+@media (max-width: 640px) {
+    /* Ensure touch targets are large enough */
+    button, a, input, select, textarea {
+        min-height: 44px;
+    }
+    
+    /* Improve readability on small screens */
+    .text-sm {
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+    }
+    
+    /* Better spacing for mobile */
+    .space-y-4 > * + * {
+        margin-top: 1rem;
+    }
+    
+    /* Mobile-friendly form inputs */
+    .form-input {
+        @apply text-base; /* Prevent zoom on iOS */
+    }
+}
+
+/* Tablet-specific styles */
+@media (min-width: 641px) and (max-width: 1024px) {
+    /* Optimize for tablet landscape */
+    .tablet-grid {
+        @apply grid-cols-2;
+    }
+    
+    /* Better spacing for tablets */
+    .space-y-6 > * + * {
+        margin-top: 1.5rem;
+    }
+}
+
+/* Desktop-specific styles */
+@media (min-width: 1025px) {
+    /* Desktop optimizations */
+    .desktop-grid {
+        @apply grid-cols-3 xl:grid-cols-4;
+    }
+    
+    /* Hover effects for desktop */
+    .hover-lift {
+        @apply transition-transform duration-200 hover:-translate-y-1;
+    }
+}
+
+/* Fix scrollbar issues */
+.sidebar-nav {
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: calc(100vh - 120px);
+}
+
+.main-content {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+/* Ensure no horizontal scrollbar */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+/* Fix pagination and table scrollbar issues */
+.pagination {
+    @apply flex justify-center items-center space-x-2;
+}
+
+.pagination a, .pagination span {
+    @apply px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50;
+}
+
+.pagination .current {
+    @apply bg-blue-600 text-white border-blue-600;
+}
+
+/* Ensure tables don't cause horizontal scroll */
+.table-container {
+    @apply overflow-x-auto;
+    max-width: 100%;
+}
+
+/* Fix for any hidden content causing scrollbar */
+.hidden-content {
+    display: none !important;
+}
+
+/* Ensure proper box-sizing for all elements */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+/* Fix for JavaScript overflow-hidden causing issues */
+body.overflow-hidden {
+    overflow: hidden !important;
+}
+
+/* Ensure mobile overlay doesn't cause scrollbar */
+#mobile-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+}
+
+/* Fix for sidebar positioning */
+#sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 50;
+    width: 16rem; /* 256px */
+}
+
+/* Ensure main content doesn't overflow */
+.main-content {
+    margin-left: 0;
+    width: 100%;
+}
+
+@media (min-width: 1024px) {
+    .main-content {
+        margin-left: 0;
+    }
+}
