@@ -18,14 +18,21 @@ rm -rf node_modules package-lock.json
 echo "📦 Installing dependencies..."
 npm install
 
+# Step 3.5: Verify package.json configuration
+echo "🔍 Verifying package.json configuration..."
+if grep -q '"type": "module"' package.json; then
+    echo "✅ package.json is configured for ES modules"
+else
+    echo "⚠️ package.json may need 'type: module' configuration"
+fi
+
 # Step 4: Install Tailwind CSS separately
 echo "🎨 Installing Tailwind CSS..."
 npm install -D tailwindcss@latest postcss autoprefixer
 
-# Step 5: Create Tailwind config if not exists
-if [ ! -f "tailwind.config.cjs" ]; then
-    echo "⚙️ Creating Tailwind config..."
-    cat > tailwind.config.cjs << 'EOF'
+# Step 5: Create Tailwind config (CommonJS format for compatibility)
+echo "⚙️ Creating Tailwind config..."
+cat > tailwind.config.cjs << 'EOF'
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -43,12 +50,10 @@ module.exports = {
   plugins: [],
 }
 EOF
-fi
 
-# Step 6: Create PostCSS config if not exists
-if [ ! -f "postcss.config.cjs" ]; then
-    echo "⚙️ Creating PostCSS config..."
-    cat > postcss.config.cjs << 'EOF'
+# Step 6: Create PostCSS config (CommonJS format for compatibility)
+echo "⚙️ Creating PostCSS config..."
+cat > postcss.config.cjs << 'EOF'
 module.exports = {
   plugins: {
     tailwindcss: {},
@@ -56,13 +61,28 @@ module.exports = {
   },
 }
 EOF
+
+# Step 7: Remove any conflicting config files
+echo "🗑️ Removing conflicting config files..."
+rm -f postcss.config.js
+rm -f tailwind.config.js
+
+# Step 7.5: Ensure Vite config uses correct extension
+if [ -f "vite.config.js" ]; then
+    echo "🔄 Checking Vite config..."
+    # Check if vite.config.js uses ES module syntax
+    if grep -q "export default" vite.config.js; then
+        echo "✅ Vite config is already using ES module syntax"
+    else
+        echo "⚠️ Vite config may need ES module syntax"
+    fi
 fi
 
-# Step 7: Build assets
+# Step 8: Build assets
 echo "🔨 Building assets..."
 npm run build
 
-# Step 8: Check if build was successful
+# Step 9: Check if build was successful
 if [ $? -eq 0 ]; then
     echo "✅ Build completed successfully!"
     echo "🎉 Production deployment completed!"
