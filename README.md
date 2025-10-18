@@ -69,10 +69,7 @@ rm -rf node_modules package-lock.json
 # 3. Install dependencies
 npm install
 
-# 4. Install Tailwind CSS
-npm install -D tailwindcss@latest postcss autoprefixer
-
-# 5. Build assets
+# 4. Build assets
 npm run build
 ```
 
@@ -257,7 +254,7 @@ npm run watch
 # Install new packages
 npm install package-name
 
-# Install additional packages
+# Install additional packages (if needed)
 npm install sweetalert2
 npm install @fortawesome/fontawesome-free
 ```
@@ -282,33 +279,27 @@ npm install @fortawesome/fontawesome-free
 
 This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
 
-## Changelog
-
-### Version 1.0.0 (Latest)
-- Initial release with core CMS functionality
-- User management and role-based access control
-- System update management
-- Performance monitoring
-- Comprehensive audit logging
-- Modern UI with Tailwind CSS and SweetAlert2
-
 ## Support
 
 For support and questions, please contact the development team or create an issue in the repository.
 
 ## System Requirements
 
-- **PHP**: 8.1 or higher
+- **PHP**: 8.2 or higher
 - **Composer**: Latest version
-- **Node.js**: 16.x or higher
+- **Node.js**: 18.0.0 or higher
+- **npm**: 8.0.0 or higher
 - **Database**: MySQL 5.7+ or SQLite 3.8+
 - **Web Server**: Apache/Nginx (for production)
 
-## Recent Updates
+## Changelog
 
+### Version 1.0.0 (Latest)
 - ✅ **System Update Management**: Laravel core, packages, and configuration updates
 - ✅ **System Information**: Comprehensive system monitoring and diagnostics
 - ✅ **Performance Settings**: System performance optimization and monitoring
 - ✅ **SweetAlert2 Integration**: Modern notification system
 - ✅ **Tailwind CSS**: Modern responsive UI design
 - ✅ **Audit Logging**: Comprehensive system activity tracking
+- ✅ **User Management**: Complete user registration, authentication, and profile management
+- ✅ **Role-Based Access Control**: Flexible role and permission system
