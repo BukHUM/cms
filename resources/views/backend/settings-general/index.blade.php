@@ -132,8 +132,9 @@
                                 </button>
                                 <button type="button" 
                                         onclick="toggleStatus({{ $settings_general->id }})"
-                                        class="text-yellow-600 hover:text-yellow-900">
-                                    <i class="fas fa-toggle-{{ $settings_general->is_active ? 'on' : 'off' }}"></i>
+                                        class="text-yellow-600 hover:text-yellow-900"
+                                        title="{{ $settings_general->is_active ? 'ปิดการใช้งาน' : 'เปิดการใช้งาน' }}">
+                                    <i class="fas fa-power-{{ $settings_general->is_active ? 'off' : 'on' }}"></i>
                                 </button>
                                 @if($settings_general->default_value)
                                 <button type="button" 
@@ -490,7 +491,10 @@ function toggleStatus(id) {
             fetch(`{{ route('backend.settings-general.toggle-status', ':id') }}`.replace(':id', id), {
                 method: 'POST',
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'X-HTTP-Method-Override': 'PATCH'
                 }
             })
             .then(response => response.json())
