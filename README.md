@@ -50,7 +50,7 @@ All database tables use the `core_` prefix for consistency:
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/BukHUM/corecms.git .
    cd backend
    ```
 
