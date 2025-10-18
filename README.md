@@ -27,6 +27,11 @@ This is a comprehensive Content Management System (CMS) backend built with Larav
 - **Base Controller Architecture**: Shared functionality through `BaseSettingsController` with category-specific controllers
 - **Dynamic Configuration**: Flexible settings system with type casting, validation, and bulk operations
 - **Modern UI Components**: Modal-based editing, SweetAlert2 notifications, and responsive design
+- **Database-First Configuration**: Settings stored in database with .env override capability
+- **Caching System**: Advanced caching with automatic cache invalidation
+- **Helper Functions**: Easy-to-use helper functions (`setting()`, `settings()`, `set_setting()`)
+- **Blade Directives**: Custom Blade directives (`@setting`, `@ifsetting`, `@ifnotsetting`)
+- **Artisan Commands**: Management commands for testing, syncing, and cache management
 - **System Update Management**: Laravel core, packages, and configuration updates
 
 ### System Administration
@@ -237,6 +242,41 @@ php artisan optimize
 - `GET /api/settings-security` - List security settings
 - `POST /api/settings-security` - Update security settings
 
+### Settings System Usage
+```php
+// Helper Functions
+$siteName = setting('site_name', 'Default Site');
+$maintenanceMode = setting('maintenance_mode', false);
+$generalSettings = settings('general');
+
+// Set settings
+set_setting('site_name', 'My Site', 'string', 'general');
+toggle_setting('site_name');
+clear_settings_cache();
+```
+
+```blade
+{{-- Blade Directives --}}
+<title>@setting('site_name')</title>
+
+@ifsetting('maintenance_mode')
+    <div class="alert">@setting('maintenance_message')</div>
+@endsetting
+
+@ifnotsetting('enable_registration')
+    <div class="info">การลงทะเบียนถูกปิดใช้งาน</div>
+@endsetting
+```
+
+```bash
+# Artisan Commands
+php artisan settings:show                    # View all settings
+php artisan settings:show general            # View general settings
+php artisan settings:test                    # Test settings functionality
+php artisan settings:sync-env               # Sync from .env file
+php artisan settings:clear-cache            # Clear settings cache
+```
+
 ### System Management
 - `GET /api/settings-update` - System update status
 - `POST /api/settings-update/quick-update` - Execute system updates
@@ -357,7 +397,18 @@ For support and questions, please contact the development team or create an issu
 
 ## Changelog
 
-### Version 1.3.0 (Latest)
+### Version 1.4.0 (Latest)
+- ✅ **Database-First Settings System**: Complete settings management with database storage and .env override
+- ✅ **Advanced Caching**: Implemented intelligent caching system with automatic invalidation
+- ✅ **Helper Functions**: Easy-to-use helper functions (`setting()`, `settings()`, `set_setting()`)
+- ✅ **Blade Directives**: Custom Blade directives (`@setting`, `@ifsetting`, `@ifnotsetting`)
+- ✅ **Artisan Commands**: Comprehensive management commands for testing, syncing, and cache management
+- ✅ **Type Casting**: Automatic type casting for boolean, integer, float, JSON, and array values
+- ✅ **Configuration Override**: Automatic override of Laravel config values from database settings
+- ✅ **Service Providers**: Integrated settings loading into application bootstrap process
+- ✅ **Documentation**: Complete documentation with examples and best practices
+
+### Version 1.3.0
 - ✅ **UI Modernization**: Implemented modal-based editing system for settings management
 - ✅ **SweetAlert2 Integration**: Replaced native alerts with modern SweetAlert2 notifications
 - ✅ **UI Standards Compliance**: Updated all components to follow UI_STANDARD.md guidelines

@@ -131,8 +131,8 @@ abstract class BaseSettingsController extends Controller
 
             $settings_general->save();
 
-            // Clear cache
-            $this->clearCache();
+            // Clear cache using SettingsService
+            \App\Services\SettingsService::clearCache($settings_general->key);
 
             DB::commit();
 
@@ -221,10 +221,11 @@ abstract class BaseSettingsController extends Controller
     public function toggleStatus(Request $request, Setting $settings_general)
     {
         try {
-            $settings_general->update(['is_active' => !$settings_general->is_active]);
-
-            // Clear cache
-            $this->clearCache();
+            // Use SettingsService to toggle status
+            \App\Services\SettingsService::toggle($settings_general->key);
+            
+            // Refresh the model
+            $settings_general->refresh();
 
             if ($request->expectsJson()) {
                 return response()->json([
