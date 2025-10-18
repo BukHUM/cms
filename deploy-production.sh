@@ -26,9 +26,9 @@ else
     echo "⚠️ package.json may need 'type: module' configuration"
 fi
 
-# Step 4: Install Tailwind CSS and PostCSS plugin
-echo "🎨 Installing Tailwind CSS and PostCSS plugin..."
-npm install -D tailwindcss@latest @tailwindcss/postcss postcss autoprefixer
+# Step 4: Install Tailwind CSS
+echo "🎨 Installing Tailwind CSS..."
+npm install -D tailwindcss@latest postcss autoprefixer
 
 # Step 5: Create Tailwind config (CommonJS format for compatibility)
 echo "⚙️ Creating Tailwind config..."
@@ -56,7 +56,7 @@ echo "⚙️ Creating PostCSS config..."
 cat > postcss.config.cjs << 'EOF'
 module.exports = {
   plugins: {
-    '@tailwindcss/postcss': {},
+    tailwindcss: {},
     autoprefixer: {},
   },
 }
