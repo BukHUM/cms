@@ -44,9 +44,9 @@ class GeneralSettingsSeeder extends Seeder
                     'value' => $value,
                     'type' => $this->getSettingType($key),
                     'category' => 'general',
-                    'group_name' => 'site',
+                    'group_name' => $this->getSettingGroup($key),
                     'description' => $this->getSettingDescription($key),
-                    'is_active' => true,
+                    'is_active' => $this->getSettingActiveStatus($key),
                     'is_public' => $this->isPublicSetting($key),
                 ]
             );
@@ -101,6 +101,42 @@ class GeneralSettingsSeeder extends Seeder
         ];
 
         return $descriptions[$key] ?? '';
+    }
+
+    private function getSettingGroup($key)
+    {
+        $groups = [
+            'site_name' => 'site',
+            'site_description' => 'site',
+            'site_keywords' => 'site',
+            'site_author' => 'site',
+            'site_version' => 'site',
+            'site_language' => 'site',
+            'site_timezone' => 'site',
+            'site_currency' => 'site',
+            'site_logo' => 'site',
+            'site_favicon' => 'site',
+            'maintenance_mode' => 'system',
+            'maintenance_message' => 'system',
+            'enable_registration' => 'system',
+            'enable_comments' => 'system',
+            'default_pagination' => 'display',
+            'max_upload_size' => 'display',
+            'allowed_file_types' => 'display',
+        ];
+
+        return $groups[$key] ?? 'general';
+    }
+
+    private function getSettingActiveStatus($key)
+    {
+        // บางการตั้งค่าควรปิดใช้งานตั้งแต่แรก
+        $inactiveSettings = [
+            'maintenance_mode', // ปิดโหมดบำรุงรักษา
+            'enable_comments',  // ปิดการแสดงความคิดเห็น
+        ];
+
+        return !in_array($key, $inactiveSettings);
     }
 
     private function isPublicSetting($key)
