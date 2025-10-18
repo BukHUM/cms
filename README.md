@@ -46,6 +46,42 @@ All database tables use the `core_` prefix for consistency:
 - `core_settings_updates` - System update tracking
 - `core_performance_settings` - Performance configuration
 
+## Production Deployment
+
+### Quick Deployment Script
+```bash
+# Make the script executable
+chmod +x deploy-production.sh
+
+# Run the deployment script
+./deploy-production.sh
+```
+
+### Manual Production Setup
+```bash
+# 1. Clean npm configuration
+rm -f /root/.npmrc
+rm -f .npmrc
+
+# 2. Clean node_modules
+rm -rf node_modules package-lock.json
+
+# 3. Install dependencies
+npm install
+
+# 4. Install Tailwind CSS
+npm install -D tailwindcss@latest postcss autoprefixer
+
+# 5. Build assets
+npm run build
+```
+
+### Production Requirements
+- **Node.js**: 18.0.0 or higher
+- **npm**: 8.0.0 or higher
+- **PHP**: 8.2 or higher
+- **Composer**: Latest version
+
 ## Installation
 
 1. **Clone the repository**
