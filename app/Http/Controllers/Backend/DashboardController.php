@@ -8,7 +8,6 @@ use App\Models\User;
 use App\Models\Role;
 use App\Models\Permission;
 use App\Models\AuditLog;
-use App\Models\LoginAttempt;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -20,10 +19,10 @@ class DashboardController extends Controller
             'active_users' => User::where('is_active', true)->count(),
             'total_roles' => Role::count(),
             'total_permissions' => Permission::count(),
-            'recent_logins' => LoginAttempt::where('success', true)
+            'recent_logins' => AuditLog::where('event', 'user_login')
                 ->where('created_at', '>=', now()->subDays(7))
                 ->count(),
-            'failed_logins' => LoginAttempt::where('success', false)
+            'failed_logins' => AuditLog::where('event', 'login_failed')
                 ->where('created_at', '>=', now()->subDays(7))
                 ->count(),
         ];
@@ -33,12 +32,13 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-        $login_attempts_chart = LoginAttempt::select(
+        $login_attempts_chart = AuditLog::select(
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('COUNT(*) as total'),
-                DB::raw('SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successful'),
-                DB::raw('SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as failed')
+                DB::raw('SUM(CASE WHEN event = "user_login" THEN 1 ELSE 0 END) as successful'),
+                DB::raw('SUM(CASE WHEN event = "login_failed" THEN 1 ELSE 0 END) as failed')
             )
+            ->whereIn('event', ['user_login', 'login_failed'])
             ->where('created_at', '>=', now()->subDays(30))
             ->groupBy('date')
             ->orderBy('date')

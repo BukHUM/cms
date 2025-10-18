@@ -217,7 +217,7 @@ class User extends Authenticatable
     /**
      * Update last login information
      */
-    public function updateLastLogin(string $ip = null): void
+    public function updateLastLogin(?string $ip = null): void
     {
         $this->update([
             'last_login_at' => now(),

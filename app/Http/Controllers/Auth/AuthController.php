@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\LoginAttempt;
 use App\Services\AuditLogService;
 use App\Services\SecurityService;
 use Illuminate\Http\Request;
@@ -82,7 +81,6 @@ class AuthController extends Controller
 
         if (!$user) {
             RateLimiter::hit($key);
-            $this->recordLoginAttempt($request, $credentials['email'], false, 'User not found');
             
             return redirect()->back()
                 ->withErrors(['email' => 'อีเมล์หรือรหัสผ่านไม่ถูกต้อง'])
@@ -92,7 +90,6 @@ class AuthController extends Controller
         // ตรวจสอบสถานะผู้ใช้
         if (!$user->is_active) {
             RateLimiter::hit($key);
-            $this->recordLoginAttempt($request, $credentials['email'], false, 'Account inactive');
             
             return redirect()->back()
                 ->withErrors(['email' => 'บัญชีของคุณถูกปิดใช้งาน กรุณาติดต่อผู้ดูแลระบบ'])
@@ -121,9 +118,6 @@ class AuthController extends Controller
                 'authentication'
             );
 
-            // บันทึก login attempt ที่สำเร็จ
-            $this->recordLoginAttempt($request, $credentials['email'], true, 'Login successful');
-
             // ตรวจสอบการตั้งค่าความปลอดภัย
             $this->securityService->checkSecuritySettings($user, $request);
 
@@ -133,7 +127,17 @@ class AuthController extends Controller
 
         // Login ไม่สำเร็จ
         RateLimiter::hit($key);
-        $this->recordLoginAttempt($request, $credentials['email'], false, 'Invalid password');
+
+        // บันทึก audit log สำหรับ failed login
+        $this->auditLogService->log(
+            'login_failed', 
+            $user, 
+            null, 
+            null, 
+            $user, 
+            $request, 
+            'authentication'
+        );
 
         return redirect()->back()
             ->withErrors(['email' => 'อีเมล์หรือรหัสผ่านไม่ถูกต้อง'])
@@ -166,26 +170,6 @@ class AuthController extends Controller
 
         return redirect()->route('login')
             ->with('success', 'ออกจากระบบเรียบร้อยแล้ว');
-    }
-
-    /**
-     * Record login attempt
-     */
-    private function recordLoginAttempt(Request $request, string $email, bool $success, string $reason = '')
-    {
-        try {
-            LoginAttempt::create([
-                'email' => $email,
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-                'success' => $success,
-                'reason' => $reason,
-                'attempted_at' => Carbon::now(),
-            ]);
-        } catch (\Exception $e) {
-            // Log error but don't break the login process
-            \Log::error('Failed to record login attempt: ' . $e->getMessage());
-        }
     }
 
     /**
