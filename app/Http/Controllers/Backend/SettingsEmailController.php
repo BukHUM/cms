@@ -1,19 +1,20 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Backend;
 
+use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Services\MailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
-class EmailSettingController extends Controller
+class SettingsEmailController extends Controller
 {
     public function index(Request $request)
     {
         // Get all email-related settings
-        $emailSettings = Setting::where('group', 'email')
+        $emailSettings = Setting::where('category', 'email')
             ->orderBy('key')
             ->get()
             ->keyBy('key');
@@ -47,7 +48,8 @@ class EmailSettingController extends Controller
                 [
                     'value' => $value,
                     'type' => $this->getSettingType($key),
-                    'group' => 'email',
+                    'category' => 'email',
+                    'group_name' => 'smtp',
                     'description' => $this->getSettingDescription($key),
                     'is_public' => $this->isPublicSetting($key),
                 ]
@@ -118,7 +120,8 @@ class EmailSettingController extends Controller
                 [
                     'value' => $value,
                     'type' => $this->getSettingType($key),
-                    'group' => 'email',
+                    'category' => 'email',
+                    'group_name' => 'smtp',
                     'description' => $this->getSettingDescription($key),
                     'is_public' => $this->isPublicSetting($key),
                 ]

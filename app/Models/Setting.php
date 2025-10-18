@@ -3,155 +3,313 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Setting extends Model
 {
+    use HasFactory, SoftDeletes;
+
     protected $table = 'core_settings';
-    
+
     protected $fillable = [
         'key',
         'value',
         'type',
-        'group',
+        'category',
+        'group_name',
         'description',
+        'is_active',
         'is_public',
+        'sort_order',
+        'validation_rules',
+        'default_value',
+        'options',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [
+        'is_active' => 'boolean',
         'is_public' => 'boolean',
-        'value' => 'string',
+        'sort_order' => 'integer',
+        'validation_rules' => 'array',
+        'options' => 'array',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
-    public static function get($key, $default = null)
+    /**
+     * Get the user who created this setting
+     */
+    public function creator()
     {
-        $setting = static::where('key', $key)->first();
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Get the user who last updated this setting
+     */
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    /**
+     * Scope for active settings
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope for public settings
+     */
+    public function scopePublic($query)
+    {
+        return $query->where('is_public', true);
+    }
+
+    /**
+     * Scope for settings by category
+     */
+    public function scopeByCategory($query, $category)
+    {
+        return $query->where('category', $category);
+    }
+
+    /**
+     * Scope for settings by group
+     */
+    public function scopeByGroup($query, $group)
+    {
+        return $query->where('group_name', $group);
+    }
+
+    /**
+     * Scope for ordered settings
+     */
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('sort_order')->orderBy('key');
+    }
+
+    /**
+     * Get setting value with type casting
+     */
+    public function getTypedValueAttribute()
+    {
+        switch ($this->type) {
+            case 'boolean':
+                return filter_var($this->value, FILTER_VALIDATE_BOOLEAN);
+            case 'integer':
+                return (int) $this->value;
+            case 'float':
+                return (float) $this->value;
+            case 'array':
+                return json_decode($this->value, true) ?? [];
+            case 'json':
+                return json_decode($this->value, true) ?? null;
+            default:
+                return $this->value;
+        }
+    }
+
+    /**
+     * Set setting value with type conversion
+     */
+    public function setTypedValue($value)
+    {
+        switch ($this->type) {
+            case 'boolean':
+                $this->value = $value ? '1' : '0';
+                break;
+            case 'integer':
+                $this->value = (string) (int) $value;
+                break;
+            case 'float':
+                $this->value = (string) (float) $value;
+                break;
+            case 'array':
+            case 'json':
+                $this->value = json_encode($value);
+                break;
+            default:
+                $this->value = (string) $value;
+        }
+    }
+
+    /**
+     * Validate setting value
+     */
+    public function validateValue($value)
+    {
+        if (empty($this->validation_rules)) {
+            return true;
+        }
+
+        $rules = $this->validation_rules;
+        
+        // Basic validation
+        if (isset($rules['required']) && $rules['required'] && empty($value)) {
+            return false;
+        }
+
+        if (isset($rules['min']) && $value < $rules['min']) {
+            return false;
+        }
+
+        if (isset($rules['max']) && $value > $rules['max']) {
+            return false;
+        }
+
+        if (isset($rules['min_length']) && strlen($value) < $rules['min_length']) {
+            return false;
+        }
+
+        if (isset($rules['max_length']) && strlen($value) > $rules['max_length']) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Get setting by key
+     */
+    public static function get($key, $default = null, $category = null)
+    {
+        $query = static::where('key', $key)->where('is_active', true);
+        
+        if ($category) {
+            $query->where('category', $category);
+        }
+        
+        $setting = $query->first();
         
         if (!$setting) {
             return $default;
         }
 
-        return static::castValue($setting->value, $setting->type);
+        return $setting->typed_value;
     }
 
-    public static function set($key, $value, $type = 'string', $group = 'general')
+    /**
+     * Set setting by key
+     */
+    public static function set($key, $value, $type = 'string', $category = 'general', $group = 'default')
     {
         return static::updateOrCreate(
             ['key' => $key],
             [
                 'value' => $value,
                 'type' => $type,
-                'group' => $group,
+                'category' => $category,
+                'group_name' => $group,
+                'is_active' => true,
             ]
         );
     }
 
-    protected static function castValue($value, $type)
+    /**
+     * Get settings by category
+     */
+    public static function getByCategory($category, $group = null)
     {
-        switch ($type) {
-            case 'boolean':
-                return (bool) $value;
-            case 'integer':
-                return (int) $value;
-            case 'float':
-                return (float) $value;
-            case 'json':
-                return json_decode($value, true);
-            default:
-                return $value;
+        $query = static::where('category', $category)->where('is_active', true);
+        
+        if ($group) {
+            $query->where('group_name', $group);
         }
+        
+        return $query->ordered()->get();
     }
 
-    // Scopes
-    public function scopeActive($query)
+    /**
+     * Get all settings grouped by category
+     */
+    public static function getAllGrouped()
     {
-        return $query->where('is_public', true);
+        return static::where('is_active', true)
+            ->ordered()
+            ->get()
+            ->groupBy('category');
     }
 
-    public function scopeInactive($query)
+    /**
+     * Get available categories
+     */
+    public static function getCategories()
     {
-        return $query->where('is_public', false);
+        return [
+            'general' => 'การตั้งค่าทั่วไป',
+            'performance' => 'การตั้งค่าประสิทธิภาพ',
+            'backup' => 'การตั้งค่าสำรองข้อมูล',
+            'email' => 'การตั้งค่าอีเมล',
+            'security' => 'การตั้งค่าความปลอดภัย',
+            'system' => 'การตั้งค่าระบบ',
+        ];
     }
 
-    public function scopeByGroup($query, $group)
+    /**
+     * Get available types
+     */
+    public static function getTypes()
     {
-        return $query->where('group', $group);
+        return [
+            'string' => 'String',
+            'boolean' => 'Boolean',
+            'integer' => 'Integer',
+            'float' => 'Float',
+            'email' => 'Email',
+            'url' => 'URL',
+            'json' => 'JSON',
+            'array' => 'Array',
+        ];
     }
 
-    public function scopeByType($query, $type)
-    {
-        return $query->where('type', $type);
-    }
-
-    // Helper methods
-    public function getFormattedValueAttribute()
-    {
-        return $this->castValue($this->value, $this->type);
-    }
-
-    public function getTypeIconAttribute()
-    {
-        switch ($this->type) {
-            case 'boolean':
-                return 'fas fa-toggle-on';
-            case 'integer':
-            case 'float':
-                return 'fas fa-hashtag';
-            case 'json':
-                return 'fas fa-code';
-            case 'email':
-                return 'fas fa-envelope';
-            case 'url':
-                return 'fas fa-link';
-            default:
-                return 'fas fa-text-width';
-        }
-    }
-
-    public function getTypeColorAttribute()
-    {
-        switch ($this->type) {
-            case 'boolean':
-                return 'bg-green-100 text-green-800';
-            case 'integer':
-            case 'float':
-                return 'bg-blue-100 text-blue-800';
-            case 'json':
-                return 'bg-purple-100 text-purple-800';
-            case 'email':
-                return 'bg-yellow-100 text-yellow-800';
-            case 'url':
-                return 'bg-indigo-100 text-indigo-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
-    }
-
-    public function getGroupColorAttribute()
-    {
-        switch ($this->group) {
-            case 'general':
-                return 'bg-blue-100 text-blue-800';
-            case 'system':
-                return 'bg-purple-100 text-purple-800';
-            case 'email':
-                return 'bg-yellow-100 text-yellow-800';
-            case 'security':
-                return 'bg-red-100 text-red-800';
-            case 'appearance':
-                return 'bg-green-100 text-green-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
-    }
-
-    public function canBeDeleted()
-    {
-        // System settings cannot be deleted
-        return $this->group !== 'system';
-    }
-
+    /**
+     * Check if setting is system setting
+     */
     public function isSystemSetting()
     {
-        return $this->group === 'system';
+        return $this->category === 'system';
+    }
+
+    /**
+     * Get formatted value for display
+     */
+    public function getFormattedValueAttribute()
+    {
+        switch ($this->type) {
+            case 'boolean':
+                return $this->typed_value ? 'เปิด' : 'ปิด';
+            case 'json':
+            case 'array':
+                return json_encode($this->typed_value, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+            default:
+                return $this->typed_value;
+        }
+    }
+
+    /**
+     * Get type icon for display
+     */
+    public function getTypeIconAttribute()
+    {
+        $icons = [
+            'string' => 'fas fa-font',
+            'boolean' => 'fas fa-toggle-on',
+            'integer' => 'fas fa-hashtag',
+            'float' => 'fas fa-calculator',
+            'email' => 'fas fa-envelope',
+            'url' => 'fas fa-link',
+            'json' => 'fas fa-code',
+            'array' => 'fas fa-list',
+        ];
+
+        return $icons[$this->type] ?? 'fas fa-cog';
     }
 }

@@ -29,6 +29,9 @@ return new class extends Migration
             $table->index(['auditable_type', 'auditable_id']); // Index สำหรับค้นหาตามข้อมูลที่เปลี่ยนแปลง
             $table->index(['user_type', 'user_id']); // Index สำหรับค้นหาตามผู้ใช้
             $table->index('created_at'); // Index สำหรับค้นหาตามวันที่
+            
+            // Foreign key constraint สำหรับ user_id (เฉพาะเมื่อ user_type เป็น App\Models\User)
+            $table->foreign('user_id')->references('id')->on('core_users')->onDelete('set null');
         });
     }
 

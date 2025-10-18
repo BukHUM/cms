@@ -19,6 +19,16 @@ return new class extends Migration
                 $table->timestamp('email_verified_at')->nullable(); // วันที่ยืนยันอีเมล
                 $table->string('password'); // รหัสผ่าน (เข้ารหัสแล้ว)
                 $table->rememberToken(); // Token สำหรับจำการเข้าสู่ระบบ
+                
+                // CMS Fields
+                $table->string('first_name')->nullable(); // ชื่อจริง
+                $table->string('last_name')->nullable(); // นามสกุล
+                $table->string('phone')->nullable(); // เบอร์โทรศัพท์
+                $table->string('avatar')->nullable(); // รูปโปรไฟล์ (URL หรือ path)
+                $table->boolean('is_active')->default(true); // สถานะการใช้งาน (true/false)
+                $table->timestamp('last_login_at')->nullable(); // เวลาเข้าสู่ระบบล่าสุด
+                $table->ipAddress('last_login_ip')->nullable(); // IP Address ที่เข้าสู่ระบบล่าสุด
+                
                 $table->timestamps(); // วันที่สร้างและแก้ไข
             });
         }
@@ -34,7 +44,7 @@ return new class extends Migration
         if (!Schema::hasTable('core_sessions')) {
             Schema::create('core_sessions', function (Blueprint $table) {
                 $table->string('id')->primary(); // รหัส Session (Primary Key)
-                $table->foreignId('user_id')->nullable()->index(); // รหัสผู้ใช้ (Foreign Key)
+                $table->foreignId('user_id')->nullable()->constrained('core_users')->onDelete('cascade'); // รหัสผู้ใช้ (Foreign Key)
                 $table->string('ip_address', 45)->nullable(); // IP Address ของผู้ใช้
                 $table->text('user_agent')->nullable(); // ข้อมูล Browser ของผู้ใช้
                 $table->longText('payload'); // ข้อมูล Session

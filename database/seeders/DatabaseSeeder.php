@@ -25,9 +25,13 @@ class DatabaseSeeder extends Seeder
         // Run other seeders
         $this->call([
             CmsSeeder::class,
-            SettingSeeder::class,
             PermissionSeeder::class,
-            PerformanceSeeder::class,
+            GeneralSettingsSeeder::class,
+            EmailSettingsSeeder::class,
+            SecuritySettingsSeeder::class,
+            PerformanceSettingsSeeder::class,
+            PerformancePermissionsSeeder::class,
+            AssignPerformancePermissionsSeeder::class,
         ]);
     }
 }

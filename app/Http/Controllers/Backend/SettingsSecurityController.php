@@ -1,19 +1,20 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Backend;
 
+use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Services\SecurityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
-class SecuritySettingController extends Controller
+class SettingsSecurityController extends Controller
 {
     public function index(Request $request)
     {
         // Get all security-related settings
-        $securitySettings = Setting::where('group', 'security')
+        $securitySettings = Setting::where('category', 'security')
             ->orderBy('key')
             ->get()
             ->keyBy('key');
@@ -22,7 +23,7 @@ class SecuritySettingController extends Controller
         $this->initializeDefaultSecuritySettings();
 
         // Get settings again after initialization
-        $securitySettings = Setting::where('group', 'security')
+        $securitySettings = Setting::where('category', 'security')
             ->orderBy('key')
             ->get()
             ->keyBy('key');
@@ -64,7 +65,7 @@ class SecuritySettingController extends Controller
                 [
                     'value' => $value,
                     'type' => $this->getSettingType($key),
-                    'group' => 'security',
+                    'category' => 'security',
                     'description' => $this->getSettingDescription($key),
                     'is_public' => $this->isPublicSetting($key),
                 ]
@@ -169,7 +170,7 @@ class SecuritySettingController extends Controller
                 [
                     'value' => $value,
                     'type' => $this->getSettingType($key),
-                    'group' => 'security',
+                    'category' => 'security',
                     'description' => $this->getSettingDescription($key),
                     'is_public' => $this->isPublicSetting($key),
                 ]
@@ -291,7 +292,7 @@ class SecuritySettingController extends Controller
                 [
                     'value' => $value,
                     'type' => $this->getSettingType($key),
-                    'group' => 'security',
+                    'category' => 'security',
                     'description' => $this->getSettingDescription($key),
                     'is_public' => $this->isPublicSetting($key),
                 ]

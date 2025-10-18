@@ -1,0 +1,536 @@
+<?php
+
+namespace App\Http\Controllers\Backend;
+
+use App\Http\Controllers\Controller;
+use App\Models\Setting;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+
+abstract class BaseSettingsController extends Controller
+{
+    protected $category;
+    protected $model;
+    protected $viewPath;
+    protected $routePrefix;
+
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->model = new Setting();
+    }
+
+    /**
+     * Display a listing of settings
+     */
+    public function index(Request $request)
+    {
+        try {
+            $query = $this->model->where('category', $this->category);
+
+            // Search functionality
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('key', 'like', "%{$search}%")
+                      ->orWhere('description', 'like', "%{$search}%");
+                });
+            }
+
+            // Status filter
+            if ($request->filled('status')) {
+                $query->where('is_active', $request->status === 'active');
+            }
+
+            $settings_generals = $query->orderBy('sort_order')->orderBy('key')->paginate(20);
+
+            if ($request->expectsJson()) {
+                return response()->json($settings_generals);
+            }
+
+            return view("{$this->viewPath}.index", compact('settings_generals'));
+
+        } catch (\Exception $e) {
+            Log::error("Settings Controller Index Error ({$this->category}): " . $e->getMessage());
+            return redirect()->back()->with('error', 'เกิดข้อผิดพลาดในการโหลดข้อมูล: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Display the specified setting
+     */
+    public function show(Setting $settings_general)
+    {
+        if (request()->expectsJson()) {
+            return response()->json($settings_general);
+        }
+        
+        return view("{$this->viewPath}.show", compact('settings_general'));
+    }
+
+    /**
+     * Show the form for editing the specified setting
+     */
+    public function edit(Setting $settings_general)
+    {
+        $groups = $this->getAvailableGroups();
+        $types = $this->getAvailableTypes();
+        
+        return view("{$this->viewPath}.edit", compact('settings_general', 'groups', 'types'));
+    }
+
+    /**
+     * Update the specified setting
+     */
+    public function update(Request $request, Setting $settings_general)
+    {
+        $validator = Validator::make($request->all(), $this->getValidationRules($settings_general->id));
+
+        if ($validator->fails()) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+            
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $oldValue = $settings_general->value;
+            
+            $settings_general->fill($request->all());
+            $settings_general->updated_by = Auth::id();
+            
+            // Set typed value
+            $this->setTypedValue($settings_general, $request->value);
+            
+            // Validate value
+            if (!$this->validateValue($settings_general, $request->value)) {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'errors' => ['value' => 'The value does not meet validation requirements.']
+                    ], 422);
+                }
+                
+                return redirect()->back()
+                    ->withErrors(['value' => 'The value does not meet validation requirements.'])
+                    ->withInput();
+            }
+
+            $settings_general->save();
+
+            // Clear cache
+            $this->clearCache();
+
+            DB::commit();
+
+            // Log activity
+            Log::info("Setting updated ({$this->category})", [
+                'id' => $settings_general->id,
+                'key' => $settings_general->key,
+                'old_value' => $oldValue,
+                'new_value' => $settings_general->value,
+                'user_id' => Auth::id(),
+            ]);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'อัปเดตการตั้งค่าเรียบร้อยแล้ว'
+                ]);
+            }
+
+            return redirect()->route("{$this->routePrefix}.index")
+                ->with('success', 'อัปเดตการตั้งค่าเรียบร้อยแล้ว');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Error updating setting ({$this->category})", [
+                'error' => $e->getMessage(),
+                'setting_id' => $settings_general->id,
+                'user_id' => Auth::id(),
+            ]);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'เกิดข้อผิดพลาดในการอัปเดตการตั้งค่า: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return redirect()->back()
+                ->with('error', 'เกิดข้อผิดพลาดในการอัปเดตการตั้งค่า: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+
+    /**
+     * Remove the specified setting
+     */
+    public function destroy(Setting $settings_general)
+    {
+        try {
+            DB::beginTransaction();
+
+            $settingKey = $settings_general->key;
+            $settings_general->delete();
+
+            // Clear cache
+            $this->clearCache();
+
+            DB::commit();
+
+            // Log activity
+            Log::info("Setting deleted ({$this->category})", [
+                'id' => $settings_general->id,
+                'key' => $settingKey,
+                'user_id' => Auth::id(),
+            ]);
+
+            return redirect()->route("{$this->routePrefix}.index")
+                ->with('success', 'ลบการตั้งค่าเรียบร้อยแล้ว');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Error deleting setting ({$this->category})", [
+                'error' => $e->getMessage(),
+                'setting_id' => $settings_general->id,
+                'user_id' => Auth::id(),
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'เกิดข้อผิดพลาดในการลบการตั้งค่า: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Toggle setting status
+     */
+    public function toggleStatus(Request $request, Setting $settings_general)
+    {
+        try {
+            $settings_general->update(['is_active' => !$settings_general->is_active]);
+
+            // Clear cache
+            $this->clearCache();
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Setting status updated successfully',
+                    'setting' => $settings_general
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'สถานะการตั้งค่าถูกอัปเดตเรียบร้อยแล้ว');
+
+        } catch (\Exception $e) {
+            Log::error("Error toggling setting status ({$this->category})", [
+                'error' => $e->getMessage(),
+                'setting_id' => $settings_general->id,
+                'user_id' => Auth::id(),
+            ]);
+
+            return redirect()->back()->with('error', 'เกิดข้อผิดพลาด: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Bulk update settings
+     */
+    public function bulkUpdate(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'settings' => 'required|array',
+            'settings.*.id' => 'required|exists:core_settings,id',
+            'settings.*.value' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ข้อมูลไม่ถูกต้อง',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $updatedCount = 0;
+            foreach ($request->settings as $settingData) {
+                $setting = Setting::find($settingData['id']);
+                if ($setting && $setting->category === $this->category) {
+                    $this->setTypedValue($setting, $settingData['value']);
+                    
+                    if ($this->validateValue($setting, $settingData['value'])) {
+                        $setting->updated_by = Auth::id();
+                        $setting->save();
+                        $updatedCount++;
+                    }
+                }
+            }
+
+            // Clear cache
+            $this->clearCache();
+
+            DB::commit();
+
+            // Log activity
+            Log::info("Bulk settings update ({$this->category})", [
+                'updated_count' => $updatedCount,
+                'user_id' => Auth::id(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "อัปเดตการตั้งค่า {$updatedCount} รายการเรียบร้อยแล้ว",
+                'updated_count' => $updatedCount
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Error in bulk settings update ({$this->category})", [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในการอัปเดตการตั้งค่า'
+            ], 500);
+        }
+    }
+
+    /**
+     * Reset setting to default value
+     */
+    public function reset(Setting $settings_general)
+    {
+        try {
+            DB::beginTransaction();
+
+            $oldValue = $settings_general->value;
+            $settings_general->value = $settings_general->default_value;
+            $settings_general->updated_by = Auth::id();
+            $settings_general->save();
+
+            // Clear cache
+            $this->clearCache();
+
+            DB::commit();
+
+            // Log activity
+            Log::info("Setting reset to default ({$this->category})", [
+                'id' => $settings_general->id,
+                'key' => $settings_general->key,
+                'old_value' => $oldValue,
+                'default_value' => $settings_general->default_value,
+                'user_id' => Auth::id(),
+            ]);
+
+            return redirect()->back()
+                ->with('success', 'รีเซ็ตการตั้งค่าเป็นค่าเริ่มต้นเรียบร้อยแล้ว');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Error resetting setting ({$this->category})", [
+                'error' => $e->getMessage(),
+                'setting_id' => $settings_general->id,
+                'user_id' => Auth::id(),
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'เกิดข้อผิดพลาดในการรีเซ็ตการตั้งค่า: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Export settings
+     */
+    public function export(Request $request)
+    {
+        $query = $this->model->where('category', $this->category);
+
+        // Apply filters
+        if ($request->filled('group')) {
+            $query->where('group_name', $request->group);
+        }
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        $settings = $query->orderBy('sort_order')->orderBy('key')->get();
+
+        $csvData = [];
+        $csvData[] = ['Key', 'Value', 'Type', 'Group', 'Description', 'Active', 'Sort Order'];
+
+        foreach ($settings as $setting) {
+            $csvData[] = [
+                $setting->key,
+                $setting->value,
+                $setting->type,
+                $setting->group_name,
+                $setting->description,
+                $setting->is_active ? 'Yes' : 'No',
+                $setting->sort_order,
+            ];
+        }
+
+        $filename = "{$this->category}_settings_" . date('Y-m-d_H-i-s') . '.csv';
+        
+        $callback = function() use ($csvData) {
+            $file = fopen('php://output', 'w');
+            foreach ($csvData as $row) {
+                fputcsv($file, $row);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
+
+    /**
+     * Get validation rules
+     */
+    protected function getValidationRules($excludeId = null)
+    {
+        $rules = [
+            'key' => ['required', 'string', 'max:255'],
+            'value' => ['required'],
+            'type' => ['required', 'string', 'in:string,boolean,integer,float,email,url,json,array'],
+            'group_name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'is_active' => ['boolean'],
+            'is_public' => ['boolean'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
+            'validation_rules' => ['nullable', 'array'],
+            'default_value' => ['nullable'],
+            'options' => ['nullable', 'array'],
+        ];
+
+        if ($excludeId) {
+            $rules['key'][] = Rule::unique('core_settings')->ignore($excludeId);
+        } else {
+            $rules['key'][] = 'unique:core_settings';
+        }
+
+        return $rules;
+    }
+
+    /**
+     * Get available groups for this category
+     */
+    protected function getAvailableGroups()
+    {
+        return $this->getCategoryGroups();
+    }
+
+    /**
+     * Get available types
+     */
+    protected function getAvailableTypes()
+    {
+        return [
+            'string' => 'String',
+            'boolean' => 'Boolean',
+            'integer' => 'Integer',
+            'float' => 'Float',
+            'email' => 'Email',
+            'url' => 'URL',
+            'json' => 'JSON',
+            'array' => 'Array',
+        ];
+    }
+
+    /**
+     * Set typed value
+     */
+    protected function setTypedValue($setting, $value)
+    {
+        switch ($setting->type) {
+            case 'boolean':
+                $setting->value = $value ? '1' : '0';
+                break;
+            case 'integer':
+                $setting->value = (string) (int) $value;
+                break;
+            case 'float':
+                $setting->value = (string) (float) $value;
+                break;
+            case 'array':
+            case 'json':
+                $setting->value = json_encode($value);
+                break;
+            default:
+                $setting->value = (string) $value;
+        }
+    }
+
+    /**
+     * Validate setting value
+     */
+    protected function validateValue($setting, $value)
+    {
+        if (empty($setting->validation_rules)) {
+            return true;
+        }
+
+        $rules = $setting->validation_rules;
+        
+        // Basic validation
+        if (isset($rules['required']) && $rules['required'] && empty($value)) {
+            return false;
+        }
+
+        if (isset($rules['min']) && $value < $rules['min']) {
+            return false;
+        }
+
+        if (isset($rules['max']) && $value > $rules['max']) {
+            return false;
+        }
+
+        if (isset($rules['min_length']) && strlen($value) < $rules['min_length']) {
+            return false;
+        }
+
+        if (isset($rules['max_length']) && strlen($value) > $rules['max_length']) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Clear cache
+     */
+    protected function clearCache()
+    {
+        Cache::forget("settings_{$this->category}");
+        Cache::forget('settings_all');
+    }
+
+    /**
+     * Get category-specific groups (override in child classes)
+     */
+    protected function getCategoryGroups()
+    {
+        return ['default'];
+    }
+}

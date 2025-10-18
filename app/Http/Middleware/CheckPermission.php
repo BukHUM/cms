@@ -40,7 +40,7 @@ class CheckPermission
             }
             
             // For web requests, redirect to dashboard with error message
-            return redirect()->route('dashboard')
+            return redirect()->route('backend.dashboard')
                 ->with('error', 'คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
         }
 

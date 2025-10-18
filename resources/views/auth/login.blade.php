@@ -79,10 +79,13 @@
                 <!-- Remember Me -->
                 <div class="flex items-center justify-between">
                     <div class="flex items-center">
+                        <!-- Hidden input to ensure remember field is always sent -->
+                        <input type="hidden" name="remember" value="0">
                         <input 
                             type="checkbox" 
                             id="remember" 
                             name="remember" 
+                            value="1"
                             class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                             {{ old('remember') ? 'checked' : '' }}
                         >

@@ -58,12 +58,13 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|max:255',
             'password' => 'required|string|min:6',
-            'remember' => 'boolean',
+            'remember' => 'nullable|boolean',
         ], [
             'email.required' => 'กรุณาใส่อีเมล์',
             'email.email' => 'รูปแบบอีเมล์ไม่ถูกต้อง',
             'password.required' => 'กรุณาใส่รหัสผ่าน',
             'password.min' => 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร',
+            'remember.boolean' => 'ฟิลด์จดจำการเข้าสู่ระบบต้องเป็น true หรือ false',
         ]);
 
         if ($validator->fails()) {

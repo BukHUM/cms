@@ -1,18 +1,18 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\RoleController;
-use App\Http\Controllers\PermissionController;
-use App\Http\Controllers\SettingController;
-use App\Http\Controllers\EmailSettingController;
-use App\Http\Controllers\SecuritySettingController;
-use App\Http\Controllers\AuditLogController;
-use App\Http\Controllers\SettingsAuditLogController;
-use App\Http\Controllers\Backend\PerformanceController;
+use App\Http\Controllers\Backend\DashboardController;
+use App\Http\Controllers\Backend\UserController;
+use App\Http\Controllers\Backend\RoleController;
+use App\Http\Controllers\Backend\PermissionController;
+use App\Http\Controllers\Backend\SettingsGeneralController;
+use App\Http\Controllers\Backend\SettingsPerformanceController;
+use App\Http\Controllers\Backend\SettingsBackupController;
+use App\Http\Controllers\Backend\SettingsEmailController;
+use App\Http\Controllers\Backend\SettingsSecurityController;
+use App\Http\Controllers\Backend\SettingsAuditLogController;
 use App\Http\Controllers\Backend\SettingsUpdateController;
-use App\Http\Controllers\Backend\SystemInfoController;
+use App\Http\Controllers\Backend\SettingsSystemInfoController;
 use App\Http\Controllers\Auth\AuthController;
 
 // Test route for Performance (without auth)
@@ -109,32 +109,46 @@ Route::prefix('backend')->name('backend.')->middleware(['auth'])->group(function
     Route::post('settings/auditlog/get-logs', [SettingsAuditLogController::class, 'getAuditLogs'])->name('settings.auditlog.get-logs');
     
     // Settings Management Routes
-    Route::resource('settings', SettingController::class);
-    Route::patch('settings/{setting}/toggle-status', [SettingController::class, 'toggleStatus'])->name('settings.toggle-status');
-    Route::post('settings/bulk-action', [SettingController::class, 'bulkAction'])->name('settings.bulk-action');
-    
-    // Email Settings Routes
-    Route::get('settings-email', [EmailSettingController::class, 'index'])->name('settings-email.index');
-    Route::put('settings-email', [EmailSettingController::class, 'update'])->name('settings-email.update');
-    Route::post('settings-email/test', [EmailSettingController::class, 'testEmail'])->name('settings-email.test');
-    Route::post('settings-email/reset', [EmailSettingController::class, 'resetToDefault'])->name('settings-email.reset');
-    Route::post('settings-email/validate', [EmailSettingController::class, 'validateSettings'])->name('settings-email.validate');
-    Route::get('settings-email/summary', [EmailSettingController::class, 'getSettingsSummary'])->name('settings-email.summary');
-    
-    // Security Settings Routes
-    Route::get('settings-security', [SecuritySettingController::class, 'index'])->name('settings-security.index');
-    Route::put('settings-security', [SecuritySettingController::class, 'update'])->name('settings-security.update');
-    Route::post('settings-security/test-password', [SecuritySettingController::class, 'testPasswordStrength'])->name('settings-security.test-password');
-    Route::post('settings-security/validate-ip', [SecuritySettingController::class, 'validateIpWhitelist'])->name('settings-security.validate-ip');
-    Route::post('settings-security/generate-password', [SecuritySettingController::class, 'generatePassword'])->name('settings-security.generate-password');
-    Route::post('settings-security/reset', [SecuritySettingController::class, 'resetToDefault'])->name('settings-security.reset');
-    Route::get('settings-security/report', [SecuritySettingController::class, 'getSecurityReport'])->name('settings-security.report');
+    Route::resource('settings-general', SettingsGeneralController::class)->except(['create', 'store']);
+    Route::patch('settings-general/{setting}/toggle-status', [SettingsGeneralController::class, 'toggleStatus'])->name('settings-general.toggle-status');
+    Route::post('settings-general/bulk-update', [SettingsGeneralController::class, 'bulkUpdate'])->name('settings-general.bulk-update');
+    Route::post('settings-general/{setting}/reset', [SettingsGeneralController::class, 'reset'])->name('settings-general.reset');
+    Route::get('settings-general-export', [SettingsGeneralController::class, 'export'])->name('settings-general.export');
     
     // Performance Settings Routes
-    Route::resource('settings-performance', PerformanceController::class);
-    Route::post('settings-performance/{performance}/reset', [PerformanceController::class, 'reset'])->name('settings-performance.reset');
-    Route::post('settings-performance/bulk-update', [PerformanceController::class, 'bulkUpdate'])->name('settings-performance.bulk-update');
-    Route::get('settings-performance-export', [PerformanceController::class, 'export'])->name('settings-performance.export');
+    Route::resource('settings-performance', SettingsPerformanceController::class);
+    Route::patch('settings-performance/{setting}/toggle-status', [SettingsPerformanceController::class, 'toggleStatus'])->name('settings-performance.toggle-status');
+    Route::post('settings-performance/bulk-update', [SettingsPerformanceController::class, 'bulkUpdate'])->name('settings-performance.bulk-update');
+    Route::post('settings-performance/{setting}/reset', [SettingsPerformanceController::class, 'reset'])->name('settings-performance.reset');
+    Route::get('settings-performance-export', [SettingsPerformanceController::class, 'export'])->name('settings-performance.export');
+    
+    // Backup Settings Routes
+    Route::resource('settings-backup', SettingsBackupController::class);
+    Route::patch('settings-backup/{setting}/toggle-status', [SettingsBackupController::class, 'toggleStatus'])->name('settings-backup.toggle-status');
+    Route::post('settings-backup/bulk-update', [SettingsBackupController::class, 'bulkUpdate'])->name('settings-backup.bulk-update');
+    Route::post('settings-backup/{setting}/reset', [SettingsBackupController::class, 'reset'])->name('settings-backup.reset');
+    Route::get('settings-backup-export', [SettingsBackupController::class, 'export'])->name('settings-backup.export');
+    Route::post('settings-backup/create-backup', [SettingsBackupController::class, 'createBackup'])->name('settings-backup.create-backup');
+    Route::get('settings-backup/get-backups', [SettingsBackupController::class, 'getBackups'])->name('settings-backup.get-backups');
+    Route::get('settings-backup/download/{backupName}', [SettingsBackupController::class, 'downloadBackup'])->name('settings-backup.download');
+    Route::delete('settings-backup/delete/{backupName}', [SettingsBackupController::class, 'deleteBackup'])->name('settings-backup.delete-backup');
+    
+    // Email Settings Routes
+    Route::get('settings-email', [SettingsEmailController::class, 'index'])->name('settings-email.index');
+    Route::put('settings-email', [SettingsEmailController::class, 'update'])->name('settings-email.update');
+    Route::post('settings-email/test', [SettingsEmailController::class, 'testEmail'])->name('settings-email.test');
+    Route::post('settings-email/reset', [SettingsEmailController::class, 'resetToDefault'])->name('settings-email.reset');
+    Route::post('settings-email/validate', [SettingsEmailController::class, 'validateSettings'])->name('settings-email.validate');
+    Route::get('settings-email/summary', [SettingsEmailController::class, 'getSettingsSummary'])->name('settings-email.summary');
+    
+    // Security Settings Routes
+    Route::get('settings-security', [SettingsSecurityController::class, 'index'])->name('settings-security.index');
+    Route::put('settings-security', [SettingsSecurityController::class, 'update'])->name('settings-security.update');
+    Route::post('settings-security/test-password', [SettingsSecurityController::class, 'testPasswordStrength'])->name('settings-security.test-password');
+    Route::post('settings-security/validate-ip', [SettingsSecurityController::class, 'validateIpWhitelist'])->name('settings-security.validate-ip');
+    Route::post('settings-security/generate-password', [SettingsSecurityController::class, 'generatePassword'])->name('settings-security.generate-password');
+    Route::post('settings-security/reset', [SettingsSecurityController::class, 'resetToDefault'])->name('settings-security.reset');
+    Route::get('settings-security/report', [SettingsSecurityController::class, 'getSecurityReport'])->name('settings-security.report');
     
     // Settings Update Routes
     Route::get('settings-update', [SettingsUpdateController::class, 'index'])->name('settings-update.index');
@@ -148,8 +162,18 @@ Route::prefix('backend')->name('backend.')->middleware(['auth'])->group(function
     Route::post('settings-update/{settingsUpdate}/retry', [SettingsUpdateController::class, 'retry'])->name('settings-update.retry');
     
     // System Info Routes
-    Route::get('settings-systeminfo', [SystemInfoController::class, 'index'])->name('settings-systeminfo.index');
-    Route::get('settings-systeminfo/export', [SystemInfoController::class, 'export'])->name('settings-systeminfo.export');
+    Route::get('settings-systeminfo', [SettingsSystemInfoController::class, 'index'])->name('settings-systeminfo.index');
+    Route::get('settings-systeminfo/export', [SettingsSystemInfoController::class, 'export'])->name('settings-systeminfo.export');
+    
+    // Settings Backup Routes
+    Route::middleware(['settings.backup.access'])->group(function () {
+        Route::resource('settings-backup', SettingsBackupController::class);
+        Route::post('settings-backup/bulk-update', [SettingsBackupController::class, 'updateBulk'])->name('settings-backup.bulk-update');
+        Route::post('settings-backup/create-backup', [SettingsBackupController::class, 'createBackup'])->name('settings-backup.create-backup');
+        Route::get('settings-backup/get-backups', [SettingsBackupController::class, 'getBackups'])->name('settings-backup.get-backups');
+        Route::get('settings-backup/download/{backupName}', [SettingsBackupController::class, 'downloadBackup'])->name('settings-backup.download');
+        Route::delete('settings-backup/delete/{backupName}', [SettingsBackupController::class, 'deleteBackup'])->name('settings-backup.delete');
+    });
 });
 
 // API Routes for CMS
@@ -169,9 +193,9 @@ Route::prefix('api')->group(function () {
     Route::apiResource('permissions', PermissionController::class);
     
     // Settings Management
-    Route::apiResource('settings', SettingController::class);
+    Route::apiResource('settings', SettingsGeneralController::class);
     
     // Audit Logs
-    Route::apiResource('audit-logs', AuditLogController::class);
+    Route::apiResource('audit-logs', SettingsAuditLogController::class);
     
 });

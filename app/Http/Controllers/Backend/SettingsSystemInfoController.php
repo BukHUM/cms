@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
 
-class SystemInfoController extends Controller
+class SettingsSystemInfoController extends Controller
 {
     /**
      * Display system information
