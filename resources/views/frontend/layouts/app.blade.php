@@ -39,10 +39,35 @@
                 </div>
                 
                 <div class="flex items-center space-x-4">
-                    <a href="{{ route('backend.dashboard') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                        <i class="fas fa-sign-in-alt mr-1"></i>
-                        เข้าสู่ระบบ
-                    </a>
+                    @auth
+                        <!-- ถ้า login แล้ว แสดงข้อมูลผู้ใช้และปุ่มต่างๆ -->
+                        <div class="flex items-center space-x-2 sm:space-x-3">
+                            <div class="text-right hidden lg:block">
+                                <p class="text-sm font-medium text-gray-900">{{ Auth::user()->name }}</p>
+                                <p class="text-xs text-gray-500">{{ Auth::user()->roles->first()->name ?? 'User' }}</p>
+                            </div>
+                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-white text-sm"></i>
+                            </div>
+                            <a href="{{ route('backend.dashboard') }}" class="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm">
+                                <i class="fas fa-cogs mr-1"></i>
+                                <span class="hidden sm:inline">Backend</span>
+                            </a>
+                            <a href="{{ route('logout') }}" class="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                <i class="fas fa-sign-out-alt mr-1"></i>
+                                <span class="hidden sm:inline">ออกจากระบบ</span>
+                            </a>
+                            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
+                                @csrf
+                            </form>
+                        </div>
+                    @else
+                        <!-- ถ้ายังไม่ login แสดงปุ่มเข้าสู่ระบบ -->
+                        <a href="{{ route('login') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-sign-in-alt mr-1"></i>
+                            เข้าสู่ระบบ
+                        </a>
+                    @endauth
                 </div>
             </div>
         </div>

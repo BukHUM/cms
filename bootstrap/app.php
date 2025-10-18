@@ -17,6 +17,16 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission.any' => \App\Http\Middleware\CheckAnyPermission::class,
             'permission.all' => \App\Http\Middleware\CheckAllPermissions::class,
         ]);
+        
+        // Register auth middleware
+        $middleware->alias([
+            'auth' => \Illuminate\Auth\Middleware\Authenticate::class,
+        ]);
+        
+        // Register settings update middleware
+        $middleware->alias([
+            'settings.update.access' => \App\Http\Middleware\SettingsUpdateAccess::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

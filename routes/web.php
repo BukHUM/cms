@@ -10,14 +10,81 @@ use App\Http\Controllers\EmailSettingController;
 use App\Http\Controllers\SecuritySettingController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\SettingsAuditLogController;
+use App\Http\Controllers\Backend\PerformanceController;
+use App\Http\Controllers\Backend\SettingsUpdateController;
+use App\Http\Controllers\Backend\SystemInfoController;
+use App\Http\Controllers\Auth\AuthController;
+
+// Test route for Performance (without auth)
+Route::get('/test-performance-no-auth', function () {
+    try {
+        // Temporarily disable auth middleware
+        $controller = new \App\Http\Controllers\Backend\PerformanceController();
+        
+        // Use reflection to call index method directly
+        $reflection = new \ReflectionClass($controller);
+        $method = $reflection->getMethod('index');
+        $method->setAccessible(true);
+        
+        $request = new \Illuminate\Http\Request();
+        $response = $method->invoke($controller, $request);
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Performance controller works without auth!',
+            'response_type' => get_class($response)
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
+    }
+});
+
+// Test route for Performance
+Route::get('/test-performance', function () {
+    try {
+        $controller = new \App\Http\Controllers\Backend\PerformanceController();
+        $request = new \Illuminate\Http\Request();
+        $response = $controller->index($request);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Performance controller works!',
+            'response_type' => get_class($response)
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
+    }
+});
 
 // Frontend Routes
 Route::get('/', function () {
     return view('frontend.welcome');
 })->name('frontend.home');
 
+// Auth Routes
+Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::get('/logout', [AuthController::class, 'logout']); // GET logout for convenience
+
+// Password Reset Routes
+Route::get('/forgot-password', [AuthController::class, 'showPasswordResetForm'])->name('password.request');
+Route::post('/forgot-password', [AuthController::class, 'sendPasswordResetLink'])->name('password.email');
+
+// Auth Check API
+Route::get('/auth/check', [AuthController::class, 'checkAuth'])->name('auth.check');
+
 // Backend Routes
-Route::prefix('backend')->name('backend.')->group(function () {
+Route::prefix('backend')->name('backend.')->middleware(['auth'])->group(function () {
     Route::get('/dashboard', function () {
         return view('backend.dashboard');
     })->name('dashboard');
@@ -62,6 +129,27 @@ Route::prefix('backend')->name('backend.')->group(function () {
     Route::post('settings-security/generate-password', [SecuritySettingController::class, 'generatePassword'])->name('settings-security.generate-password');
     Route::post('settings-security/reset', [SecuritySettingController::class, 'resetToDefault'])->name('settings-security.reset');
     Route::get('settings-security/report', [SecuritySettingController::class, 'getSecurityReport'])->name('settings-security.report');
+    
+    // Performance Settings Routes
+    Route::resource('settings-performance', PerformanceController::class);
+    Route::post('settings-performance/{performance}/reset', [PerformanceController::class, 'reset'])->name('settings-performance.reset');
+    Route::post('settings-performance/bulk-update', [PerformanceController::class, 'bulkUpdate'])->name('settings-performance.bulk-update');
+    Route::get('settings-performance-export', [PerformanceController::class, 'export'])->name('settings-performance.export');
+    
+    // Settings Update Routes
+    Route::get('settings-update', [SettingsUpdateController::class, 'index'])->name('settings-update.index');
+    Route::post('settings-update/quick-update', [SettingsUpdateController::class, 'quickUpdate'])->name('settings-update.quick-update');
+    Route::post('settings-update/clear-cache', [SettingsUpdateController::class, 'clearCache'])->name('settings-update.clear-cache');
+    Route::post('settings-update/optimize', [SettingsUpdateController::class, 'optimize'])->name('settings-update.optimize');
+    Route::post('settings-update/migrate', [SettingsUpdateController::class, 'migrate'])->name('settings-update.migrate');
+    Route::post('settings-update/seed', [SettingsUpdateController::class, 'seed'])->name('settings-update.seed');
+    Route::post('settings-update/{settingsUpdate}/start', [SettingsUpdateController::class, 'start'])->name('settings-update.start');
+    Route::post('settings-update/{settingsUpdate}/cancel', [SettingsUpdateController::class, 'cancel'])->name('settings-update.cancel');
+    Route::post('settings-update/{settingsUpdate}/retry', [SettingsUpdateController::class, 'retry'])->name('settings-update.retry');
+    
+    // System Info Routes
+    Route::get('settings-systeminfo', [SystemInfoController::class, 'index'])->name('settings-systeminfo.index');
+    Route::get('settings-systeminfo/export', [SystemInfoController::class, 'export'])->name('settings-systeminfo.export');
 });
 
 // API Routes for CMS

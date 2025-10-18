@@ -141,7 +141,7 @@
         <p class="text-xl text-blue-100 mb-8">
             เข้าสู่ระบบเพื่อเริ่มจัดการเนื้อหาของคุณ
         </p>
-        <a href="{{ route('backend.dashboard') }}" class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors inline-block">
+        <a href="{{ route('login') }}" class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors inline-block">
             <i class="fas fa-sign-in-alt mr-2"></i>
             เข้าสู่ระบบ
         </a>

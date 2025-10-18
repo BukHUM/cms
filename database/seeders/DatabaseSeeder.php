@@ -26,6 +26,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CmsSeeder::class,
             SettingSeeder::class,
+            PermissionSeeder::class,
+            PerformanceSeeder::class,
         ]);
     }
 }

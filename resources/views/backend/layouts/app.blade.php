@@ -74,17 +74,17 @@
                     <span class="truncate">Audit Log</span>
                 </a>
                 
-                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-200">
+                <a href="{{ route('backend.settings-performance.index') }}" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-200 {{ request()->routeIs('backend.settings-performance.*') ? 'bg-blue-50 border-r-4 border-blue-500' : '' }}">
                     <i class="fas fa-chart-line mr-3 w-5 text-center"></i>
                     <span class="truncate">Performance</span>
                 </a>
                 
-                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-200">
-                    <i class="fas fa-sync mr-3 w-5 text-center"></i>
-                    <span class="truncate">อัพเดต</span>
+                <a href="{{ route('backend.settings-update.index') }}" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-200 {{ request()->routeIs('backend.settings-update.*') ? 'bg-blue-50 border-r-4 border-blue-500' : '' }}">
+                    <i class="fas fa-sync-alt mr-3 w-5 text-center"></i>
+                    <span class="truncate">อัพเดตระบบ</span>
                 </a>
                 
-                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-200">
+                <a href="{{ route('backend.settings-systeminfo.index') }}" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-200 {{ request()->routeIs('backend.settings-systeminfo.*') ? 'bg-blue-50 border-r-4 border-blue-500' : '' }}">
                     <i class="fas fa-info-circle mr-3 w-5 text-center"></i>
                     <span class="truncate">ข้อมูลระบบ</span>
                 </a>
@@ -158,17 +158,17 @@
                     <span class="truncate">Audit Log</span>
                 </a>
                 
-                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-200">
+                <a href="{{ route('backend.settings-performance.index') }}" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-200 {{ request()->routeIs('backend.settings-performance.*') ? 'bg-blue-50 border-r-4 border-blue-500' : '' }}">
                     <i class="fas fa-chart-line mr-3 w-5 text-center"></i>
                     <span class="truncate">Performance</span>
                 </a>
                 
-                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-200">
-                    <i class="fas fa-sync mr-3 w-5 text-center"></i>
-                    <span class="truncate">อัพเดต</span>
+                <a href="{{ route('backend.settings-update.index') }}" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-200 {{ request()->routeIs('backend.settings-update.*') ? 'bg-blue-50 border-r-4 border-blue-500' : '' }}">
+                    <i class="fas fa-sync-alt mr-3 w-5 text-center"></i>
+                    <span class="truncate">อัพเดตระบบ</span>
                 </a>
                 
-                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-200">
+                <a href="{{ route('backend.settings-systeminfo.index') }}" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-200 {{ request()->routeIs('backend.settings-systeminfo.*') ? 'bg-blue-50 border-r-4 border-blue-500' : '' }}">
                     <i class="fas fa-info-circle mr-3 w-5 text-center"></i>
                     <span class="truncate">ข้อมูลระบบ</span>
                 </a>
@@ -203,11 +203,34 @@
                             <!-- User Profile -->
                             <div class="flex items-center space-x-2 sm:space-x-3">
                                 <div class="text-right hidden sm:block">
-                                    <p class="text-sm font-medium text-gray-900">Admin User</p>
-                                    <p class="text-xs text-gray-500">Administrator</p>
+                                    <p class="text-sm font-medium text-gray-900">{{ Auth::user()->name ?? 'Admin User' }}</p>
+                                    <p class="text-xs text-gray-500">{{ Auth::user()->roles->first()->name ?? 'Administrator' }}</p>
                                 </div>
-                                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                                    <i class="fas fa-user text-white text-sm sm:text-base"></i>
+                                <div class="relative group">
+                                    <div class="w-8 h-8 sm:w-10 sm:h-10 bg-blue-500 rounded-full flex items-center justify-center cursor-pointer">
+                                        <i class="fas fa-user text-white text-sm sm:text-base"></i>
+                                    </div>
+                                    
+                                    <!-- Dropdown Menu -->
+                                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                                        <div class="px-4 py-2 text-sm text-gray-700 border-b">
+                                            <p class="font-medium">{{ Auth::user()->name ?? 'Admin User' }}</p>
+                                            <p class="text-gray-500">{{ Auth::user()->email ?? 'admin@example.com' }}</p>
+                                        </div>
+                                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            <i class="fas fa-user mr-2"></i>โปรไฟล์
+                                        </a>
+                                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            <i class="fas fa-cog mr-2"></i>ตั้งค่า
+                                        </a>
+                                        <div class="border-t"></div>
+                                        <form method="POST" action="{{ route('logout') }}" class="block">
+                                            @csrf
+                                            <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                                <i class="fas fa-sign-out-alt mr-2"></i>ออกจากระบบ
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>

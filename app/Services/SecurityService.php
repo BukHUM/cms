@@ -315,6 +315,83 @@ class SecurityService
     }
 
     /**
+     * Check security settings for user login
+     */
+    public function checkSecuritySettings($user, $request)
+    {
+        // Check if user needs to change password
+        $passwordExpiryDays = Setting::get('password_expiry_days', 90);
+        if ($user->password_changed_at) {
+            $daysSinceChange = $user->password_changed_at->diffInDays(now());
+            if ($daysSinceChange >= $passwordExpiryDays) {
+                Log::warning("User {$user->email} password expired", [
+                    'user_id' => $user->id,
+                    'days_since_change' => $daysSinceChange,
+                    'ip_address' => $request->ip()
+                ]);
+            }
+        }
+
+        // Check IP whitelist if enabled
+        $enableIpWhitelist = Setting::get('enable_ip_whitelist', false);
+        if ($enableIpWhitelist) {
+            $ipWhitelist = Setting::get('ip_whitelist', '');
+            $clientIp = $request->ip();
+            
+            if (!empty($ipWhitelist)) {
+                $allowedIps = array_filter(array_map('trim', explode(',', $ipWhitelist)));
+                $isAllowed = false;
+                
+                foreach ($allowedIps as $allowedIp) {
+                    if ($this->ipMatches($clientIp, $allowedIp)) {
+                        $isAllowed = true;
+                        break;
+                    }
+                }
+                
+                if (!$isAllowed) {
+                    Log::warning("User {$user->email} login from non-whitelisted IP", [
+                        'user_id' => $user->id,
+                        'client_ip' => $clientIp,
+                        'whitelist' => $ipWhitelist
+                    ]);
+                }
+            }
+        }
+
+        // Check session timeout
+        $sessionTimeout = Setting::get('session_timeout', 120);
+        if ($sessionTimeout > 0) {
+            // This will be handled by Laravel's session configuration
+            Log::info("Session timeout set to {$sessionTimeout} minutes for user {$user->email}");
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if IP matches allowed IP or CIDR
+     */
+    private function ipMatches($ip, $allowedIp)
+    {
+        if ($ip === $allowedIp) {
+            return true;
+        }
+
+        // Check CIDR notation
+        if (strpos($allowedIp, '/') !== false) {
+            list($subnet, $mask) = explode('/', $allowedIp);
+            $ipLong = ip2long($ip);
+            $subnetLong = ip2long($subnet);
+            $maskLong = -1 << (32 - $mask);
+            
+            return ($ipLong & $maskLong) === ($subnetLong & $maskLong);
+        }
+
+        return false;
+    }
+
+    /**
      * Check if current security settings are compliant
      */
     public function checkCompliance()

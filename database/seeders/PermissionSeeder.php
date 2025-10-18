@@ -172,6 +172,36 @@ class PermissionSeeder extends Seeder
                 'is_active' => true,
             ],
 
+            // Performance Settings
+            [
+                'name' => 'performance.view',
+                'display_name' => 'ดูการตั้งค่าประสิทธิภาพ',
+                'description' => 'สามารถดูการตั้งค่าประสิทธิภาพของระบบ',
+                'group' => 'Performance Settings',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'performance.create',
+                'display_name' => 'สร้างการตั้งค่าประสิทธิภาพ',
+                'description' => 'สามารถสร้างการตั้งค่าประสิทธิภาพใหม่',
+                'group' => 'Performance Settings',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'performance.edit',
+                'display_name' => 'แก้ไขการตั้งค่าประสิทธิภาพ',
+                'description' => 'สามารถแก้ไขการตั้งค่าประสิทธิภาพ',
+                'group' => 'Performance Settings',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'performance.delete',
+                'display_name' => 'ลบการตั้งค่าประสิทธิภาพ',
+                'description' => 'สามารถลบการตั้งค่าประสิทธิภาพ',
+                'group' => 'Performance Settings',
+                'is_active' => true,
+            ],
+
             // System Administration
             [
                 'name' => 'system.admin',

@@ -161,6 +161,39 @@ resources/
 /* Button Sizes */
 .btn-sm { @apply px-2 py-1 text-sm; }
 .btn-lg { @apply px-6 py-3 text-lg; }
+
+/* Button with Custom Focus Styles */
+.btn-custom {
+  @apply px-4 py-2 rounded-md font-medium transition-all duration-200;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.btn-custom:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5) !important;
+}
+
+/* Button Custom Variants */
+.btn-custom-primary {
+  @apply btn-custom bg-blue-600 text-white hover:bg-blue-700;
+}
+
+.btn-custom-secondary {
+  @apply btn-custom bg-gray-600 text-white hover:bg-gray-700;
+}
+
+.btn-custom-success {
+  @apply btn-custom bg-green-600 text-white hover:bg-green-700;
+}
+
+.btn-custom-warning {
+  @apply btn-custom bg-yellow-600 text-white hover:bg-yellow-700;
+}
+
+.btn-custom-danger {
+  @apply btn-custom bg-red-600 text-white hover:bg-red-700;
+}
 ```
 
 ### Form Classes
@@ -168,6 +201,19 @@ resources/
 /* Form Input */
 .form-input {
   @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500;
+}
+
+/* Form Input with Custom Focus Styles */
+.form-input-custom {
+  @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.form-input-custom:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5) !important;
+  border-color: #3b82f6 !important;
 }
 
 /* Form Label */
@@ -749,6 +795,58 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 ```
 
+### Focus Styles Usage Examples
+```html
+<!-- Form Inputs with Custom Focus -->
+<div class="form-group">
+    <label class="form-label">อีเมล์</label>
+    <input type="email" class="form-input-custom focus-blue" placeholder="กรอกอีเมล์">
+</div>
+
+<div class="form-group">
+    <label class="form-label">รหัสผ่าน</label>
+    <input type="password" class="form-input-custom focus-blue" placeholder="กรอกรหัสผ่าน">
+</div>
+
+<div class="form-group">
+    <label class="form-label">ข้อความ</label>
+    <textarea class="form-input-custom focus-green" placeholder="กรอกข้อความ"></textarea>
+</div>
+
+<!-- Buttons with Custom Focus -->
+<div class="flex space-x-4">
+    <button class="btn-custom-primary">บันทึก</button>
+    <button class="btn-custom-secondary">ยกเลิก</button>
+    <button class="btn-custom-success">ยืนยัน</button>
+    <button class="btn-custom-warning">เตือน</button>
+    <button class="btn-custom-danger">ลบ</button>
+</div>
+
+<!-- Different Focus Colors -->
+<div class="space-y-4">
+    <input type="text" class="form-input-custom focus-blue" placeholder="Focus สีน้ำเงิน">
+    <input type="text" class="form-input-custom focus-green" placeholder="Focus สีเขียว">
+    <input type="text" class="form-input-custom focus-purple" placeholder="Focus สีม่วง">
+    <input type="text" class="form-input-custom focus-red" placeholder="Focus สีแดง">
+    <input type="text" class="form-input-custom focus-yellow" placeholder="Focus สีเหลือง">
+</div>
+
+<!-- Login Form Example -->
+<form class="space-y-6">
+    <div>
+        <label class="form-label">อีเมล์</label>
+        <input type="email" class="form-input-custom focus-blue" placeholder="กรอกอีเมล์" required>
+    </div>
+    
+    <div>
+        <label class="form-label">รหัสผ่าน</label>
+        <input type="password" class="form-input-custom focus-blue" placeholder="กรอกรหัสผ่าน" required>
+    </div>
+    
+    <button type="submit" class="btn-custom-primary w-full">เข้าสู่ระบบ</button>
+</form>
+```
+
 ## 📱 Responsive Design
 
 ### Breakpoints
@@ -795,6 +893,46 @@ document.addEventListener('DOMContentLoaded', function() {
 .badge-success { @apply bg-green-100 text-green-800; }
 .badge-warning { @apply bg-yellow-100 text-yellow-800; }
 .badge-danger { @apply bg-red-100 text-red-800; }
+```
+
+### Focus Styles Components
+```css
+/* Custom Focus Styles - ปิด browser default outline และใช้ custom focus */
+.focus-custom {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.focus-custom:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5) !important;
+}
+
+/* Focus Styles with Different Colors */
+.focus-blue:focus {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5) !important;
+  border-color: #3b82f6 !important;
+}
+
+.focus-green:focus {
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.5) !important;
+  border-color: #22c55e !important;
+}
+
+.focus-purple:focus {
+  box-shadow: 0 0 0 2px rgba(147, 51, 234, 0.5) !important;
+  border-color: #9333ea !important;
+}
+
+.focus-red:focus {
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.5) !important;
+  border-color: #ef4444 !important;
+}
+
+.focus-yellow:focus {
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.5) !important;
+  border-color: #f59e0b !important;
+}
 ```
 
 ## 🚀 Development Workflow
@@ -851,7 +989,9 @@ rm public/hot
 
 ### 5. Component Usage
 - **Buttons**: ใช้ `.btn-primary`, `.btn-secondary`, `.btn-success`, `.btn-warning`, `.btn-danger`
-- **Forms**: ใช้ `.form-input`, `.form-label`, `.form-group`, `.form-error`
+- **Buttons Custom Focus**: ใช้ `.btn-custom-primary`, `.btn-custom-secondary`, `.btn-custom-success`, `.btn-custom-warning`, `.btn-custom-danger`
+- **Forms**: ใช้ `.form-input`, `.form-input-custom`, `.form-label`, `.form-group`, `.form-error`
+- **Focus Styles**: ใช้ `.focus-custom`, `.focus-blue`, `.focus-green`, `.focus-purple`, `.focus-red`, `.focus-yellow`
 - **Cards**: ใช้ `.card`, `.card-header`, `.card-title`, `.card-body`, `.card-footer`
 - **Tables**: ใช้ `.table`, `.table-header`, `.table-cell`, `.table-row`
 - **Alerts**: ใช้ `.alert`, `.alert-success`, `.alert-warning`, `.alert-error`, `.alert-info`
@@ -887,6 +1027,7 @@ rm public/hot
 ### ✅ ใช้ได้
 - **Tailwind utility classes**: `bg-blue-600`, `text-white`, `px-4 py-2`, `rounded-md`, `hover:bg-blue-700`
 - **Custom Components ที่มีอยู่**: `.btn-primary`, `.card`, `.form-input`, `.table`, `.alert`, `.sidebar`, `.header`
+- **Custom Focus Styles**: `.form-input-custom`, `.btn-custom-*`, `.focus-custom`, `.focus-blue`, `.focus-green`, `.focus-purple`, `.focus-red`, `.focus-yellow`
 - **Font Awesome icons**: `<i class="fas fa-icon-name"></i>`
 - **Responsive classes**: `sm:`, `md:`, `lg:`, `xl:`
 
@@ -906,6 +1047,11 @@ rm public/hot
   <div class="card-body">เนื้อหา</div>
 </div>
 
+<!-- ✅ Focus Styles ตัวอย่าง -->
+<input type="text" class="form-input-custom focus-blue" placeholder="กรอกข้อมูล">
+<button class="btn-custom-primary">บันทึก</button>
+<textarea class="form-input-custom focus-green" placeholder="ข้อความ"></textarea>
+
 <!-- ❌ ผิด -->
 <button style="background: blue;">บันทึก</button>
 <div class="my-custom-card">เนื้อหา</div>
@@ -913,10 +1059,19 @@ rm public/hot
 
 ---
 
-**Last Updated**: 2024-10-17  
-**Version**: 1.4.0
+**Last Updated**: 2025-10-18  
+**Version**: 1.5.0
 
 ## 📋 Changelog
+
+### Version 1.5.0 (2024-10-18)
+- **ใหม่**: เพิ่ม Custom Focus Styles Components
+- เพิ่ม `.form-input-custom` สำหรับ input fields ที่มี custom focus styles
+- เพิ่ม `.btn-custom-*` variants สำหรับ buttons ที่มี custom focus styles
+- เพิ่ม `.focus-custom`, `.focus-blue`, `.focus-green`, `.focus-purple`, `.focus-red`, `.focus-yellow` utility classes
+- เพิ่มตัวอย่างการใช้งาน Focus Styles ในส่วน Usage Examples
+- อัพเดต Component Usage section เพื่อรวม Focus Styles
+- แก้ไขปัญหา browser default outline ที่ไม่เข้ากับธีม
 
 ### Version 1.4.0 (2024-10-17)
 - **สำคัญ**: ปรับปรุงให้ทุก library ใช้แบบ local ไม่ต้องเรียกใช้จาก CDN
