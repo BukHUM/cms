@@ -110,10 +110,6 @@ npm run build
    
    # Install SweetAlert2
    npm install sweetalert2
-   
-   # Install additional packages
-   npm install sweetalert2
-   npm install @fortawesome/fontawesome-free
    ```
 
 5. **Build frontend assets**
@@ -264,12 +260,6 @@ npm install package-name
 # Install additional packages
 npm install sweetalert2
 npm install @fortawesome/fontawesome-free
-
-# Build for production
-npm run build
-
-# Development with hot reload
-npm run dev
 ```
 
 ## Contributing
