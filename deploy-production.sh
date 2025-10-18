@@ -18,7 +18,7 @@ rm -rf node_modules package-lock.json
 echo "📦 Installing dependencies..."
 npm install
 
-# Step 3.5: Verify package.json configuration
+# Step 3.5: Verify and fix package.json configuration
 echo "🔍 Verifying package.json configuration..."
 if grep -q '"type": "module"' package.json; then
     echo "✅ package.json is configured for ES modules"
@@ -26,9 +26,55 @@ else
     echo "⚠️ package.json may need 'type: module' configuration"
 fi
 
-# Step 4: Install Tailwind CSS
-echo "🎨 Installing Tailwind CSS..."
-npm install -D tailwindcss@latest postcss autoprefixer
+# Step 3.6: Ensure package.json has correct Tailwind CSS version
+echo "🔧 Ensuring correct Tailwind CSS version in package.json..."
+# Backup original package.json
+cp package.json package.json.backup
+
+# Update package.json to use specific versions
+cat > package.json << 'EOF'
+{
+    "$schema": "https://json.schemastore.org/package.json",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "vite build",
+        "dev": "vite"
+    },
+    "devDependencies": {
+        "autoprefixer": "^10.4.21",
+        "axios": "^1.11.0",
+        "concurrently": "^9.0.1",
+        "laravel-vite-plugin": "^2.0.0",
+        "postcss": "^8.5.6",
+        "tailwindcss": "^3.4.18",
+        "vite": "^7.0.7"
+    },
+    "dependencies": {
+        "@fontsource/prompt": "^5.2.8",
+        "@fortawesome/fontawesome-free": "^7.1.0",
+        "sweetalert2": "^11.26.3"
+    },
+    "engines": {
+        "node": ">=18.0.0",
+        "npm": ">=8.0.0"
+    }
+}
+EOF
+echo "✅ package.json updated with correct versions"
+
+# Step 4: Install dependencies with correct versions
+echo "🎨 Installing dependencies with correct versions..."
+npm install
+
+# Step 4.5: Verify installed versions
+echo "🔍 Verifying installed versions..."
+echo "Tailwind CSS version:"
+npm list tailwindcss
+echo "PostCSS version:"
+npm list postcss
+echo "Autoprefixer version:"
+npm list autoprefixer
 
 # Step 5: Create Tailwind config (CommonJS format for compatibility)
 echo "⚙️ Creating Tailwind config..."
