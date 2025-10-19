@@ -11,7 +11,6 @@ use App\Http\Controllers\Backend\SettingsBackupController;
 use App\Http\Controllers\Backend\SettingsEmailController;
 use App\Http\Controllers\Backend\SettingsSecurityController;
 use App\Http\Controllers\Backend\SettingsAuditLogController;
-use App\Http\Controllers\Backend\SettingsUpdateController;
 use App\Http\Controllers\Backend\SettingsSystemInfoController;
 use App\Http\Controllers\Auth\AuthController;
 
@@ -150,16 +149,6 @@ Route::prefix('backend')->name('backend.')->middleware(['auth'])->group(function
     Route::post('settings-security/reset', [SettingsSecurityController::class, 'resetToDefault'])->name('settings-security.reset');
     Route::get('settings-security/report', [SettingsSecurityController::class, 'getSecurityReport'])->name('settings-security.report');
     
-    // Settings Update Routes
-    Route::get('settings-update', [SettingsUpdateController::class, 'index'])->name('settings-update.index');
-    Route::post('settings-update/quick-update', [SettingsUpdateController::class, 'quickUpdate'])->name('settings-update.quick-update');
-    Route::post('settings-update/clear-cache', [SettingsUpdateController::class, 'clearCache'])->name('settings-update.clear-cache');
-    Route::post('settings-update/optimize', [SettingsUpdateController::class, 'optimize'])->name('settings-update.optimize');
-    Route::post('settings-update/migrate', [SettingsUpdateController::class, 'migrate'])->name('settings-update.migrate');
-    Route::post('settings-update/seed', [SettingsUpdateController::class, 'seed'])->name('settings-update.seed');
-    Route::post('settings-update/{settingsUpdate}/start', [SettingsUpdateController::class, 'start'])->name('settings-update.start');
-    Route::post('settings-update/{settingsUpdate}/cancel', [SettingsUpdateController::class, 'cancel'])->name('settings-update.cancel');
-    Route::post('settings-update/{settingsUpdate}/retry', [SettingsUpdateController::class, 'retry'])->name('settings-update.retry');
     
     // System Info Routes
     Route::get('settings-systeminfo', [SettingsSystemInfoController::class, 'index'])->name('settings-systeminfo.index');

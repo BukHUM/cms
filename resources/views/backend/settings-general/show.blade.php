@@ -12,17 +12,17 @@
         <div class="p-6">
             <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
                 <div class="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <i class="{{ $settings_general->type_icon }} text-white text-2xl"></i>
+                    <i class="{{ $setting->type_icon }} text-white text-2xl"></i>
                 </div>
                 
                 <div class="flex-1 min-w-0">
-                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">{{ $settings_general->key }}</h2>
-                    @if($settings_general->description)
-                        <p class="text-base sm:text-lg text-gray-600 dark:text-gray-400 mt-1">{{ $settings_general->description }}</p>
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">{{ $setting->key }}</h2>
+                    @if($setting->description)
+                        <p class="text-base sm:text-lg text-gray-600 dark:text-gray-400 mt-1">{{ $setting->description }}</p>
                     @endif
                     
                     <div class="flex flex-wrap items-center gap-2 mt-3">
-                        @if($settings_general->is_active)
+                        @if($setting->is_active)
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                 <i class="fas fa-check-circle mr-1"></i>
                                 เปิดใช้งาน
@@ -35,23 +35,23 @@
                         @endif
                         
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                            {{ ucfirst($settings_general->group_name) }}
+                            {{ ucfirst($setting->group_name) }}
                         </span>
                         
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $settings_general->type_color }}">
-                            <i class="{{ $settings_general->type_icon }} mr-1"></i>
-                            {{ ucfirst($settings_general->type) }}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $setting->type_color }}">
+                            <i class="{{ $setting->type_icon }} mr-1"></i>
+                            {{ ucfirst($setting->type) }}
                         </span>
                     </div>
                 </div>
                 
                 <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
-                    <button onclick="toggleStatus({{ $settings_general->id }}, {{ $settings_general->is_active ? 'false' : 'true' }})" 
+                    <button onclick="toggleStatus({{ $setting->id }}, {{ $setting->is_active ? 'false' : 'true' }})" 
                             class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 w-full sm:w-auto">
-                        <i class="fas fa-toggle-{{ $settings_general->is_active ? 'on' : 'off' }} mr-2"></i>
-                        {{ $settings_general->is_active ? 'ปิดใช้งาน' : 'เปิดใช้งาน' }}
+                        <i class="fas fa-toggle-{{ $setting->is_active ? 'on' : 'off' }} mr-2"></i>
+                        {{ $setting->is_active ? 'ปิดใช้งาน' : 'เปิดใช้งาน' }}
                     </button>
-                    <button onclick="openEditModal({{ $settings_general->id }})" 
+                    <button onclick="openEditModal({{ $setting->id }})" 
                             class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full sm:w-auto">
                         <i class="fas fa-edit mr-2"></i>
                         แก้ไข
@@ -80,28 +80,28 @@
                 <dl class="space-y-4">
                     <div>
                         <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">คีย์</dt>
-                        <dd class="mt-1 text-sm text-gray-900 dark:text-white font-mono bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded border dark:border-gray-600">{{ $settings_general->key }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white font-mono bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded border dark:border-gray-600">{{ $setting->key }}</dd>
                     </div>
                     
                     <div>
                         <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">ค่า</dt>
                         <dd class="mt-1 text-sm text-gray-900">
-                            @if($settings_general->type === 'boolean')
-                                @if($settings_general->value)
+                            @if($setting->type === 'boolean')
+                                @if($setting->value)
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                         <i class="fas fa-check mr-1"></i>
-                                        เปิด ({{ $settings_general->value }})
+                                        เปิด ({{ $setting->value }})
                                     </span>
                                 @else
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                         <i class="fas fa-times mr-1"></i>
-                                        ปิด ({{ $settings_general->value }})
+                                        ปิด ({{ $setting->value }})
                                     </span>
                                 @endif
-                            @elseif($settings_general->type === 'json')
-                                <pre class="bg-gray-50 p-3 rounded border text-xs overflow-x-auto">{{ json_encode(json_decode($settings_general->value), JSON_PRETTY_PRINT) }}</pre>
+                            @elseif($setting->type === 'json')
+                                <pre class="bg-gray-50 p-3 rounded border text-xs overflow-x-auto">{{ json_encode(json_decode($setting->value), JSON_PRETTY_PRINT) }}</pre>
                             @else
-                                <span class="font-mono bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded border dark:border-gray-600 block">{{ $settings_general->value }}</span>
+                                <span class="font-mono bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded border dark:border-gray-600 block">{{ $setting->value }}</span>
                             @endif
                         </dd>
                     </div>
@@ -109,9 +109,9 @@
                     <div>
                         <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">ประเภท</dt>
                         <dd class="mt-1">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $settings_general->type_color }}">
-                                <i class="{{ $settings_general->type_icon }} mr-1"></i>
-                                {{ ucfirst($settings_general->type) }}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $setting->type_color }}">
+                                <i class="{{ $setting->type_icon }} mr-1"></i>
+                                {{ ucfirst($setting->type) }}
                             </span>
                         </dd>
                     </div>
@@ -120,7 +120,7 @@
                         <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">กลุ่ม</dt>
                         <dd class="mt-1">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                {{ ucfirst($settings_general->group_name) }}
+                                {{ ucfirst($setting->group_name) }}
                             </span>
                         </dd>
                     </div>
@@ -141,7 +141,7 @@
                     <div>
                         <dt class="text-sm font-medium text-gray-500">สถานะ</dt>
                         <dd class="mt-1">
-                            @if($settings_general->is_active)
+                            @if($setting->is_active)
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                     <i class="fas fa-check-circle mr-1"></i>
                                     เปิดใช้งาน
@@ -167,12 +167,12 @@
                     
                     <div>
                         <dt class="text-sm font-medium text-gray-500">สร้างเมื่อ</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $settings_general->created_at->format('d/m/Y H:i') }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $setting->created_at->format('d/m/Y H:i') }}</dd>
                     </div>
                     
                     <div>
                         <dt class="text-sm font-medium text-gray-500">อัปเดตล่าสุด</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $settings_general->updated_at->format('d/m/Y H:i') }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $setting->updated_at->format('d/m/Y H:i') }}</dd>
                     </div>
                 </dl>
             </div>
@@ -180,7 +180,7 @@
     </div>
 
     <!-- Description -->
-    @if($settings_general->description)
+    @if($setting->description)
         <div class="bg-white rounded-lg shadow mt-6">
             <div class="px-6 py-4 border-b border-gray-200">
                 <h3 class="text-lg font-medium text-gray-900">
@@ -189,7 +189,7 @@
                 </h3>
             </div>
             <div class="p-6">
-                <p class="text-gray-700 leading-relaxed">{{ $settings_general->description }}</p>
+                <p class="text-gray-700 leading-relaxed">{{ $setting->description }}</p>
             </div>
         </div>
     @endif

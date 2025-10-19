@@ -64,32 +64,32 @@ abstract class BaseSettingsController extends Controller
     /**
      * Display the specified setting
      */
-    public function show(Setting $settings_general)
+    public function show(Setting $setting)
     {
         if (request()->expectsJson()) {
-            return response()->json($settings_general);
+            return response()->json($setting);
         }
         
-        return view("{$this->viewPath}.show", compact('settings_general'));
+        return view("{$this->viewPath}.show", compact('setting'));
     }
 
     /**
      * Show the form for editing the specified setting
      */
-    public function edit(Setting $settings_general)
+    public function edit(Setting $setting)
     {
         $groups = $this->getAvailableGroups();
         $types = $this->getAvailableTypes();
         
-        return view("{$this->viewPath}.edit", compact('settings_general', 'groups', 'types'));
+        return view("{$this->viewPath}.edit", compact('setting', 'groups', 'types'));
     }
 
     /**
      * Update the specified setting
      */
-    public function update(Request $request, Setting $settings_general)
+    public function update(Request $request, Setting $setting)
     {
-        $validator = Validator::make($request->all(), $this->getValidationRules($settings_general->id));
+        $validator = Validator::make($request->all(), $this->getValidationRules($setting->id));
 
         if ($validator->fails()) {
             if ($request->expectsJson()) {
@@ -107,16 +107,20 @@ abstract class BaseSettingsController extends Controller
         try {
             DB::beginTransaction();
 
-            $oldValue = $settings_general->value;
+            $oldValue = $setting->value;
             
-            $settings_general->fill($request->all());
-            $settings_general->updated_by = Auth::id();
+            // Handle checkbox for is_active
+            $data = $request->all();
+            $data['is_active'] = $request->has('is_active') ? true : false;
+            
+            $setting->fill($data);
+            $setting->updated_by = Auth::id();
             
             // Set typed value
-            $this->setTypedValue($settings_general, $request->value);
+            $this->setTypedValue($setting, $request->value);
             
             // Validate value
-            if (!$this->validateValue($settings_general, $request->value)) {
+            if (!$this->validateValue($setting, $request->value)) {
                 if ($request->expectsJson()) {
                     return response()->json([
                         'success' => false,
@@ -129,19 +133,20 @@ abstract class BaseSettingsController extends Controller
                     ->withInput();
             }
 
-            $settings_general->save();
+            $setting->save();
 
             // Clear cache using SettingsService
-            \App\Services\SettingsService::clearCache($settings_general->key);
+            \App\Services\SettingsService::clearCache($setting->key);
+            \App\Services\SettingsService::clearCache(); // Clear all category cache
 
             DB::commit();
 
             // Log activity
             Log::info("Setting updated ({$this->category})", [
-                'id' => $settings_general->id,
-                'key' => $settings_general->key,
+                'id' => $setting->id,
+                'key' => $setting->key,
                 'old_value' => $oldValue,
-                'new_value' => $settings_general->value,
+                'new_value' => $setting->value,
                 'user_id' => Auth::id(),
             ]);
 
@@ -159,7 +164,7 @@ abstract class BaseSettingsController extends Controller
             DB::rollBack();
             Log::error("Error updating setting ({$this->category})", [
                 'error' => $e->getMessage(),
-                'setting_id' => $settings_general->id,
+                'setting_id' => $setting->id,
                 'user_id' => Auth::id(),
             ]);
 
@@ -179,13 +184,13 @@ abstract class BaseSettingsController extends Controller
     /**
      * Remove the specified setting
      */
-    public function destroy(Setting $settings_general)
+    public function destroy(Setting $setting)
     {
         try {
             DB::beginTransaction();
 
-            $settingKey = $settings_general->key;
-            $settings_general->delete();
+            $settingKey = $setting->key;
+            $setting->delete();
 
             // Clear cache
             $this->clearCache();
@@ -194,7 +199,7 @@ abstract class BaseSettingsController extends Controller
 
             // Log activity
             Log::info("Setting deleted ({$this->category})", [
-                'id' => $settings_general->id,
+                'id' => $setting->id,
                 'key' => $settingKey,
                 'user_id' => Auth::id(),
             ]);
@@ -206,7 +211,7 @@ abstract class BaseSettingsController extends Controller
             DB::rollBack();
             Log::error("Error deleting setting ({$this->category})", [
                 'error' => $e->getMessage(),
-                'setting_id' => $settings_general->id,
+                'setting_id' => $setting->id,
                 'user_id' => Auth::id(),
             ]);
 
@@ -218,30 +223,45 @@ abstract class BaseSettingsController extends Controller
     /**
      * Toggle setting status
      */
-    public function toggleStatus(Request $request, Setting $settings_general)
+    public function toggleStatus(Request $request, Setting $setting)
     {
         try {
-            // Use SettingsService to toggle status
-            \App\Services\SettingsService::toggle($settings_general->key);
+            DB::beginTransaction();
             
-            // Refresh the model
-            $settings_general->refresh();
+            // Toggle status directly
+            $setting->is_active = !$setting->is_active;
+            $setting->updated_by = Auth::id();
+            $setting->save();
+            
+            // Clear cache
+            \App\Services\SettingsService::clearCache($setting->key);
+            \App\Services\SettingsService::clearCache(); // Clear all category cache
+            
+            DB::commit();
 
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'Setting status updated successfully',
-                    'setting' => $settings_general
+                    'setting' => $setting->fresh()
                 ]);
             }
 
             return redirect()->back()->with('success', 'สถานะการตั้งค่าถูกอัปเดตเรียบร้อยแล้ว');
 
         } catch (\Exception $e) {
+            DB::rollBack();
             Log::error("Error toggling setting status ({$this->category})", [
                 'error' => $e->getMessage(),
-                'setting_id' => $settings_general->id,
+                'setting_id' => $setting->id,
                 'user_id' => Auth::id(),
             ]);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()
+                ], 500);
+            }
 
             return redirect()->back()->with('error', 'เกิดข้อผิดพลาด: ' . $e->getMessage());
         }
@@ -317,15 +337,15 @@ abstract class BaseSettingsController extends Controller
     /**
      * Reset setting to default value
      */
-    public function reset(Setting $settings_general)
+    public function reset(Setting $setting)
     {
         try {
             DB::beginTransaction();
 
-            $oldValue = $settings_general->value;
-            $settings_general->value = $settings_general->default_value;
-            $settings_general->updated_by = Auth::id();
-            $settings_general->save();
+            $oldValue = $setting->value;
+            $setting->value = $setting->default_value;
+            $setting->updated_by = Auth::id();
+            $setting->save();
 
             // Clear cache
             $this->clearCache();
@@ -334,10 +354,10 @@ abstract class BaseSettingsController extends Controller
 
             // Log activity
             Log::info("Setting reset to default ({$this->category})", [
-                'id' => $settings_general->id,
-                'key' => $settings_general->key,
+                'id' => $setting->id,
+                'key' => $setting->key,
                 'old_value' => $oldValue,
-                'default_value' => $settings_general->default_value,
+                'default_value' => $setting->default_value,
                 'user_id' => Auth::id(),
             ]);
 
@@ -348,7 +368,7 @@ abstract class BaseSettingsController extends Controller
             DB::rollBack();
             Log::error("Error resetting setting ({$this->category})", [
                 'error' => $e->getMessage(),
-                'setting_id' => $settings_general->id,
+                'setting_id' => $setting->id,
                 'user_id' => Auth::id(),
             ]);
 

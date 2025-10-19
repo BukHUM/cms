@@ -91,10 +91,6 @@
                         <span class="truncate">Performance</span>
                     </a>
                     
-                    <a href="{{ route('backend.settings-update.index') }}" class="flex items-center px-6 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 {{ request()->routeIs('backend.settings-update.*') ? 'bg-blue-50 dark:bg-blue-900 border-r-4 border-blue-500' : '' }}">
-                        <i class="fas fa-sync-alt mr-3 w-5 text-center"></i>
-                        <span class="truncate">อัพเดตระบบ</span>
-                    </a>
                     
                     <a href="{{ route('backend.settings-systeminfo.index') }}" class="flex items-center px-6 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 {{ request()->routeIs('backend.settings-systeminfo.*') ? 'bg-blue-50 dark:bg-blue-900 border-r-4 border-blue-500' : '' }}">
                         <i class="fas fa-info-circle mr-3 w-5 text-center"></i>
@@ -192,10 +188,6 @@
                         <span class="truncate">Performance</span>
                     </a>
                     
-                    <a href="{{ route('backend.settings-update.index') }}" class="flex items-center px-6 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 {{ request()->routeIs('backend.settings-update.*') ? 'bg-blue-50 dark:bg-blue-900 border-r-4 border-blue-500' : '' }}">
-                        <i class="fas fa-sync-alt mr-3 w-5 text-center"></i>
-                        <span class="truncate">อัพเดตระบบ</span>
-                    </a>
                     
                     <a href="{{ route('backend.settings-systeminfo.index') }}" class="flex items-center px-6 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 {{ request()->routeIs('backend.settings-systeminfo.*') ? 'bg-blue-50 dark:bg-blue-900 border-r-4 border-blue-500' : '' }}">
                         <i class="fas fa-info-circle mr-3 w-5 text-center"></i>

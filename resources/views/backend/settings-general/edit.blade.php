@@ -13,7 +13,7 @@
             <div class="flex justify-between items-center pb-3 border-b">
                 <h3 class="text-lg font-semibold text-gray-900">
                     <i class="fas fa-edit mr-2"></i>
-                    แก้ไขการตั้งค่า: {{ $settings_general->key }}
+                    แก้ไขการตั้งค่า: {{ $setting->key }}
                 </h3>
                 <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
                     <i class="fas fa-times text-xl"></i>
@@ -22,7 +22,7 @@
 
             <!-- Modal Body -->
             <div class="mt-4">
-                <form action="{{ route('backend.settings-general.update', $settings_general->id) }}" method="POST" id="editForm">
+                <form action="{{ route('backend.settings-general.update', $setting->id) }}" method="POST" id="editForm">
                     @csrf
                     @method('PUT')
                     
@@ -38,7 +38,7 @@
                                 <input type="text" 
                                        id="key" 
                                        name="key" 
-                                       value="{{ old('key', $settings_general->key) }}"
+                                       value="{{ old('key', $setting->key) }}"
                                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('key') border-red-500 @enderror"
                                        placeholder="เช่น: site_name, email_from"
                                        required>
@@ -56,7 +56,7 @@
                                 <input type="text" 
                                        id="value" 
                                        name="value" 
-                                       value="{{ old('value', $settings_general->value) }}"
+                                       value="{{ old('value', $setting->value) }}"
                                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('value') border-red-500 @enderror"
                                        placeholder="ค่าของการตั้งค่า"
                                        required>
@@ -77,7 +77,7 @@
                                         required>
                                     <option value="">เลือกประเภท</option>
                                     @foreach($types as $type)
-                                        <option value="{{ $type }}" {{ old('type', $settings_general->type) == $type ? 'selected' : '' }}>
+                                        <option value="{{ $type }}" {{ old('type', $setting->type) == $type ? 'selected' : '' }}>
                                             {{ ucfirst($type) }}
                                         </option>
                                     @endforeach
@@ -99,7 +99,7 @@
                                         required>
                                     <option value="">เลือกกลุ่ม</option>
                                     @foreach($groups as $group)
-                                        <option value="{{ $group }}" {{ old('group_name', $settings_general->group_name) == $group ? 'selected' : '' }}>
+                                        <option value="{{ $group }}" {{ old('group_name', $setting->group_name) == $group ? 'selected' : '' }}>
                                             {{ ucfirst($group) }}
                                         </option>
                                     @endforeach
@@ -122,7 +122,7 @@
                                           name="description" 
                                           rows="3"
                                           class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('description') border-red-500 @enderror"
-                                          placeholder="คำอธิบายการตั้งค่านี้">{{ old('description', $settings_general->description) }}</textarea>
+                                          placeholder="คำอธิบายการตั้งค่านี้">{{ old('description', $setting->description) }}</textarea>
                                 @error('description')
                                     <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                                 @enderror
@@ -139,7 +139,7 @@
                                            id="is_active" 
                                            name="is_active" 
                                            value="1"
-                                           {{ old('is_active', $settings_general->is_active) ? 'checked' : '' }}
+                                           {{ old('is_active', $setting->is_active) ? 'checked' : '' }}
                                            class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                                     <label for="is_active" class="ml-2 block text-sm font-medium text-gray-700">
                                         เปิดใช้งาน
@@ -157,22 +157,22 @@
                                     <div>
                                         <span class="font-medium">ประเภท:</span>
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 ml-1">
-                                            {{ ucfirst($settings_general->type) }}
+                                            {{ ucfirst($setting->type) }}
                                         </span>
                                     </div>
                                     <div>
                                         <span class="font-medium">กลุ่ม:</span>
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 ml-1">
-                                            {{ ucfirst($settings_general->group_name) }}
+                                            {{ ucfirst($setting->group_name) }}
                                         </span>
                                     </div>
                                     <div>
                                         <span class="font-medium">ค่า:</span>
                                         <span class="ml-1 font-mono text-xs bg-white px-2 py-1 rounded border">
-                                            @if($settings_general->type === 'boolean')
-                                                {{ $settings_general->value ? 'true' : 'false' }}
+                                            @if($setting->type === 'boolean')
+                                                {{ $setting->value ? 'true' : 'false' }}
                                             @else
-                                                {{ $settings_general->value }}
+                                                {{ $setting->value }}
                                             @endif
                                         </span>
                                     </div>
