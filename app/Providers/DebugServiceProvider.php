@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Config;
+use App\Models\Setting;
 
 class DebugServiceProvider extends ServiceProvider
 {
@@ -31,7 +32,8 @@ class DebugServiceProvider extends ServiceProvider
     private function configureDebugMode(): void
     {
         try {
-            $debugMode = setting('debug_mode', false);
+            // ใช้ Setting model โดยตรงแทนการใช้ helper function
+            $debugMode = Setting::get('debug_mode', false);
             
             if ($debugMode) {
                 Config::set('app.debug', true);
@@ -54,8 +56,9 @@ class DebugServiceProvider extends ServiceProvider
     private function configureDebugBar(): void
     {
         try {
-            $debugMode = setting('debug_mode', false);
-            $debugBar = setting('debug_bar', false);
+            // ใช้ Setting model โดยตรงแทนการใช้ helper function
+            $debugMode = Setting::get('debug_mode', false);
+            $debugBar = Setting::get('debug_bar', false);
             
             if ($debugBar && $debugMode) {
                 Config::set('debugbar.enabled', true);
@@ -66,7 +69,7 @@ class DebugServiceProvider extends ServiceProvider
             }
         } catch (\Exception $e) {
             // Fallback to default if settings are not available
-            Config::set('debugbar.enabled', env('DEBUGBAR_ENABLED', false));
+            Config::set('debugbar.enabled', false);
         }
     }
 }
