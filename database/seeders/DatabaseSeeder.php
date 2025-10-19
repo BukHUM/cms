@@ -15,23 +15,16 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
-
-        // Run other seeders
+        // Run essential seeders
         $this->call([
-            CmsSeeder::class,
-            PermissionSeeder::class,
-            GeneralSettingsSeeder::class,
-            EmailSettingsSeeder::class,
-            SecuritySettingsSeeder::class,
-            PerformanceSettingsSeeder::class,
-            PerformancePermissionsSeeder::class,
-            AssignPerformancePermissionsSeeder::class,
+            CmsSeeder::class,           // Users and Roles
+            PermissionSeeder::class,    // Permissions and assign to roles
+            GeneralSettingsSeeder::class, // Basic settings
         ]);
+
+        $this->command->info('Database seeded successfully!');
+        $this->command->info('You can now login with:');
+        $this->command->info('Admin: admin@example.com / admin123');
+        $this->command->info('Editor: editor@example.com / editor123');
     }
 }

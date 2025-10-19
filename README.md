@@ -69,6 +69,11 @@ All database tables use the `core_` prefix for consistency and proper organizati
 - `core_settings` - **Unified settings table** for all configuration types (general, performance, backup, email, security, system)
 - `core_settings_updates` - System update tracking
 
+### Database Seeders
+- `CmsSeeder` - Creates admin and editor users with roles
+- `PermissionSeeder` - Creates permissions and assigns them to roles
+- `GeneralSettingsSeeder` - Creates basic system settings
+
 ### Database Features
 - **Foreign Key Constraints**: Proper referential integrity
 - **Soft Deletes**: Data preservation with soft deletion
@@ -105,15 +110,8 @@ npm run build
 # 5. Run migrations
 php artisan migrate --force
 
-# 6. Seed production data
-php artisan db:seed --class=CmsSeeder --force
-php artisan db:seed --class=PermissionSeeder --force
-php artisan db:seed --class=GeneralSettingsSeeder --force
-php artisan db:seed --class=EmailSettingsSeeder --force
-php artisan db:seed --class=SecuritySettingsSeeder --force
-php artisan db:seed --class=PerformanceSettingsSeeder --force
-php artisan db:seed --class=PerformancePermissionsSeeder --force
-php artisan db:seed --class=AssignPerformancePermissionsSeeder --force
+# 6. Seed production data (simplified)
+php artisan db:seed --force
 
 # 7. Optimize application
 php artisan optimize
@@ -130,70 +128,101 @@ php artisan optimize
 
 ## Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/BukHUM/corecms.git .
-   cd backend
-   ```
+### 1. Git Setup & Repository Clone
 
-2. **Install PHP dependencies**
-   ```bash
-   composer install
-   ```
+**Option A: Clone from existing repository**
+```bash
+git clone https://github.com/BukHUM/corecms.git .
+cd backend
+```
 
-3. **Install Node.js dependencies**
-   ```bash
-   npm install
-   ```
+**Option B: Initialize new repository**
+```bash
+# Initialize git repository
+git init
 
-4. **Install additional frontend packages**
-   ```bash
-   # Install Tailwind CSS
-   npm install -D tailwindcss postcss autoprefixer
-   
-   # Install FontAwesome
-   npm install @fortawesome/fontawesome-free
-   
-   # Install SweetAlert2
-   npm install sweetalert2
-   ```
+# Add remote origin (replace with your repository URL)
+git remote add origin https://github.com/yourusername/your-repo.git
 
-5. **Build frontend assets**
-   ```bash
-   npm run build
-   # หรือสำหรับ development
-   npm run dev
-   ```
+# Create initial commit
+git add .
+git commit -m "Initial commit: CMS Backend System"
+git branch -M main
+git push -u origin main
+```
 
-6. **Environment setup**
-   ```bash
-   cp .env.example .env
-   php artisan key:generate
-   ```
+### 2. Install Dependencies
 
-7. **Database configuration**
-   - Update `.env` file with your database credentials
-   - Run migrations:
-   ```bash
-   php artisan migrate
-   ```
+**Install PHP dependencies**
+```bash
+composer install
+```
 
-8. **Seed initial data**
-   ```bash
-   php artisan db:seed --class=CmsSeeder
-   php artisan db:seed --class=PermissionSeeder
-   php artisan db:seed --class=GeneralSettingsSeeder
-   php artisan db:seed --class=EmailSettingsSeeder
-   php artisan db:seed --class=SecuritySettingsSeeder
-   php artisan db:seed --class=PerformanceSettingsSeeder
-   php artisan db:seed --class=PerformancePermissionsSeeder
-   php artisan db:seed --class=AssignPerformancePermissionsSeeder
-   ```
+**Install Node.js dependencies**
+```bash
+npm install
+```
 
-9. **Start development server**
-   ```bash
-   php artisan serve
-   ```
+**Install additional frontend packages**
+```bash
+# Install Tailwind CSS
+npm install -D tailwindcss postcss autoprefixer
+
+# Install FontAwesome
+npm install @fortawesome/fontawesome-free
+
+# Install SweetAlert2
+npm install sweetalert2
+```
+
+### 3. Environment Setup
+
+```bash
+# Copy environment file
+cp .env.example .env
+
+# Generate application key
+php artisan key:generate
+
+# Update .env file with your database credentials
+# DB_CONNECTION=mysql
+# DB_HOST=127.0.0.1
+# DB_PORT=3306
+# DB_DATABASE=your_database_name
+# DB_USERNAME=your_username
+# DB_PASSWORD=your_password
+```
+
+### 4. Database Setup
+
+```bash
+# Run migrations
+php artisan migrate
+
+# Seed essential data (simplified - only necessary seeders)
+php artisan db:seed
+```
+
+**Seeder Information:**
+- `CmsSeeder`: Creates admin and editor users with roles
+- `PermissionSeeder`: Creates permissions and assigns them to roles  
+- `GeneralSettingsSeeder`: Creates basic system settings
+
+**Available Users After Seeding:**
+- Admin: `admin@example.com` / `admin123` (Full access)
+- Editor: `editor@example.com` / `editor123` (Limited access)
+
+### 5. Build Assets & Start Server
+
+```bash
+# Build frontend assets
+npm run build
+# หรือสำหรับ development
+npm run dev
+
+# Start development server
+php artisan serve
+```
 
 ## API Endpoints
 
@@ -291,8 +320,16 @@ php artisan settings:clear-cache            # Clear settings cache
 ## Default Credentials
 
 After running the seeder, you can login with:
+
+### Admin Account
 - **Email**: admin@example.com
-- **Password**: password
+- **Password**: admin123
+- **Role**: Administrator (Full access)
+
+### Editor Account
+- **Email**: editor@example.com
+- **Password**: editor123
+- **Role**: Editor (Limited access)
 
 ## Technology Stack
 
@@ -338,14 +375,7 @@ php artisan optimize:clear
 
 # Database operations
 php artisan db:wipe
-php artisan db:seed --class=CmsSeeder
-php artisan db:seed --class=PermissionSeeder
-php artisan db:seed --class=GeneralSettingsSeeder
-php artisan db:seed --class=EmailSettingsSeeder
-php artisan db:seed --class=SecuritySettingsSeeder
-php artisan db:seed --class=PerformanceSettingsSeeder
-php artisan db:seed --class=PerformancePermissionsSeeder
-php artisan db:seed --class=AssignPerformancePermissionsSeeder
+php artisan db:seed
 ```
 
 ### Frontend Commands
@@ -370,11 +400,33 @@ npm install -D tailwindcss postcss autoprefixer
 
 ## Contributing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+### Git Workflow
+1. **Fork the repository** or clone your own repository
+2. **Create feature branch** (`git checkout -b feature/amazing-feature`)
+3. **Make changes** and test thoroughly
+4. **Commit changes** (`git commit -m 'Add some amazing feature'`)
+5. **Push to branch** (`git push origin feature/amazing-feature`)
+6. **Open Pull Request** for review
+
+### Git Best Practices
+```bash
+# Always pull latest changes before starting work
+git pull origin main
+
+# Create descriptive commit messages
+git commit -m "feat: add user authentication system"
+git commit -m "fix: resolve database migration issue"
+git commit -m "docs: update installation instructions"
+
+# Use conventional commit format
+# feat: new feature
+# fix: bug fix
+# docs: documentation changes
+# style: formatting changes
+# refactor: code refactoring
+# test: adding tests
+# chore: maintenance tasks
+```
 
 ## Development Guidelines
 
@@ -386,6 +438,8 @@ npm install -D tailwindcss postcss autoprefixer
 - Maintain proper database relationships with foreign key constraints
 - Use consistent naming conventions for tables and controllers
 - Organize controllers in appropriate namespaces (Backend/Frontend)
+- Use `updateOrCreate()` in seeders to prevent duplicate data
+- Keep seeder files minimal and focused on essential data only
 
 ## License
 
@@ -397,7 +451,15 @@ For support and questions, please contact the development team or create an issu
 
 ## Changelog
 
-### Version 1.4.0 (Latest)
+### Version 1.5.0 (Latest)
+- ✅ **Simplified Seeder System**: Streamlined database seeding with only essential seeders
+- ✅ **Updated User Credentials**: Changed default admin password to `admin123` for better security
+- ✅ **Role-Based Access**: Added editor user with limited permissions for testing
+- ✅ **Git Setup Guide**: Added comprehensive git repository setup instructions
+- ✅ **Documentation Cleanup**: Removed redundant seeder references and simplified installation process
+- ✅ **Production Optimization**: Simplified production deployment with single seeder command
+
+### Version 1.4.0
 - ✅ **Database-First Settings System**: Complete settings management with database storage and .env override
 - ✅ **Advanced Caching**: Implemented intelligent caching system with automatic invalidation
 - ✅ **Helper Functions**: Easy-to-use helper functions (`setting()`, `settings()`, `set_setting()`)

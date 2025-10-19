@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Permission;
+use App\Models\Role;
 
 class PermissionSeeder extends Seeder
 {
@@ -13,6 +14,22 @@ class PermissionSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
+            // Dashboard
+            [
+                'name' => 'dashboard.view',
+                'display_name' => 'ดู Dashboard',
+                'description' => 'สามารถเข้าถึงหน้า Dashboard',
+                'group' => 'Dashboard',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'dashboard.statistics',
+                'display_name' => 'ดูสถิติ',
+                'description' => 'สามารถดูสถิติต่างๆ ในระบบ',
+                'group' => 'Dashboard',
+                'is_active' => true,
+            ],
+
             // User Management
             [
                 'name' => 'user.view',
@@ -116,29 +133,6 @@ class PermissionSeeder extends Seeder
                 'group' => 'Permission Management',
                 'is_active' => true,
             ],
-            [
-                'name' => 'permission.toggle-status',
-                'display_name' => 'เปลี่ยนสถานะสิทธิ์',
-                'description' => 'สามารถเปิด/ปิดใช้งานสิทธิ์',
-                'group' => 'Permission Management',
-                'is_active' => true,
-            ],
-
-            // Dashboard
-            [
-                'name' => 'dashboard.view',
-                'display_name' => 'ดู Dashboard',
-                'description' => 'สามารถเข้าถึงหน้า Dashboard',
-                'group' => 'Dashboard',
-                'is_active' => true,
-            ],
-            [
-                'name' => 'dashboard.statistics',
-                'display_name' => 'ดูสถิติ',
-                'description' => 'สามารถดูสถิติต่างๆ ในระบบ',
-                'group' => 'Dashboard',
-                'is_active' => true,
-            ],
 
             // Settings
             [
@@ -171,61 +165,9 @@ class PermissionSeeder extends Seeder
                 'group' => 'Audit Logs',
                 'is_active' => true,
             ],
-
-            // Performance Settings
-            [
-                'name' => 'performance.view',
-                'display_name' => 'ดูการตั้งค่าประสิทธิภาพ',
-                'description' => 'สามารถดูการตั้งค่าประสิทธิภาพของระบบ',
-                'group' => 'Performance Settings',
-                'is_active' => true,
-            ],
-            [
-                'name' => 'performance.create',
-                'display_name' => 'สร้างการตั้งค่าประสิทธิภาพ',
-                'description' => 'สามารถสร้างการตั้งค่าประสิทธิภาพใหม่',
-                'group' => 'Performance Settings',
-                'is_active' => true,
-            ],
-            [
-                'name' => 'performance.edit',
-                'display_name' => 'แก้ไขการตั้งค่าประสิทธิภาพ',
-                'description' => 'สามารถแก้ไขการตั้งค่าประสิทธิภาพ',
-                'group' => 'Performance Settings',
-                'is_active' => true,
-            ],
-            [
-                'name' => 'performance.delete',
-                'display_name' => 'ลบการตั้งค่าประสิทธิภาพ',
-                'description' => 'สามารถลบการตั้งค่าประสิทธิภาพ',
-                'group' => 'Performance Settings',
-                'is_active' => true,
-            ],
-
-            // System Administration
-            [
-                'name' => 'system.admin',
-                'display_name' => 'ผู้ดูแลระบบ',
-                'description' => 'สิทธิ์ผู้ดูแลระบบทั้งหมด',
-                'group' => 'System Administration',
-                'is_active' => true,
-            ],
-            [
-                'name' => 'system.backup',
-                'display_name' => 'สำรองข้อมูล',
-                'description' => 'สามารถสำรองและกู้คืนข้อมูล',
-                'group' => 'System Administration',
-                'is_active' => true,
-            ],
-            [
-                'name' => 'system.maintenance',
-                'display_name' => 'บำรุงรักษาระบบ',
-                'description' => 'สามารถเข้าสู่โหมดบำรุงรักษา',
-                'group' => 'System Administration',
-                'is_active' => true,
-            ],
         ];
 
+        // Create permissions
         foreach ($permissions as $permission) {
             Permission::updateOrCreate(
                 ['name' => $permission['name']],
@@ -233,6 +175,33 @@ class PermissionSeeder extends Seeder
             );
         }
 
+        // Assign permissions to roles
+        $this->assignPermissionsToRoles();
+
         $this->command->info('Permissions seeded successfully!');
+    }
+
+    private function assignPermissionsToRoles()
+    {
+        // Get roles
+        $adminRole = Role::where('name', 'admin')->first();
+        $editorRole = Role::where('name', 'editor')->first();
+
+        if ($adminRole) {
+            // Admin gets all permissions
+            $adminRole->permissions()->sync(Permission::pluck('id'));
+        }
+
+        if ($editorRole) {
+            // Editor gets limited permissions
+            $editorPermissions = Permission::whereIn('name', [
+                'dashboard.view',
+                'dashboard.statistics',
+                'user.view',
+                'setting.view',
+            ])->pluck('id');
+            
+            $editorRole->permissions()->sync($editorPermissions);
+        }
     }
 }
