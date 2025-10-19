@@ -19,7 +19,7 @@ class MailService
             
             // Get email settings
             $fromName = Setting::get('mail_from_name', 'Laravel Backend');
-            $fromAddress = $to; // Use recipient email as from address for testing
+            $fromAddress = Setting::get('mail_reply_to') ?: 'noreply@example.com';
 
             // Send email
             Mail::raw($message, function ($mail) use ($to, $subject, $fromAddress, $fromName) {
@@ -47,11 +47,12 @@ class MailService
      */
     private function configureSmtpSettings()
     {
-        $smtpHost = Setting::get('mail_smtp_host');
-        $smtpPort = Setting::get('mail_smtp_port');
-        $smtpUsername = Setting::get('mail_smtp_username');
-        $smtpPassword = Setting::get('mail_smtp_password');
-        $smtpEncryption = Setting::get('mail_smtp_encryption');
+        // Try to get SMTP settings with priority for mail_smtp_* keys
+        $smtpHost = Setting::get('mail_smtp_host') ?: Setting::get('mail_host');
+        $smtpPort = Setting::get('mail_smtp_port') ?: Setting::get('mail_port');
+        $smtpUsername = Setting::get('mail_smtp_username') ?: Setting::get('mail_username');
+        $smtpPassword = Setting::get('mail_smtp_password') ?: Setting::get('mail_password');
+        $smtpEncryption = Setting::get('mail_smtp_encryption') ?: Setting::get('mail_encryption');
 
         if ($smtpHost && $smtpPort) {
             config([
@@ -61,6 +62,8 @@ class MailService
                 'mail.mailers.smtp.username' => $smtpUsername,
                 'mail.mailers.smtp.password' => $smtpPassword,
                 'mail.mailers.smtp.encryption' => strtolower($smtpEncryption),
+                'mail.mailers.smtp.timeout' => 30,
+                'mail.mailers.smtp.auth_mode' => null,
             ]);
         }
     }
@@ -83,7 +86,7 @@ class MailService
             $this->configureSmtpSettings();
             
             $fromName = Setting::get('mail_from_name', 'Laravel Backend');
-            $fromAddress = $to; // Use recipient email as from address for notifications
+            $fromAddress = Setting::get('mail_reply_to') ?: 'noreply@example.com';
 
             Mail::send('emails.notification', [
                 'message' => $message,

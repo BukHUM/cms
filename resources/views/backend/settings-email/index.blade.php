@@ -9,12 +9,12 @@
     <!-- Action Buttons -->
     <div class="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2 mb-6">
         <button onclick="resetToDefault()" 
-                class="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 w-full sm:w-auto">
+                class="btn-warning w-full sm:w-auto">
             <i class="fas fa-undo mr-2"></i>
             รีเซ็ตเป็นค่าเริ่มต้น
         </button>
-        <button onclick="testEmail()" 
-                class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 w-full sm:w-auto">
+        <button id="test-email-btn" onclick="testEmail()" 
+                class="btn-success w-full sm:w-auto">
             <i class="fas fa-paper-plane mr-2"></i>
             ทดสอบการส่งอีเมล์
         </button>
@@ -37,7 +37,7 @@
                         <select id="mail_driver" 
                                 name="mail_driver" 
                                 onchange="updateMailConfig()"
-                                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white @error('mail_driver') border-red-500 @enderror">
+                                class="form-input @error('mail_driver') border-red-500 @enderror">
                             <option value="gmail" {{ old('mail_driver', $emailSettings['mail_driver']->value ?? '') == 'gmail' ? 'selected' : '' }}>Gmail</option>
                             <option value="office365" {{ old('mail_driver', $emailSettings['mail_driver']->value ?? '') == 'office365' ? 'selected' : '' }}>Office 365</option>
                             <option value="mailtrap" {{ old('mail_driver', $emailSettings['mail_driver']->value ?? '') == 'mailtrap' ? 'selected' : '' }}>Mailtrap</option>
@@ -59,7 +59,7 @@
                                id="mail_smtp_port" 
                                name="mail_smtp_port" 
                                value="{{ old('mail_smtp_port', $emailSettings['mail_smtp_port']->value ?? '') }}"
-                               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white @error('mail_smtp_port') border-red-500 @enderror"
+                               class="form-input @error('mail_smtp_port') border-red-500 @enderror"
                                placeholder="587"
                                min="1" max="65535">
                         @error('mail_smtp_port')
@@ -78,7 +78,7 @@
                                    id="mail_smtp_password" 
                                    name="mail_smtp_password" 
                                    value="{{ old('mail_smtp_password', $emailSettings['mail_smtp_password']->value ?? '') }}"
-                                   class="block w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white @error('mail_smtp_password') border-red-500 @enderror"
+                                   class="form-input pr-10 @error('mail_smtp_password') border-red-500 @enderror"
                                    placeholder="รหัสผ่านอีเมล">
                             <button type="button" 
                                     onclick="togglePassword('mail_smtp_password')"
@@ -101,7 +101,7 @@
                                id="mail_from_name" 
                                name="mail_from_name" 
                                value="{{ old('mail_from_name', $emailSettings['mail_from_name']->value ?? '') }}"
-                               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white @error('mail_from_name') border-red-500 @enderror"
+                               class="form-input @error('mail_from_name') border-red-500 @enderror"
                                placeholder="Laravel Backend">
                         @error('mail_from_name')
                             <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
@@ -121,7 +121,7 @@
                                id="mail_smtp_host" 
                                name="mail_smtp_host" 
                                value="{{ old('mail_smtp_host', $emailSettings['mail_smtp_host']->value ?? '') }}"
-                               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white @error('mail_smtp_host') border-red-500 @enderror"
+                               class="form-input @error('mail_smtp_host') border-red-500 @enderror"
                                placeholder="smtp.gmail.com">
                         @error('mail_smtp_host')
                             <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
@@ -138,7 +138,7 @@
                                id="mail_smtp_username" 
                                name="mail_smtp_username" 
                                value="{{ old('mail_smtp_username', $emailSettings['mail_smtp_username']->value ?? '') }}"
-                               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white @error('mail_smtp_username') border-red-500 @enderror"
+                               class="form-input @error('mail_smtp_username') border-red-500 @enderror"
                                placeholder="your-email@gmail.com">
                         @error('mail_smtp_username')
                             <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
@@ -155,7 +155,7 @@
                                id="mail_smtp_encryption" 
                                name="mail_smtp_encryption" 
                                value="{{ old('mail_smtp_encryption', $emailSettings['mail_smtp_encryption']->value ?? '') }}"
-                               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white @error('mail_smtp_encryption') border-red-500 @enderror"
+                               class="form-input @error('mail_smtp_encryption') border-red-500 @enderror"
                                placeholder="TLS">
                         @error('mail_smtp_encryption')
                             <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
@@ -173,7 +173,7 @@
                                    id="enable_email_notifications" 
                                    name="enable_email_notifications" 
                                    value="1"
-                                   {{ old('enable_email_notifications', $emailSettings['enable_email_notifications']->value ?? 'true') == 'true' ? 'checked' : '' }}
+                                   {{ old('enable_email_notifications', $emailSettings['enable_email_notifications']->value ?? '1') == '1' ? 'checked' : '' }}
                                    class="rounded border-gray-300 dark:border-gray-600 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                             <label for="enable_email_notifications" class="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 เปิดใช้งานการแจ้งเตือนทางอีเมล
@@ -203,7 +203,7 @@
                                    id="mail_queue_enabled" 
                                    name="mail_queue_enabled" 
                                    value="1"
-                                   {{ old('mail_queue_enabled', $emailSettings['mail_queue_enabled']->value ?? 'false') == 'true' ? 'checked' : '' }}
+                                   {{ old('mail_queue_enabled', $emailSettings['mail_queue_enabled']->value ?? '0') == '1' ? 'checked' : '' }}
                                    class="rounded border-gray-300 dark:border-gray-600 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                             <label for="mail_queue_enabled" class="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 เปิดใช้งาน Mail Queue
@@ -222,7 +222,7 @@
                                id="mail_retry_attempts" 
                                name="mail_retry_attempts" 
                                value="{{ old('mail_retry_attempts', $emailSettings['mail_retry_attempts']->value ?? '3') }}"
-                               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white @error('mail_retry_attempts') border-red-500 @enderror"
+                               class="form-input @error('mail_retry_attempts') border-red-500 @enderror"
                                placeholder="3"
                                min="1" max="10">
                         @error('mail_retry_attempts')
@@ -237,12 +237,12 @@
             <div class="flex flex-col sm:flex-row sm:justify-end space-y-3 sm:space-y-0 sm:space-x-3 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <button type="button" 
                         onclick="resetToDefault()"
-                        class="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 w-full sm:w-auto">
+                        class="btn-secondary w-full sm:w-auto">
                     <i class="fas fa-undo mr-2"></i>
                     รีเซ็ตเป็นค่าเริ่มต้น
                 </button>
                 <button type="submit" 
-                        class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full sm:w-auto">
+                        class="btn-primary w-full sm:w-auto">
                     <i class="fas fa-save mr-2"></i>
                     บันทึกการตั้งค่า
                 </button>
@@ -262,6 +262,7 @@
                 </div>
                 <form id="test-email-form" class="p-6">
                     @csrf
+                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
                     <div class="space-y-4">
                         <div>
                             <label for="test_email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -270,7 +271,7 @@
                             <input type="email" 
                                    id="test_email" 
                                    name="test_email" 
-                                   class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                   class="form-input"
                                    placeholder="test@example.com"
                                    required>
                         </div>
@@ -281,7 +282,7 @@
                             <input type="text" 
                                    id="test_subject" 
                                    name="test_subject" 
-                                   class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                   class="form-input"
                                    placeholder="ทดสอบการส่งอีเมล์"
                                    required>
                         </div>
@@ -292,7 +293,7 @@
                             <textarea id="test_message" 
                                       name="test_message" 
                                       rows="4"
-                                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                      class="form-input"
                                       placeholder="นี่คือข้อความทดสอบการส่งอีเมล์"
                                       required></textarea>
                         </div>
@@ -300,11 +301,11 @@
                     <div class="flex justify-end space-x-3 mt-6">
                         <button type="button" 
                                 onclick="closeTestEmailModal()"
-                                class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                                class="btn-secondary">
                             ยกเลิก
                         </button>
                         <button type="submit" 
-                                class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                                class="btn-success">
                             <i class="fas fa-paper-plane mr-2"></i>
                             ส่งทดสอบ
                         </button>
@@ -321,6 +322,14 @@
     </form>
 </div>
 @endsection
+
+@push('styles')
+<style>
+    /* Custom CSS removed - using Tailwind utilities instead */
+    /* button:disabled -> disabled:opacity-60 disabled:cursor-not-allowed */
+    /* .fa-spinner -> animate-spin (built-in Tailwind) */
+</style>
+@endpush
 
 @push('scripts')
 <script>
@@ -454,9 +463,55 @@
             cancelButtonText: 'ยกเลิก'
         }).then((result) => {
             if (result.isConfirmed) {
+                // Show loading
+                Swal.fire({
+                    title: 'กำลังรีเซ็ตการตั้งค่า',
+                    text: 'กรุณารอสักครู่...',
+                    icon: 'info',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
                 const form = document.getElementById('reset-form');
                 if (form) {
-                    form.submit();
+                    fetch(form.action, {
+                        method: 'POST',
+                        body: new FormData(form),
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        Swal.fire({
+                            title: 'สำเร็จ!',
+                            text: data.message || 'รีเซ็ตการตั้งค่าอีเมล์เรียบร้อยแล้ว',
+                            icon: 'success',
+                            confirmButtonText: 'ตกลง'
+                        }).then(() => {
+                            // Reload page to show reset values
+                            window.location.reload();
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            title: 'เกิดข้อผิดพลาด!',
+                            text: 'ไม่สามารถรีเซ็ตการตั้งค่าได้',
+                            icon: 'error',
+                            confirmButtonText: 'ตกลง'
+                        });
+                    });
                 }
             }
         });
@@ -469,15 +524,49 @@
             e.preventDefault();
             
             const formData = new FormData(this);
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.innerHTML;
+            
+            // Show loading state
+            submitButton.disabled = true;
+            submitButton.classList.add('disabled:opacity-60', 'disabled:cursor-not-allowed');
+            submitButton.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i>กำลังส่งอีเมล์...';
+            
+            // Also disable main button
+            const mainButton = document.getElementById('test-email-btn');
+            if (mainButton) {
+                mainButton.disabled = true;
+                mainButton.classList.add('disabled:opacity-60', 'disabled:cursor-not-allowed');
+                mainButton.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i>กำลังส่งอีเมล์...';
+            }
+            
+            // Show loading modal
+            Swal.fire({
+                title: 'กำลังส่งอีเมล์ทดสอบ',
+                text: 'กรุณารอสักครู่...',
+                icon: 'info',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
             
             fetch('{{ route("backend.settings-email.test") }}', {
                 method: 'POST',
                 body: formData,
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.message) {
                     Swal.fire({
@@ -487,15 +576,35 @@
                         confirmButtonText: 'ตกลง'
                     });
                     closeTestEmailModal();
+                    
+                    // Restore main button state
+                    const mainButton = document.getElementById('test-email-btn');
+                    if (mainButton) {
+                        mainButton.disabled = false;
+                        mainButton.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>ทดสอบการส่งอีเมล์';
+                    }
                 }
             })
             .catch(error => {
+                console.error('Error:', error);
                 Swal.fire({
                     title: 'เกิดข้อผิดพลาด!',
                     text: 'ไม่สามารถส่งอีเมล์ทดสอบได้',
                     icon: 'error',
                     confirmButtonText: 'ตกลง'
                 });
+                
+                // Restore main button state on error
+                const mainButton = document.getElementById('test-email-btn');
+                if (mainButton) {
+                    mainButton.disabled = false;
+                    mainButton.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>ทดสอบการส่งอีเมล์';
+                }
+            })
+            .finally(() => {
+                // Restore button state
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalButtonText;
             });
         });
     }
@@ -507,6 +616,73 @@
             if (e.target === modal) {
                 closeTestEmailModal();
             }
+        });
+    }
+
+    // Handle main form submission with SweetAlert
+    const mainForm = document.querySelector('form[action="{{ route("backend.settings-email.update") }}"]');
+    if (mainForm) {
+        mainForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.innerHTML;
+            
+            // Show loading state
+            submitButton.disabled = true;
+            submitButton.classList.add('disabled:opacity-60', 'disabled:cursor-not-allowed');
+            submitButton.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i>กำลังบันทึก...';
+            
+            // Show loading SweetAlert
+            Swal.fire({
+                title: 'กำลังบันทึกการตั้งค่า',
+                text: 'กรุณารอสักครู่...',
+                icon: 'info',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                Swal.fire({
+                    title: 'สำเร็จ!',
+                    text: data.message || 'บันทึกการตั้งค่าอีเมล์เรียบร้อยแล้ว',
+                    icon: 'success',
+                    confirmButtonText: 'ตกลง'
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    title: 'เกิดข้อผิดพลาด!',
+                    text: 'ไม่สามารถบันทึกการตั้งค่าได้',
+                    icon: 'error',
+                    confirmButtonText: 'ตกลง'
+                });
+            })
+            .finally(() => {
+                // Restore button state
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalButtonText;
+            });
         });
     }
 })();

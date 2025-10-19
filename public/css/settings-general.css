@@ -1,0 +1,361 @@
+/* Settings General Styles - Optimized Tailwind Classes */
+
+/* Common Card Styles */
+.settings-card {
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow;
+}
+
+.settings-card-header {
+    @apply px-6 py-4 border-b border-gray-200 dark:border-gray-700;
+}
+
+.settings-card-content {
+    @apply p-6;
+}
+
+/* Common Button Styles */
+.btn-primary {
+    @apply bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+.btn-secondary {
+    @apply bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2;
+}
+
+.btn-danger {
+    @apply bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
+}
+
+.btn-success {
+    @apply bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2;
+}
+
+.btn-gray {
+    @apply bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
+}
+
+/* Action Button Styles */
+.btn-action {
+    @apply inline-flex items-center justify-center w-8 h-8 rounded-md transition-colors duration-200;
+}
+
+.btn-action-sm {
+    @apply inline-flex items-center justify-center w-10 h-10 rounded-md transition-colors duration-200;
+}
+
+.btn-action-view {
+    @apply text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900;
+}
+
+.btn-action-edit {
+    @apply text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900;
+}
+
+.btn-action-toggle-on {
+    @apply bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-800 hover:text-green-700 dark:hover:text-green-300;
+}
+
+.btn-action-toggle-off {
+    @apply bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-800 hover:text-red-700 dark:hover:text-red-300;
+}
+
+.btn-action-reset {
+    @apply text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900;
+}
+
+/* Form Styles */
+.form-input {
+    @apply block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white;
+}
+
+.form-textarea {
+    @apply block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white;
+}
+
+.form-select {
+    @apply block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 h-10 bg-white dark:bg-gray-700 text-gray-900 dark:text-white;
+}
+
+.form-checkbox {
+    @apply rounded border-gray-300 dark:border-gray-600 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 dark:bg-gray-700;
+}
+
+.form-readonly {
+    @apply block w-full px-3 py-2 bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 font-mono;
+}
+
+/* Badge Styles */
+.badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge-blue {
+    @apply bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200;
+}
+
+.badge-gray {
+    @apply bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200;
+}
+
+.badge-green {
+    @apply bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200;
+}
+
+.badge-red {
+    @apply bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200;
+}
+
+/* Status Styles */
+.status-active {
+    @apply bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200;
+}
+
+.status-inactive {
+    @apply bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200;
+}
+
+/* Table Styles */
+.table-header {
+    @apply px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider;
+}
+
+.table-cell {
+    @apply px-6 py-4 whitespace-nowrap;
+}
+
+.table-row {
+    @apply hover:bg-gray-50 dark:hover:bg-gray-700;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    @apply fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50;
+}
+
+.modal-container {
+    @apply relative top-4 sm:top-20 mx-auto p-4 sm:p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white dark:bg-gray-800 max-h-[90vh] overflow-y-auto;
+}
+
+.modal-header {
+    @apply flex justify-between items-center pb-3 border-b dark:border-gray-700;
+}
+
+.modal-title {
+    @apply text-lg font-semibold text-gray-900 dark:text-white;
+}
+
+.modal-close {
+    @apply text-gray-400 hover:text-gray-600 dark:hover:text-gray-300;
+}
+
+.modal-footer {
+    @apply flex justify-end space-x-3 mt-6 pt-4 border-t dark:border-gray-700;
+}
+
+/* Search Styles */
+.search-container {
+    @apply relative;
+}
+
+.search-input {
+    @apply block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 h-10 bg-white dark:bg-gray-700 text-gray-900 dark:text-white;
+}
+
+.search-suggestions {
+    @apply absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto;
+}
+
+.search-suggestion-item {
+    @apply px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-600 last:border-b-0;
+}
+
+.search-loading {
+    @apply absolute inset-y-0 right-0 pr-3 flex items-center;
+}
+
+/* File Upload Styles */
+.file-upload-section {
+    @apply mt-2;
+}
+
+.file-input {
+    @apply block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-300;
+}
+
+.file-preview {
+    @apply flex items-center space-x-3 p-3 rounded-md;
+}
+
+.file-preview-current {
+    @apply bg-gray-50 dark:bg-gray-700;
+}
+
+.file-preview-new {
+    @apply bg-blue-50 dark:bg-blue-900;
+}
+
+.file-preview-image {
+    @apply w-12 h-12 object-cover rounded;
+}
+
+.file-preview-info {
+    @apply flex-1;
+}
+
+.file-preview-name {
+    @apply text-sm font-medium text-gray-900 dark:text-white;
+}
+
+.file-preview-name-new {
+    @apply text-sm font-medium text-blue-900 dark:text-blue-100;
+}
+
+.file-preview-size {
+    @apply text-xs text-gray-500 dark:text-gray-400;
+}
+
+.file-preview-size-new {
+    @apply text-xs text-blue-600 dark:text-blue-300;
+}
+
+.file-remove {
+    @apply text-red-500 hover:text-red-700;
+}
+
+/* Highlight Styles */
+.search-highlight {
+    @apply bg-yellow-200 px-1 rounded;
+}
+
+/* Responsive Grid */
+.grid-responsive {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4;
+}
+
+.grid-form {
+    @apply grid grid-cols-1 lg:grid-cols-2 gap-4;
+}
+
+.grid-form-md {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-4;
+}
+
+/* Spacing Utilities */
+.space-form {
+    @apply space-y-4;
+}
+
+.space-actions {
+    @apply space-x-3;
+}
+
+.space-actions-mobile {
+    @apply space-x-3 pt-3 border-t border-gray-200 dark:border-gray-700;
+}
+
+/* Text Utilities */
+.text-primary {
+    @apply text-gray-900 dark:text-white;
+}
+
+.text-secondary {
+    @apply text-gray-500 dark:text-gray-400;
+}
+
+.text-muted {
+    @apply text-gray-400 dark:text-gray-500;
+}
+
+.text-error {
+    @apply text-red-600 text-sm mt-1;
+}
+
+/* Icon Styles */
+.icon-sm {
+    @apply text-sm;
+}
+
+.icon-lg {
+    @apply text-lg;
+}
+
+.icon-xl {
+    @apply text-xl;
+}
+
+.icon-2xl {
+    @apply text-2xl;
+}
+
+.icon-gray {
+    @apply text-gray-400;
+}
+
+.icon-white {
+    @apply text-white;
+}
+
+/* Loading States */
+.loading-hidden {
+    @apply hidden;
+}
+
+/* Error States */
+.error-border {
+    @apply border-red-500;
+}
+
+/* Custom Components */
+.setting-icon-container {
+    @apply w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0;
+}
+
+.setting-title {
+    @apply text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate;
+}
+
+.setting-description {
+    @apply text-base sm:text-lg text-gray-600 dark:text-gray-400 mt-1;
+}
+
+.setting-badges {
+    @apply flex flex-wrap items-center gap-2 mt-3;
+}
+
+.setting-actions {
+    @apply flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto;
+}
+
+/* Pagination Styles */
+.pagination-container {
+    @apply px-6 py-4 border-t border-gray-200 dark:border-gray-700;
+}
+
+.pagination-info {
+    @apply flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0;
+}
+
+.pagination-text {
+    @apply text-sm text-gray-700 dark:text-gray-300 text-center sm:text-left;
+}
+
+.pagination-links {
+    @apply flex items-center justify-center;
+}
+
+/* Empty State */
+.empty-state {
+    @apply px-6 py-12 text-center;
+}
+
+.empty-icon {
+    @apply text-gray-400 text-4xl mb-4;
+}
+
+.empty-title {
+    @apply text-lg font-medium text-gray-900 dark:text-white mb-2;
+}
+
+.empty-description {
+    @apply text-gray-500 dark:text-gray-400 mb-4;
+}

@@ -42,10 +42,9 @@ This is a comprehensive Content Management System (CMS) backend built with Larav
 
 ### Technical Features
 - **RESTful API**: Clean API endpoints for frontend integration
-- **Modern UI**: Tailwind CSS with SweetAlert2 notifications and modal-based interactions
-- **Database Integrity**: Foreign key constraints and cascade operations
-- **Soft Deletes**: Data preservation with soft deletion capabilities
-- **Indexing**: Optimized database performance with proper indexing
+- **Modern UI**: Tailwind CSS with modal-based interactions and responsive design
+- **CSS Components**: Reusable component system with `form-input`, `btn-primary`, `btn-secondary`, `btn-success`, `btn-warning` classes
+- **Code Optimization**: Reduced code duplication through CSS component classes and Tailwind utilities
 - **UI Standards**: Consistent design system with predefined components and focus styles
 
 ## Database Structure
@@ -75,11 +74,10 @@ All database tables use the `core_` prefix for consistency and proper organizati
 - `GeneralSettingsSeeder` - Creates basic system settings
 
 ### Database Features
-- **Foreign Key Constraints**: Proper referential integrity
-- **Soft Deletes**: Data preservation with soft deletion
-- **Audit Trail**: Complete change tracking
-- **Indexing**: Optimized database performance
-- **Cascade Operations**: Proper data cleanup on deletion
+- **Foreign Key Constraints**: Proper referential integrity with cascade operations
+- **Soft Deletes**: Data preservation with soft deletion capabilities
+- **Audit Trail**: Complete change tracking and activity monitoring
+- **Indexing**: Optimized database performance with proper indexing
 
 ## Production Deployment
 
@@ -306,6 +304,55 @@ php artisan settings:sync-env               # Sync from .env file
 php artisan settings:clear-cache            # Clear settings cache
 ```
 
+### CSS Components System
+The system uses a reusable CSS component system to reduce code duplication and maintain consistency:
+
+```css
+/* Form Components */
+.form-input {
+    @apply block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white;
+}
+
+/* Button Components */
+.btn-primary {
+    @apply bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+.btn-secondary {
+    @apply bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
+}
+
+.btn-success {
+    @apply bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2;
+}
+
+.btn-warning {
+    @apply bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2;
+}
+```
+
+```blade
+{{-- Usage Examples --}}
+{{-- Form Inputs --}}
+<input type="text" class="form-input" placeholder="Enter text">
+<input type="email" class="form-input" placeholder="Enter email">
+<select class="form-input">
+    <option>Select option</option>
+</select>
+<textarea class="form-input" rows="3"></textarea>
+
+{{-- Buttons --}}
+<button class="btn-primary">Primary Action</button>
+<button class="btn-secondary">Secondary Action</button>
+<button class="btn-success">Success Action</button>
+<button class="btn-warning">Warning Action</button>
+
+{{-- Loading States --}}
+<button class="btn-primary disabled:opacity-60 disabled:cursor-not-allowed" disabled>
+    <i class="fas fa-spinner animate-spin mr-2"></i>Loading...
+</button>
+```
+
 ### System Management
 - `GET /api/settings-update` - System update status
 - `POST /api/settings-update/quick-update` - Execute system updates
@@ -343,12 +390,12 @@ After running the seeder, you can login with:
 - **Database Integrity**: Foreign key constraints, cascade operations, soft deletes
 
 ### Frontend
-- **CSS Framework**: Tailwind CSS
-- **Icons**: FontAwesome
-- **Notifications**: SweetAlert2
-- **Build Tool**: Vite
-- **JavaScript**: Vanilla JS / Vue.js (if applicable)
-- **UI Components**: Modern responsive design with backend/frontend separation
+- **CSS Framework**: Tailwind CSS with utility-first approach
+- **Icons**: FontAwesome with proper loading states and animations
+- **Notifications**: SweetAlert2 with loading states and progress indicators
+- **Build Tool**: Vite for fast development and optimized production builds
+- **JavaScript**: Vanilla JS with modern ES6+ features
+- **UI Components**: Modern responsive design with consistent styling and accessibility
 
 ## Development
 
@@ -440,6 +487,9 @@ git commit -m "docs: update installation instructions"
 - Organize controllers in appropriate namespaces (Backend/Frontend)
 - Use `updateOrCreate()` in seeders to prevent duplicate data
 - Keep seeder files minimal and focused on essential data only
+- **CSS Components**: Use predefined CSS components (`form-input`, `btn-primary`, `btn-secondary`, `btn-success`, `btn-warning`) instead of inline Tailwind classes
+- **Code Duplication**: Avoid repeating CSS classes by using component system
+- **Tailwind Utilities**: Prefer Tailwind utilities over custom CSS for consistency and performance
 
 ## License
 
@@ -451,7 +501,15 @@ For support and questions, please contact the development team or create an issu
 
 ## Changelog
 
-### Version 1.5.0 (Latest)
+### Version 1.6.0 (Latest)
+- ✅ **CSS Components System**: Implemented reusable CSS component system with `form-input`, `btn-primary`, `btn-secondary`, `btn-success`, `btn-warning` classes
+- ✅ **Code Optimization**: Reduced code duplication by replacing inline Tailwind classes with CSS components
+- ✅ **Custom CSS Removal**: Eliminated custom CSS in favor of Tailwind utilities (`animate-spin`, `disabled:opacity-60`, `disabled:cursor-not-allowed`)
+- ✅ **UI Consistency**: Standardized form inputs and buttons across all settings pages
+- ✅ **Performance Improvement**: Reduced bundle size by removing redundant CSS and using utility-first approach
+- ✅ **Maintainability**: Improved code maintainability through centralized component definitions
+
+### Version 1.5.0
 - ✅ **Simplified Seeder System**: Streamlined database seeding with only essential seeders
 - ✅ **Updated User Credentials**: Changed default admin password to `admin123` for better security
 - ✅ **Role-Based Access**: Added editor user with limited permissions for testing

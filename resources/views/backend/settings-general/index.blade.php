@@ -479,64 +479,73 @@ let searchTimeout;
 let currentSearchTerm = '';
 let currentSettings = [];
 
-// Live search functionality
-document.getElementById('search').addEventListener('input', function(e) {
-    const searchTerm = e.target.value.trim();
-    currentSearchTerm = searchTerm;
+// Global cleanup management
+const cleanupManager = {
+    timeouts: new Set(),
+    eventListeners: new Map(),
     
-    // Clear previous timeout
-    clearTimeout(searchTimeout);
+    // Add timeout for cleanup tracking
+    addTimeout(timeoutId) {
+        this.timeouts.add(timeoutId);
+        return timeoutId;
+    },
     
-    // Hide suggestions if search is empty
-    if (searchTerm === '') {
-        hideSuggestions();
-        resetTableToAll();
-        return;
-    }
+    // Clear all timeouts
+    clearAllTimeouts() {
+        this.timeouts.forEach(timeoutId => {
+            clearTimeout(timeoutId);
+        });
+        this.timeouts.clear();
+    },
     
-    // Show loading indicator
-    showSearchLoading();
-    
-    // Debounce search - wait 300ms after user stops typing
-    searchTimeout = setTimeout(() => {
-        performLiveSearch(searchTerm);
-    }, 300);
-});
-
-// Show suggestions on focus
-document.getElementById('search').addEventListener('focus', function() {
-    if (this.value.trim() !== '') {
-        performLiveSearch(this.value.trim());
-    }
-});
-
-// Status filter functionality
-document.getElementById('status-filter').addEventListener('change', function() {
-    const searchTerm = document.getElementById('search').value.trim();
-    const status = this.value;
-    
-    // Clear previous timeout
-    clearTimeout(searchTimeout);
-    
-    // If no search term and no status filter, reset to all
-    if (searchTerm === '' && status === '') {
-        resetTableToAll();
-        return;
-    }
-    
-    // Show loading indicator
-    showSearchLoading();
-    
-    // Debounce filter - wait 300ms after user stops changing
-    searchTimeout = setTimeout(() => {
-        if (searchTerm !== '') {
-            performLiveSearch(searchTerm, false);
-        } else {
-            // Only status filter, no search term
-            performStatusFilter(status);
+    // Add event listener for cleanup tracking
+    addEventListener(element, event, handler) {
+        element.addEventListener(event, handler);
+        
+        if (!this.eventListeners.has(element)) {
+            this.eventListeners.set(element, []);
         }
-    }, 300);
-});
+        this.eventListeners.get(element).push({ event, handler });
+    },
+    
+    // Remove all event listeners from element
+    removeAllEventListeners(element) {
+        const listeners = this.eventListeners.get(element);
+        if (listeners) {
+            listeners.forEach(({ event, handler }) => {
+                element.removeEventListener(event, handler);
+            });
+            this.eventListeners.delete(element);
+        }
+    },
+    
+    // Cleanup everything
+    cleanup() {
+        this.clearAllTimeouts();
+        this.eventListeners.forEach((listeners, element) => {
+            listeners.forEach(({ event, handler }) => {
+                element.removeEventListener(event, handler);
+            });
+        });
+        this.eventListeners.clear();
+    }
+};
+
+// Enhanced timeout management
+function createTimeout(callback, delay) {
+    const timeoutId = setTimeout(() => {
+        cleanupManager.timeouts.delete(timeoutId);
+        callback();
+    }, delay);
+    return cleanupManager.addTimeout(timeoutId);
+}
+
+// Enhanced event listener management
+function addManagedEventListener(element, event, handler) {
+    cleanupManager.addEventListener(element, event, handler);
+}
+
+// Live search functionality - moved to DOMContentLoaded
 
 // Perform status filter only
 function performStatusFilter(status) {
@@ -652,7 +661,7 @@ function updateTableWithResults(settings) {
     }
 }
 
-// Create table row with highlighting
+// Create table row with highlighting - using safe DOM methods
 function createTableRow(setting) {
     const row = document.createElement('tr');
     row.className = 'hover:bg-gray-50 dark:hover:bg-gray-700';
@@ -661,64 +670,154 @@ function createTableRow(setting) {
     const highlightedDescription = setting.description ? highlightText(setting.description, currentSearchTerm) : '';
     const highlightedValue = highlightText(setting.formatted_value, currentSearchTerm);
     
-    row.innerHTML = `
-        <td class="px-6 py-4 whitespace-nowrap">
-            <div class="flex items-center">
-                <i class="${setting.type_icon} text-gray-400 mr-2"></i>
-                <div>
-                    <div class="text-sm font-medium text-gray-900 dark:text-white">${highlightedKey}</div>
-                    ${highlightedDescription ? `<div class="text-sm text-gray-500 dark:text-gray-400">${highlightedDescription}</div>` : ''}
-                </div>
-            </div>
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm text-gray-900 dark:text-white max-w-xs truncate">
-                ${highlightedValue}
-            </div>
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-                ${setting.type.charAt(0).toUpperCase() + setting.type.slice(1)}
-            </span>
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200">
-                ${setting.group_name}
-            </span>
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${setting.is_active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}">
-                ${setting.is_active ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}
-            </span>
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-            <div class="flex items-center space-x-3">
-                <a href="/backend/settings-general/${setting.id}" 
-                   class="inline-flex items-center justify-center w-8 h-8 text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-md transition-colors duration-200"
-                   title="ดูรายละเอียด">
-                    <i class="fas fa-eye text-sm"></i>
-                </a>
-                <button type="button" 
-                        onclick="openEditModal(${setting.id})"
-                        class="inline-flex items-center justify-center w-8 h-8 text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900 rounded-md transition-colors duration-200"
-                        title="แก้ไข">
-                    <i class="fas fa-edit text-sm"></i>
-                </button>
-                ${setting.is_active ? 
-                    `<button type="button" onclick="toggleStatus(${setting.id})" class="inline-flex items-center justify-center w-8 h-8 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-800 hover:text-green-700 dark:hover:text-green-300 rounded-md transition-colors duration-200" title="ปิดการใช้งาน"><i class="fas fa-toggle-off text-sm"></i></button>` :
-                    `<button type="button" onclick="toggleStatus(${setting.id})" class="inline-flex items-center justify-center w-8 h-8 bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-800 hover:text-red-700 dark:hover:text-red-300 rounded-md transition-colors duration-200" title="เปิดการใช้งาน"><i class="fas fa-toggle-on text-sm"></i></button>`
-                }
-                ${setting.default_value ? 
-                    `<button type="button" onclick="resetSetting(${setting.id})" class="inline-flex items-center justify-center w-8 h-8 text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900 rounded-md transition-colors duration-200" title="รีเซ็ตเป็นค่าเริ่มต้น"><i class="fas fa-undo text-sm"></i></button>` : ''
-                }
-            </div>
-        </td>
-    `;
+    // Create cells using DOM methods for better security
+    const cells = [
+        createKeyCell(setting, highlightedKey, highlightedDescription),
+        createValueCell(highlightedValue),
+        createTypeCell(setting.type),
+        createGroupCell(setting.group_name),
+        createStatusCell(setting.is_active),
+        createActionsCell(setting)
+    ];
+    
+    cells.forEach(cell => row.appendChild(cell));
     
     return row;
 }
 
-// Create mobile card with highlighting
+// Helper functions to create table cells safely
+function createKeyCell(setting, highlightedKey, highlightedDescription) {
+    const cell = document.createElement('td');
+    cell.className = 'px-6 py-4 whitespace-nowrap';
+    
+    const container = document.createElement('div');
+    container.className = 'flex items-center';
+    
+    const icon = document.createElement('i');
+    icon.className = `${setting.type_icon} text-gray-400 mr-2`;
+    
+    const content = document.createElement('div');
+    
+    const keyDiv = document.createElement('div');
+    keyDiv.className = 'text-sm font-medium text-gray-900 dark:text-white';
+    keyDiv.innerHTML = highlightedKey; // Safe because it's already processed by highlightText
+    
+    content.appendChild(keyDiv);
+    
+    if (highlightedDescription) {
+        const descDiv = document.createElement('div');
+        descDiv.className = 'text-sm text-gray-500 dark:text-gray-400';
+        descDiv.innerHTML = highlightedDescription; // Safe because it's already processed
+        content.appendChild(descDiv);
+    }
+    
+    container.appendChild(icon);
+    container.appendChild(content);
+    cell.appendChild(container);
+    
+    return cell;
+}
+
+function createValueCell(highlightedValue) {
+    const cell = document.createElement('td');
+    cell.className = 'px-6 py-4 whitespace-nowrap';
+    
+    const div = document.createElement('div');
+    div.className = 'text-sm text-gray-900 dark:text-white max-w-xs truncate';
+    div.innerHTML = highlightedValue; // Safe because it's already processed
+    
+    cell.appendChild(div);
+    return cell;
+}
+
+function createTypeCell(type) {
+    const cell = document.createElement('td');
+    cell.className = 'px-6 py-4 whitespace-nowrap';
+    
+    const span = document.createElement('span');
+    span.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200';
+    span.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+    
+    cell.appendChild(span);
+    return cell;
+}
+
+function createGroupCell(groupName) {
+    const cell = document.createElement('td');
+    cell.className = 'px-6 py-4 whitespace-nowrap';
+    
+    const span = document.createElement('span');
+    span.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200';
+    span.textContent = groupName;
+    
+    cell.appendChild(span);
+    return cell;
+}
+
+function createStatusCell(isActive) {
+    const cell = document.createElement('td');
+    cell.className = 'px-6 py-4 whitespace-nowrap';
+    
+    const span = document.createElement('span');
+    span.className = `inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isActive ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}`;
+    span.textContent = isActive ? 'เปิดใช้งาน' : 'ปิดใช้งาน';
+    
+    cell.appendChild(span);
+    return cell;
+}
+
+function createActionsCell(setting) {
+    const cell = document.createElement('td');
+    cell.className = 'px-6 py-4 whitespace-nowrap text-sm font-medium';
+    
+    const container = document.createElement('div');
+    container.className = 'flex items-center space-x-3';
+    
+    // View button
+    const viewBtn = document.createElement('a');
+    viewBtn.href = `/backend/settings-general/${setting.id}`;
+    viewBtn.className = 'inline-flex items-center justify-center w-8 h-8 text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-md transition-colors duration-200';
+    viewBtn.title = 'ดูรายละเอียด';
+    viewBtn.innerHTML = '<i class="fas fa-eye text-sm"></i>';
+    
+    // Edit button
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'inline-flex items-center justify-center w-8 h-8 text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900 rounded-md transition-colors duration-200';
+    editBtn.title = 'แก้ไข';
+    editBtn.innerHTML = '<i class="fas fa-edit text-sm"></i>';
+    editBtn.onclick = () => openEditModal(setting.id);
+    
+    container.appendChild(viewBtn);
+    container.appendChild(editBtn);
+    
+    // Toggle status button
+    const toggleBtn = document.createElement('button');
+    toggleBtn.type = 'button';
+    toggleBtn.className = `inline-flex items-center justify-center w-8 h-8 ${setting.is_active ? 'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-800 hover:text-green-700 dark:hover:text-green-300' : 'bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-800 hover:text-red-700 dark:hover:text-red-300'} rounded-md transition-colors duration-200`;
+    toggleBtn.title = setting.is_active ? 'ปิดการใช้งาน' : 'เปิดการใช้งาน';
+    toggleBtn.innerHTML = `<i class="fas fa-toggle-${setting.is_active ? 'off' : 'on'} text-sm"></i>`;
+    toggleBtn.onclick = () => toggleStatus(setting.id);
+    
+    container.appendChild(toggleBtn);
+    
+    // Reset button (if has default value)
+    if (setting.default_value) {
+        const resetBtn = document.createElement('button');
+        resetBtn.type = 'button';
+        resetBtn.className = 'inline-flex items-center justify-center w-8 h-8 text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900 rounded-md transition-colors duration-200';
+        resetBtn.title = 'รีเซ็ตเป็นค่าเริ่มต้น';
+        resetBtn.innerHTML = '<i class="fas fa-undo text-sm"></i>';
+        resetBtn.onclick = () => resetSetting(setting.id);
+        
+        container.appendChild(resetBtn);
+    }
+    
+    cell.appendChild(container);
+    return cell;
+}
+
+// Create mobile card with highlighting - using safe DOM methods
 function createMobileCard(setting) {
     const card = document.createElement('div');
     card.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4';
@@ -726,40 +825,88 @@ function createMobileCard(setting) {
     const highlightedKey = highlightText(setting.key, currentSearchTerm);
     const highlightedDescription = setting.description ? highlightText(setting.description, currentSearchTerm) : '';
     
-    card.innerHTML = `
-        <div class="flex items-start justify-between mb-4">
-            <div class="flex items-center flex-1">
-                <i class="${setting.type_icon} text-gray-400 mr-3 text-lg"></i>
-                <div class="flex-1 min-w-0">
-                    <h3 class="text-base font-medium text-gray-900 dark:text-white truncate">${highlightedKey}</h3>
-                    ${highlightedDescription ? `<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">${highlightedDescription}</p>` : ''}
-                </div>
-            </div>
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${setting.is_active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}">
-                ${setting.is_active ? 'เปิด' : 'ปิด'}
-            </span>
-        </div>
-        <div class="flex items-center justify-center space-x-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-            <a href="/backend/settings-general/${setting.id}" 
-               class="inline-flex items-center justify-center w-10 h-10 text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-md transition-colors duration-200"
-               title="ดูรายละเอียด">
-                <i class="fas fa-eye"></i>
-            </a>
-            <button type="button" 
-                    onclick="openEditModal(${setting.id})"
-                    class="inline-flex items-center justify-center w-10 h-10 text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900 rounded-md transition-colors duration-200"
-                    title="แก้ไข">
-                <i class="fas fa-edit"></i>
-            </button>
-            ${setting.is_active ? 
-                `<button type="button" onclick="toggleStatus(${setting.id})" class="inline-flex items-center justify-center w-10 h-10 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-800 hover:text-green-700 dark:hover:text-green-300 rounded-md transition-colors duration-200" title="ปิดการใช้งาน"><i class="fas fa-toggle-off"></i></button>` :
-                `<button type="button" onclick="toggleStatus(${setting.id})" class="inline-flex items-center justify-center w-10 h-10 bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-800 hover:text-red-700 dark:hover:text-red-300 rounded-md transition-colors duration-200" title="เปิดการใช้งาน"><i class="fas fa-toggle-on"></i></button>`
-            }
-            ${setting.default_value ? 
-                `<button type="button" onclick="resetSetting(${setting.id})" class="inline-flex items-center justify-center w-10 h-10 text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900 rounded-md transition-colors duration-200" title="รีเซ็ตเป็นค่าเริ่มต้น"><i class="fas fa-undo"></i></button>` : ''
-            }
-        </div>
-    `;
+    // Header section
+    const header = document.createElement('div');
+    header.className = 'flex items-start justify-between mb-4';
+    
+    const leftSection = document.createElement('div');
+    leftSection.className = 'flex items-center flex-1';
+    
+    const icon = document.createElement('i');
+    icon.className = `${setting.type_icon} text-gray-400 mr-3 text-lg`;
+    
+    const content = document.createElement('div');
+    content.className = 'flex-1 min-w-0';
+    
+    const title = document.createElement('h3');
+    title.className = 'text-base font-medium text-gray-900 dark:text-white truncate';
+    title.innerHTML = highlightedKey; // Safe because it's already processed
+    
+    content.appendChild(title);
+    
+    if (highlightedDescription) {
+        const desc = document.createElement('p');
+        desc.className = 'text-sm text-gray-500 dark:text-gray-400 mt-1';
+        desc.innerHTML = highlightedDescription; // Safe because it's already processed
+        content.appendChild(desc);
+    }
+    
+    leftSection.appendChild(icon);
+    leftSection.appendChild(content);
+    
+    const statusSpan = document.createElement('span');
+    statusSpan.className = `inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${setting.is_active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}`;
+    statusSpan.textContent = setting.is_active ? 'เปิด' : 'ปิด';
+    
+    header.appendChild(leftSection);
+    header.appendChild(statusSpan);
+    
+    // Actions section
+    const actions = document.createElement('div');
+    actions.className = 'flex items-center justify-center space-x-3 pt-3 border-t border-gray-200 dark:border-gray-700';
+    
+    // View button
+    const viewBtn = document.createElement('a');
+    viewBtn.href = `/backend/settings-general/${setting.id}`;
+    viewBtn.className = 'inline-flex items-center justify-center w-10 h-10 text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-md transition-colors duration-200';
+    viewBtn.title = 'ดูรายละเอียด';
+    viewBtn.innerHTML = '<i class="fas fa-eye"></i>';
+    
+    // Edit button
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'inline-flex items-center justify-center w-10 h-10 text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900 rounded-md transition-colors duration-200';
+    editBtn.title = 'แก้ไข';
+    editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+    editBtn.onclick = () => openEditModal(setting.id);
+    
+    actions.appendChild(viewBtn);
+    actions.appendChild(editBtn);
+    
+    // Toggle status button
+    const toggleBtn = document.createElement('button');
+    toggleBtn.type = 'button';
+    toggleBtn.className = `inline-flex items-center justify-center w-10 h-10 ${setting.is_active ? 'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-800 hover:text-green-700 dark:hover:text-green-300' : 'bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-800 hover:text-red-700 dark:hover:text-red-300'} rounded-md transition-colors duration-200`;
+    toggleBtn.title = setting.is_active ? 'ปิดการใช้งาน' : 'เปิดการใช้งาน';
+    toggleBtn.innerHTML = `<i class="fas fa-toggle-${setting.is_active ? 'off' : 'on'}"></i>`;
+    toggleBtn.onclick = () => toggleStatus(setting.id);
+    
+    actions.appendChild(toggleBtn);
+    
+    // Reset button (if has default value)
+    if (setting.default_value) {
+        const resetBtn = document.createElement('button');
+        resetBtn.type = 'button';
+        resetBtn.className = 'inline-flex items-center justify-center w-10 h-10 text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900 rounded-md transition-colors duration-200';
+        resetBtn.title = 'รีเซ็ตเป็นค่าเริ่มต้น';
+        resetBtn.innerHTML = '<i class="fas fa-undo"></i>';
+        resetBtn.onclick = () => resetSetting(setting.id);
+        
+        actions.appendChild(resetBtn);
+    }
+    
+    card.appendChild(header);
+    card.appendChild(actions);
     
     return card;
 }
@@ -780,7 +927,7 @@ function escapeRegExp(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// Show search suggestions
+// Show search suggestions - using safe DOM methods
 function showSuggestions(suggestions, searchTerm) {
     const suggestionsContainer = document.getElementById('search-suggestions');
     
@@ -789,21 +936,42 @@ function showSuggestions(suggestions, searchTerm) {
         return;
     }
     
+    // Clear existing suggestions
     suggestionsContainer.innerHTML = '';
     
     suggestions.forEach(suggestion => {
         const item = document.createElement('div');
         item.className = 'px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-600 last:border-b-0';
-        item.innerHTML = `
-            <div class="flex items-center">
-                <i class="${suggestion.type_icon} text-gray-400 mr-2"></i>
-                <div class="flex-1">
-                    <div class="text-sm font-medium text-gray-900 dark:text-white">${highlightText(suggestion.key, searchTerm)}</div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400">${highlightText(suggestion.description || '', searchTerm)}</div>
-                </div>
-                <span class="text-xs text-gray-400 dark:text-gray-500">${suggestion.type}</span>
-            </div>
-        `;
+        
+        const container = document.createElement('div');
+        container.className = 'flex items-center';
+        
+        const icon = document.createElement('i');
+        icon.className = `${suggestion.type_icon} text-gray-400 mr-2`;
+        
+        const content = document.createElement('div');
+        content.className = 'flex-1';
+        
+        const keyDiv = document.createElement('div');
+        keyDiv.className = 'text-sm font-medium text-gray-900 dark:text-white';
+        keyDiv.innerHTML = highlightText(suggestion.key, searchTerm); // Safe because it's already processed
+        
+        const descDiv = document.createElement('div');
+        descDiv.className = 'text-xs text-gray-500 dark:text-gray-400';
+        descDiv.innerHTML = highlightText(suggestion.description || '', searchTerm); // Safe because it's already processed
+        
+        content.appendChild(keyDiv);
+        content.appendChild(descDiv);
+        
+        const typeSpan = document.createElement('span');
+        typeSpan.className = 'text-xs text-gray-400 dark:text-gray-500';
+        typeSpan.textContent = suggestion.type;
+        
+        container.appendChild(icon);
+        container.appendChild(content);
+        container.appendChild(typeSpan);
+        
+        item.appendChild(container);
         
         item.addEventListener('click', function() {
             document.getElementById('search').value = suggestion.key;
@@ -868,14 +1036,7 @@ function resetTableToAll() {
     });
 }
 
-// Filter functionality
-document.getElementById('clear-filters').addEventListener('click', function() {
-    document.getElementById('search').value = '';
-    document.getElementById('status-filter').value = '';
-    currentSearchTerm = '';
-    hideSuggestions();
-    resetTableToAll();
-});
+// Filter functionality - moved to DOMContentLoaded
 
 function toggleStatus(id) {
     // Get setting info from the table row
@@ -1152,182 +1313,7 @@ function closeEditModal() {
     });
 }
 
-// File Upload Event Listeners
-document.getElementById('edit_file').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        // Validate file type
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/x-icon', 'image/vnd.microsoft.icon'];
-        if (!allowedTypes.includes(file.type)) {
-            Swal.fire({
-                title: 'ไฟล์ไม่ถูกต้อง!',
-                text: 'กรุณาเลือกไฟล์รูปภาพ (JPG, PNG, GIF, ICO) เท่านั้น',
-                icon: 'error',
-                confirmButtonText: 'ตกลง'
-            });
-            this.value = '';
-            return;
-        }
-        
-        // Validate file size (2MB)
-        if (file.size > 2 * 1024 * 1024) {
-            Swal.fire({
-                title: 'ไฟล์ใหญ่เกินไป!',
-                text: 'กรุณาเลือกไฟล์ที่มีขนาดไม่เกิน 2MB',
-                icon: 'error',
-                confirmButtonText: 'ตกลง'
-            });
-            this.value = '';
-            return;
-        }
-        
-        showNewFilePreview(file);
-    }
-});
-
-// Remove new file button
-document.getElementById('remove_new_file').addEventListener('click', function() {
-    document.getElementById('edit_file').value = '';
-    document.getElementById('new_file_preview').classList.add('hidden');
-});
-
-// Remove current file button
-document.getElementById('remove_current_file').addEventListener('click', function() {
-    document.getElementById('current_file_preview').classList.add('hidden');
-    // Set a flag to indicate current file should be removed
-    document.getElementById('edit_value').value = '';
-});
-
-// Form submission
-document.getElementById('editForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    // Check if this is a file type setting
-    const isFileType = document.getElementById('file_upload_section').classList.contains('hidden') === false;
-    
-    console.log('Form submission debug:', {
-        isFileType: isFileType,
-        hasFile: document.getElementById('edit_file').files.length > 0,
-        fileName: document.getElementById('edit_file').files[0]?.name,
-        valueInputHidden: document.getElementById('edit_value').classList.contains('hidden'),
-        valueInputRequired: document.getElementById('edit_value').hasAttribute('required')
-    });
-    
-    // For file type settings, temporarily remove required attribute
-    let wasRequired = false;
-    if (isFileType) {
-        const valueInput = document.getElementById('edit_value');
-        wasRequired = valueInput.hasAttribute('required');
-        valueInput.removeAttribute('required');
-    }
-
-    const formData = new FormData(this);
-    const url = this.action;
-    
-    if (isFileType) {
-        // For file type settings, check if file is uploaded
-        const fileInput = document.getElementById('edit_file');
-        if (fileInput.files[0]) {
-            formData.append('file', fileInput.files[0]);
-            // Remove value field completely for file uploads
-            formData.delete('value');
-        } else {
-            // If no new file, keep current value (even if empty)
-            const currentValue = document.getElementById('current_value').textContent || '';
-            formData.set('value', currentValue);
-        }
-        
-        // Restore required attribute if it was there
-        const valueInput = document.getElementById('edit_value');
-        if (wasRequired) {
-            valueInput.setAttribute('required', 'required');
-        }
-    } else {
-        // For text type settings, validate required field
-        const valueInput = document.getElementById('edit_value');
-        if (!valueInput.value.trim()) {
-            Swal.fire({
-                title: 'ข้อมูลไม่ครบถ้วน!',
-                text: 'กรุณากรอกค่าการตั้งค่า',
-                icon: 'error',
-                confirmButtonText: 'ตกลง'
-            });
-            return;
-        }
-    }
-
-    // Debug logging
-    console.log('Form submission details:', {
-        url: url,
-        method: 'POST',
-        hasFile: formData.has('file'),
-        hasValue: formData.has('value'),
-        csrfToken: document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-        formDataEntries: Array.from(formData.entries())
-    });
-
-    fetch(url, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        }
-    })
-    .then(response => {
-        console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);
-        
-        if (!response.ok) {
-            return response.text().then(text => {
-                console.error('Error response:', text);
-                throw new Error(`HTTP ${response.status}: ${text}`);
-            });
-        }
-        
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            closeEditModal();
-            location.reload();
-        } else {
-            // Display validation errors
-            if (data.errors) {
-                Object.keys(data.errors).forEach(field => {
-                    const errorElement = document.getElementById(field + '_error');
-                    if (errorElement) {
-                        errorElement.textContent = data.errors[field][0];
-                        errorElement.classList.remove('hidden');
-                    }
-                });
-            }
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        Swal.fire({
-            title: 'เกิดข้อผิดพลาด!',
-            text: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล',
-            icon: 'error',
-            confirmButtonText: 'ตกลง'
-        });
-    });
-});
-
-// Close modal when clicking outside
-document.getElementById('editModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeEditModal();
-    }
-});
-
-// Close modal with Escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && !document.getElementById('editModal').classList.contains('hidden')) {
-        closeEditModal();
-    }
-});
+// File Upload Event Listeners - moved to DOMContentLoaded
 
 function resetSetting(id) {
     Swal.fire({
@@ -1371,5 +1357,270 @@ function resetSetting(id) {
         }
     });
 }
+
+// Cleanup function to prevent memory leaks
+function cleanup() {
+    cleanupManager.cleanup();
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', cleanup);
+
+// Cleanup on page visibility change (when user switches tabs)
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        // Page is hidden, cleanup timeouts to save resources
+        cleanupManager.clearAllTimeouts();
+    }
+});
+
+// Initialize cleanup management
+document.addEventListener('DOMContentLoaded', function() {
+    // Add managed event listeners for better cleanup
+    const searchInput = document.getElementById('search');
+    const statusFilter = document.getElementById('status-filter');
+    const clearFiltersBtn = document.getElementById('clear-filters');
+    const editFileInput = document.getElementById('edit_file');
+    const editForm = document.getElementById('editForm');
+    const editModal = document.getElementById('editModal');
+    
+    if (searchInput) {
+        addManagedEventListener(searchInput, 'input', function(e) {
+            const searchTerm = e.target.value.trim();
+            currentSearchTerm = searchTerm;
+            
+            // Clear previous timeout
+            clearTimeout(searchTimeout);
+            
+            // Hide suggestions if search is empty
+            if (searchTerm === '') {
+                hideSuggestions();
+                resetTableToAll();
+                return;
+            }
+            
+            // Show loading indicator
+            showSearchLoading();
+            
+            // Debounce search - wait 300ms after user stops typing
+            searchTimeout = createTimeout(() => {
+                performLiveSearch(searchTerm);
+            }, 300);
+        });
+        
+        addManagedEventListener(searchInput, 'focus', function() {
+            if (this.value.trim() !== '') {
+                performLiveSearch(this.value.trim());
+            }
+        });
+    }
+    
+    if (statusFilter) {
+        addManagedEventListener(statusFilter, 'change', function() {
+            const searchTerm = document.getElementById('search').value.trim();
+            const status = this.value;
+            
+            // Clear previous timeout
+            clearTimeout(searchTimeout);
+            
+            // If no search term and no status filter, reset to all
+            if (searchTerm === '' && status === '') {
+                resetTableToAll();
+                return;
+            }
+            
+            // Show loading indicator
+            showSearchLoading();
+            
+            // Debounce filter - wait 300ms after user stops changing
+            searchTimeout = createTimeout(() => {
+                if (searchTerm !== '') {
+                    performLiveSearch(searchTerm, false);
+                } else {
+                    // Only status filter, no search term
+                    performStatusFilter(status);
+                }
+            }, 300);
+        });
+    }
+    
+    if (clearFiltersBtn) {
+        addManagedEventListener(clearFiltersBtn, 'click', function() {
+            document.getElementById('search').value = '';
+            document.getElementById('status-filter').value = '';
+            currentSearchTerm = '';
+            hideSuggestions();
+            resetTableToAll();
+        });
+    }
+    
+    if (editFileInput) {
+        addManagedEventListener(editFileInput, 'change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validate file type
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/x-icon', 'image/vnd.microsoft.icon'];
+                if (!allowedTypes.includes(file.type)) {
+                    Swal.fire({
+                        title: 'ไฟล์ไม่ถูกต้อง!',
+                        text: 'กรุณาเลือกไฟล์รูปภาพ (JPG, PNG, GIF, ICO) เท่านั้น',
+                        icon: 'error',
+                        confirmButtonText: 'ตกลง'
+                    });
+                    this.value = '';
+                    return;
+                }
+                
+                // Validate file size (2MB)
+                if (file.size > 2 * 1024 * 1024) {
+                    Swal.fire({
+                        title: 'ไฟล์ใหญ่เกินไป!',
+                        text: 'กรุณาเลือกไฟล์ที่มีขนาดไม่เกิน 2MB',
+                        icon: 'error',
+                        confirmButtonText: 'ตกลง'
+                    });
+                    this.value = '';
+                    return;
+                }
+                
+                showNewFilePreview(file);
+            }
+        });
+    }
+    
+    // Remove file buttons
+    const removeNewFileBtn = document.getElementById('remove_new_file');
+    const removeCurrentFileBtn = document.getElementById('remove_current_file');
+    
+    if (removeNewFileBtn) {
+        addManagedEventListener(removeNewFileBtn, 'click', function() {
+            document.getElementById('edit_file').value = '';
+            document.getElementById('new_file_preview').classList.add('hidden');
+        });
+    }
+    
+    if (removeCurrentFileBtn) {
+        addManagedEventListener(removeCurrentFileBtn, 'click', function() {
+            document.getElementById('current_file_preview').classList.add('hidden');
+            // Set a flag to indicate current file should be removed
+            document.getElementById('edit_value').value = '';
+        });
+    }
+    
+    if (editForm) {
+        addManagedEventListener(editForm, 'submit', function(e) {
+            e.preventDefault();
+
+            // Check if this is a file type setting
+            const isFileType = document.getElementById('file_upload_section').classList.contains('hidden') === false;
+            
+            // Debug logging removed for production
+            
+            // For file type settings, temporarily remove required attribute
+            let wasRequired = false;
+            if (isFileType) {
+                const valueInput = document.getElementById('edit_value');
+                wasRequired = valueInput.hasAttribute('required');
+                valueInput.removeAttribute('required');
+            }
+
+            const formData = new FormData(this);
+            const url = this.action;
+            
+            if (isFileType) {
+                // For file type settings, check if file is uploaded
+                const fileInput = document.getElementById('edit_file');
+                if (fileInput.files[0]) {
+                    formData.append('file', fileInput.files[0]);
+                    // Remove value field completely for file uploads
+                    formData.delete('value');
+                } else {
+                    // If no new file, keep current value (even if empty)
+                    const currentValue = document.getElementById('current_value').textContent || '';
+                    formData.set('value', currentValue);
+                }
+                
+                // Restore required attribute if it was there
+                const valueInput = document.getElementById('edit_value');
+                if (wasRequired) {
+                    valueInput.setAttribute('required', 'required');
+                }
+            } else {
+                // For text type settings, validate required field
+                const valueInput = document.getElementById('edit_value');
+                if (!valueInput.value.trim()) {
+                    Swal.fire({
+                        title: 'ข้อมูลไม่ครบถ้วน!',
+                        text: 'กรุณากรอกค่าการตั้งค่า',
+                        icon: 'error',
+                        confirmButtonText: 'ตกลง'
+                    });
+                    return;
+                }
+            }
+
+            // Debug logging removed for production
+
+            fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(`HTTP ${response.status}: ${text}`);
+                    });
+                }
+                
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    closeEditModal();
+                    location.reload();
+                } else {
+                    // Display validation errors
+                    if (data.errors) {
+                        Object.keys(data.errors).forEach(field => {
+                            const errorElement = document.getElementById(field + '_error');
+                            if (errorElement) {
+                                errorElement.textContent = data.errors[field][0];
+                                errorElement.classList.remove('hidden');
+                            }
+                        });
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    title: 'เกิดข้อผิดพลาด!',
+                    text: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล',
+                    icon: 'error',
+                    confirmButtonText: 'ตกลง'
+                });
+            });
+        });
+    }
+    
+    if (editModal) {
+        addManagedEventListener(editModal, 'click', function(e) {
+            if (e.target === this) {
+                closeEditModal();
+            }
+        });
+    }
+    
+    // Global keyboard event listener
+    addManagedEventListener(document, 'keydown', function(e) {
+        if (e.key === 'Escape' && !document.getElementById('editModal').classList.contains('hidden')) {
+            closeEditModal();
+        }
+    });
+});
 </script>
 @endsection

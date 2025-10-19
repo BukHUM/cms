@@ -36,10 +36,14 @@ class SettingsEmailController extends Controller
             'mail_smtp_username' => ['nullable', 'string', 'max:255'],
             'mail_smtp_password' => ['nullable', 'string', 'max:255'],
             'mail_smtp_encryption' => ['required', 'string', 'max:255'],
-            'enable_email_notifications' => ['boolean'],
-            'mail_queue_enabled' => ['boolean'],
+            'enable_email_notifications' => ['nullable', 'in:0,1'],
+            'mail_queue_enabled' => ['nullable', 'in:0,1'],
             'mail_retry_attempts' => ['integer', 'min:1', 'max:10'],
         ]);
+
+        // Handle checkbox values - if not present, set to 0
+        $validated['enable_email_notifications'] = $request->has('enable_email_notifications') ? '1' : '0';
+        $validated['mail_queue_enabled'] = $request->has('mail_queue_enabled') ? '1' : '0';
 
         // Update email settings
         foreach ($validated as $key => $value) {
@@ -81,7 +85,7 @@ class SettingsEmailController extends Controller
 
             if ($result['success']) {
                 if ($request->expectsJson() || $request->ajax()) {
-                    return response()->json(['message' => $result['message']]);
+                    return response()->json(['message' => $result['message']], 200);
                 }
                 return redirect()->back()->with('success', $result['message']);
             } else {
