@@ -7,7 +7,7 @@
 @section('content')
 <div class="main-content-area">
     <!-- Filters -->
-    <div class="bg-white rounded-lg shadow mb-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-6">
         <div class="p-6">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <!-- Search -->
@@ -15,12 +15,12 @@
                     <input type="text" 
                            id="search" 
                            placeholder="ค้นหาการตั้งค่า..." 
-                           class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 h-10"
+                           class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 h-10 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                            value="{{ request('search') }}"
                            autocomplete="off">
                     
                     <!-- Search Suggestions Dropdown -->
-                    <div id="search-suggestions" class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg hidden max-h-60 overflow-y-auto">
+                    <div id="search-suggestions" class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg hidden max-h-60 overflow-y-auto">
                         <!-- Suggestions will be populated here -->
                     </div>
                     
@@ -30,7 +30,7 @@
                     </div>
                     
                     <!-- Search Hint -->
-                    <div class="mt-1 text-xs text-gray-500">
+                    <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         <i class="fas fa-info-circle mr-1"></i>
                         ค้นหาได้จาก: คีย์ (site_name), คำอธิบาย (ชื่อเว็บไซต์), ค่า (Core Backend)
                     </div>
@@ -38,7 +38,7 @@
 
                 <!-- Status Filter -->
                 <select id="status-filter" 
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 h-10">
+                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 h-10 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                     <option value="">ทุกสถานะ</option>
                     <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>เปิดใช้งาน</option>
                     <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>ปิดใช้งาน</option>
@@ -56,10 +56,10 @@
     </div>
 
     <!-- Settings Table -->
-    <div class="bg-white rounded-lg shadow">
-        <div class="px-6 py-4 border-b border-gray-200">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-                <h3 class="text-lg font-medium text-gray-900">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white">
                     รายการการตั้งค่า ({{ $settings_generals->total() }} รายการ)
                 </h3>
             </div>
@@ -69,59 +69,59 @@
         <!-- Desktop Table View -->
         <div class="hidden md:block overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+                <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             คีย์
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             ค่า
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             ประเภท
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             กลุ่ม
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             สถานะ
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             การดำเนินการ
                         </th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     @foreach($settings_generals as $settings_general)
-                    <tr class="hover:bg-gray-50">
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <i class="{{ $settings_general->type_icon }} text-gray-400 mr-2"></i>
                                 <div>
-                                    <div class="text-sm font-medium text-gray-900">{{ $settings_general->key }}</div>
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $settings_general->key }}</div>
                                     @if($settings_general->description)
-                                    <div class="text-sm text-gray-500">{{ Str::limit($settings_general->description, 50) }}</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ Str::limit($settings_general->description, 50) }}</div>
                                     @endif
                                 </div>
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900 max-w-xs truncate">
+                            <div class="text-sm text-gray-900 dark:text-white max-w-xs truncate">
                                 {{ $settings_general->formatted_value }}
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
                                 {{ ucfirst($settings_general->type) }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200">
                                 {{ $settings_general->group_name }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $settings_general->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $settings_general->is_active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200' }}">
                                 {{ $settings_general->is_active ? 'เปิดใช้งาน' : 'ปิดใช้งาน' }}
                             </span>
                         </td>
@@ -129,7 +129,7 @@
                             <div class="flex items-center space-x-3">
                                 <!-- View Button -->
                                 <a href="{{ route('backend.settings-general.show', $settings_general->id) }}" 
-                                   class="inline-flex items-center justify-center w-8 h-8 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-md transition-colors duration-200"
+                                   class="inline-flex items-center justify-center w-8 h-8 text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-md transition-colors duration-200"
                                    title="ดูรายละเอียด">
                                     <i class="fas fa-eye text-sm"></i>
                                 </a>
@@ -137,7 +137,7 @@
                                 <!-- Edit Button -->
                                 <button type="button" 
                                         onclick="openEditModal({{ $settings_general->id }})"
-                                        class="inline-flex items-center justify-center w-8 h-8 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-md transition-colors duration-200"
+                                        class="inline-flex items-center justify-center w-8 h-8 text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900 rounded-md transition-colors duration-200"
                                         title="แก้ไข">
                                     <i class="fas fa-edit text-sm"></i>
                                 </button>
@@ -146,14 +146,14 @@
                                 @if($settings_general->is_active)
                                 <button type="button" 
                                         onclick="toggleStatus({{ $settings_general->id }})"
-                                        class="inline-flex items-center justify-center w-8 h-8 bg-green-100 text-green-600 hover:bg-green-200 hover:text-green-700 rounded-md transition-colors duration-200"
+                                        class="inline-flex items-center justify-center w-8 h-8 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-800 hover:text-green-700 dark:hover:text-green-300 rounded-md transition-colors duration-200"
                                         title="ปิดการใช้งาน">
                                     <i class="fas fa-toggle-off text-sm"></i>
                                 </button>
                                 @else
                                 <button type="button" 
                                         onclick="toggleStatus({{ $settings_general->id }})"
-                                        class="inline-flex items-center justify-center w-8 h-8 bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 rounded-md transition-colors duration-200"
+                                        class="inline-flex items-center justify-center w-8 h-8 bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-800 hover:text-red-700 dark:hover:text-red-300 rounded-md transition-colors duration-200"
                                         title="เปิดการใช้งาน">
                                     <i class="fas fa-toggle-on text-sm"></i>
                                 </button>
@@ -163,7 +163,7 @@
                                 @if($settings_general->default_value)
                                 <button type="button" 
                                         onclick="resetSetting({{ $settings_general->id }})"
-                                        class="inline-flex items-center justify-center w-8 h-8 text-purple-600 hover:text-purple-900 hover:bg-purple-50 rounded-md transition-colors duration-200"
+                                        class="inline-flex items-center justify-center w-8 h-8 text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900 rounded-md transition-colors duration-200"
                                         title="รีเซ็ตเป็นค่าเริ่มต้น">
                                     <i class="fas fa-undo text-sm"></i>
                                 </button>
@@ -179,28 +179,28 @@
         <!-- Mobile Card View -->
         <div class="md:hidden space-y-4 p-4">
             @foreach($settings_generals as $settings_general)
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
                 <!-- Header with Key and Status -->
                 <div class="flex items-start justify-between mb-4">
                     <div class="flex items-center flex-1">
                         <i class="{{ $settings_general->type_icon }} text-gray-400 mr-3 text-lg"></i>
                         <div class="flex-1 min-w-0">
-                            <h3 class="text-base font-medium text-gray-900 truncate">{{ $settings_general->key }}</h3>
+                            <h3 class="text-base font-medium text-gray-900 dark:text-white truncate">{{ $settings_general->key }}</h3>
                             @if($settings_general->description)
-                            <p class="text-sm text-gray-500 mt-1">{{ Str::limit($settings_general->description, 80) }}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ Str::limit($settings_general->description, 80) }}</p>
                             @endif
                         </div>
                     </div>
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ $settings_general->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ $settings_general->is_active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200' }}">
                         {{ $settings_general->is_active ? 'เปิด' : 'ปิด' }}
                     </span>
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="flex items-center justify-center space-x-3 pt-3 border-t border-gray-200">
+                <div class="flex items-center justify-center space-x-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                     <!-- View Button -->
                     <a href="{{ route('backend.settings-general.show', $settings_general->id) }}" 
-                       class="inline-flex items-center justify-center w-10 h-10 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-md transition-colors duration-200"
+                       class="inline-flex items-center justify-center w-10 h-10 text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-md transition-colors duration-200"
                        title="ดูรายละเอียด">
                         <i class="fas fa-eye"></i>
                     </a>
@@ -208,7 +208,7 @@
                     <!-- Edit Button -->
                     <button type="button" 
                             onclick="openEditModal({{ $settings_general->id }})"
-                            class="inline-flex items-center justify-center w-10 h-10 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-md transition-colors duration-200"
+                            class="inline-flex items-center justify-center w-10 h-10 text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900 rounded-md transition-colors duration-200"
                             title="แก้ไข">
                         <i class="fas fa-edit"></i>
                     </button>
@@ -217,14 +217,14 @@
                     @if($settings_general->is_active)
                     <button type="button" 
                             onclick="toggleStatus({{ $settings_general->id }})"
-                            class="inline-flex items-center justify-center w-10 h-10 bg-green-100 text-green-600 hover:bg-green-200 hover:text-green-700 rounded-md transition-colors duration-200"
+                            class="inline-flex items-center justify-center w-10 h-10 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-800 hover:text-green-700 dark:hover:text-green-300 rounded-md transition-colors duration-200"
                             title="ปิดการใช้งาน">
                         <i class="fas fa-toggle-off"></i>
                     </button>
                     @else
                     <button type="button" 
                             onclick="toggleStatus({{ $settings_general->id }})"
-                            class="inline-flex items-center justify-center w-10 h-10 bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 rounded-md transition-colors duration-200"
+                            class="inline-flex items-center justify-center w-10 h-10 bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-800 hover:text-red-700 dark:hover:text-red-300 rounded-md transition-colors duration-200"
                             title="เปิดการใช้งาน">
                         <i class="fas fa-toggle-on"></i>
                     </button>
@@ -234,7 +234,7 @@
                     @if($settings_general->default_value)
                     <button type="button" 
                             onclick="resetSetting({{ $settings_general->id }})"
-                            class="inline-flex items-center justify-center w-10 h-10 text-purple-600 hover:text-purple-900 hover:bg-purple-50 rounded-md transition-colors duration-200"
+                            class="inline-flex items-center justify-center w-10 h-10 text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900 rounded-md transition-colors duration-200"
                             title="รีเซ็ตเป็นค่าเริ่มต้น">
                         <i class="fas fa-undo"></i>
                     </button>
@@ -245,9 +245,9 @@
         </div>
 
         <!-- Pagination -->
-        <div class="px-6 py-4 border-t border-gray-200">
+        <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-                <div class="text-sm text-gray-700 text-center sm:text-left">
+                <div class="text-sm text-gray-700 dark:text-gray-300 text-center sm:text-left">
                     แสดง {{ $settings_generals->firstItem() ?? 0 }} ถึง {{ $settings_generals->lastItem() ?? 0 }} จาก {{ $settings_generals->total() }} รายการ
                 </div>
                 <div class="flex items-center justify-center">
@@ -258,8 +258,8 @@
         @else
         <div class="px-6 py-12 text-center">
             <i class="fas fa-cog text-gray-400 text-4xl mb-4"></i>
-            <h3 class="text-lg font-medium text-gray-900 mb-2">ไม่พบการตั้งค่า</h3>
-            <p class="text-gray-500 mb-4">ยังไม่มีการตั้งค่าในระบบ</p>
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">ไม่พบการตั้งค่า</h3>
+            <p class="text-gray-500 dark:text-gray-400 mb-4">ยังไม่มีการตั้งค่าในระบบ</p>
         </div>
         @endif
     </div>
@@ -655,7 +655,7 @@ function updateTableWithResults(settings) {
 // Create table row with highlighting
 function createTableRow(setting) {
     const row = document.createElement('tr');
-    row.className = 'hover:bg-gray-50';
+    row.className = 'hover:bg-gray-50 dark:hover:bg-gray-700';
     
     const highlightedKey = highlightText(setting.key, currentSearchTerm);
     const highlightedDescription = setting.description ? highlightText(setting.description, currentSearchTerm) : '';
@@ -666,50 +666,50 @@ function createTableRow(setting) {
             <div class="flex items-center">
                 <i class="${setting.type_icon} text-gray-400 mr-2"></i>
                 <div>
-                    <div class="text-sm font-medium text-gray-900">${highlightedKey}</div>
-                    ${highlightedDescription ? `<div class="text-sm text-gray-500">${highlightedDescription}</div>` : ''}
+                    <div class="text-sm font-medium text-gray-900 dark:text-white">${highlightedKey}</div>
+                    ${highlightedDescription ? `<div class="text-sm text-gray-500 dark:text-gray-400">${highlightedDescription}</div>` : ''}
                 </div>
             </div>
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm text-gray-900 max-w-xs truncate">
+            <div class="text-sm text-gray-900 dark:text-white max-w-xs truncate">
                 ${highlightedValue}
             </div>
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
                 ${setting.type.charAt(0).toUpperCase() + setting.type.slice(1)}
             </span>
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200">
                 ${setting.group_name}
             </span>
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${setting.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${setting.is_active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}">
                 ${setting.is_active ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}
             </span>
         </td>
         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
             <div class="flex items-center space-x-3">
                 <a href="/backend/settings-general/${setting.id}" 
-                   class="inline-flex items-center justify-center w-8 h-8 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-md transition-colors duration-200"
+                   class="inline-flex items-center justify-center w-8 h-8 text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-md transition-colors duration-200"
                    title="ดูรายละเอียด">
                     <i class="fas fa-eye text-sm"></i>
                 </a>
                 <button type="button" 
                         onclick="openEditModal(${setting.id})"
-                        class="inline-flex items-center justify-center w-8 h-8 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-md transition-colors duration-200"
+                        class="inline-flex items-center justify-center w-8 h-8 text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900 rounded-md transition-colors duration-200"
                         title="แก้ไข">
                     <i class="fas fa-edit text-sm"></i>
                 </button>
                 ${setting.is_active ? 
-                    `<button type="button" onclick="toggleStatus(${setting.id})" class="inline-flex items-center justify-center w-8 h-8 bg-green-100 text-green-600 hover:bg-green-200 hover:text-green-700 rounded-md transition-colors duration-200" title="ปิดการใช้งาน"><i class="fas fa-toggle-off text-sm"></i></button>` :
-                    `<button type="button" onclick="toggleStatus(${setting.id})" class="inline-flex items-center justify-center w-8 h-8 bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 rounded-md transition-colors duration-200" title="เปิดการใช้งาน"><i class="fas fa-toggle-on text-sm"></i></button>`
+                    `<button type="button" onclick="toggleStatus(${setting.id})" class="inline-flex items-center justify-center w-8 h-8 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-800 hover:text-green-700 dark:hover:text-green-300 rounded-md transition-colors duration-200" title="ปิดการใช้งาน"><i class="fas fa-toggle-off text-sm"></i></button>` :
+                    `<button type="button" onclick="toggleStatus(${setting.id})" class="inline-flex items-center justify-center w-8 h-8 bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-800 hover:text-red-700 dark:hover:text-red-300 rounded-md transition-colors duration-200" title="เปิดการใช้งาน"><i class="fas fa-toggle-on text-sm"></i></button>`
                 }
                 ${setting.default_value ? 
-                    `<button type="button" onclick="resetSetting(${setting.id})" class="inline-flex items-center justify-center w-8 h-8 text-purple-600 hover:text-purple-900 hover:bg-purple-50 rounded-md transition-colors duration-200" title="รีเซ็ตเป็นค่าเริ่มต้น"><i class="fas fa-undo text-sm"></i></button>` : ''
+                    `<button type="button" onclick="resetSetting(${setting.id})" class="inline-flex items-center justify-center w-8 h-8 text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900 rounded-md transition-colors duration-200" title="รีเซ็ตเป็นค่าเริ่มต้น"><i class="fas fa-undo text-sm"></i></button>` : ''
                 }
             </div>
         </td>
@@ -721,7 +721,7 @@ function createTableRow(setting) {
 // Create mobile card with highlighting
 function createMobileCard(setting) {
     const card = document.createElement('div');
-    card.className = 'bg-white rounded-lg shadow-sm border border-gray-200 p-4';
+    card.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4';
     
     const highlightedKey = highlightText(setting.key, currentSearchTerm);
     const highlightedDescription = setting.description ? highlightText(setting.description, currentSearchTerm) : '';
@@ -731,32 +731,32 @@ function createMobileCard(setting) {
             <div class="flex items-center flex-1">
                 <i class="${setting.type_icon} text-gray-400 mr-3 text-lg"></i>
                 <div class="flex-1 min-w-0">
-                    <h3 class="text-base font-medium text-gray-900 truncate">${highlightedKey}</h3>
-                    ${highlightedDescription ? `<p class="text-sm text-gray-500 mt-1">${highlightedDescription}</p>` : ''}
+                    <h3 class="text-base font-medium text-gray-900 dark:text-white truncate">${highlightedKey}</h3>
+                    ${highlightedDescription ? `<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">${highlightedDescription}</p>` : ''}
                 </div>
             </div>
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${setting.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${setting.is_active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}">
                 ${setting.is_active ? 'เปิด' : 'ปิด'}
             </span>
         </div>
-        <div class="flex items-center justify-center space-x-3 pt-3 border-t border-gray-200">
+        <div class="flex items-center justify-center space-x-3 pt-3 border-t border-gray-200 dark:border-gray-700">
             <a href="/backend/settings-general/${setting.id}" 
-               class="inline-flex items-center justify-center w-10 h-10 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-md transition-colors duration-200"
+               class="inline-flex items-center justify-center w-10 h-10 text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-md transition-colors duration-200"
                title="ดูรายละเอียด">
                 <i class="fas fa-eye"></i>
             </a>
             <button type="button" 
                     onclick="openEditModal(${setting.id})"
-                    class="inline-flex items-center justify-center w-10 h-10 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-md transition-colors duration-200"
+                    class="inline-flex items-center justify-center w-10 h-10 text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900 rounded-md transition-colors duration-200"
                     title="แก้ไข">
                 <i class="fas fa-edit"></i>
             </button>
             ${setting.is_active ? 
-                `<button type="button" onclick="toggleStatus(${setting.id})" class="inline-flex items-center justify-center w-10 h-10 bg-green-100 text-green-600 hover:bg-green-200 hover:text-green-700 rounded-md transition-colors duration-200" title="ปิดการใช้งาน"><i class="fas fa-toggle-off"></i></button>` :
-                `<button type="button" onclick="toggleStatus(${setting.id})" class="inline-flex items-center justify-center w-10 h-10 bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 rounded-md transition-colors duration-200" title="เปิดการใช้งาน"><i class="fas fa-toggle-on"></i></button>`
+                `<button type="button" onclick="toggleStatus(${setting.id})" class="inline-flex items-center justify-center w-10 h-10 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-800 hover:text-green-700 dark:hover:text-green-300 rounded-md transition-colors duration-200" title="ปิดการใช้งาน"><i class="fas fa-toggle-off"></i></button>` :
+                `<button type="button" onclick="toggleStatus(${setting.id})" class="inline-flex items-center justify-center w-10 h-10 bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-800 hover:text-red-700 dark:hover:text-red-300 rounded-md transition-colors duration-200" title="เปิดการใช้งาน"><i class="fas fa-toggle-on"></i></button>`
             }
             ${setting.default_value ? 
-                `<button type="button" onclick="resetSetting(${setting.id})" class="inline-flex items-center justify-center w-10 h-10 text-purple-600 hover:text-purple-900 hover:bg-purple-50 rounded-md transition-colors duration-200" title="รีเซ็ตเป็นค่าเริ่มต้น"><i class="fas fa-undo"></i></button>` : ''
+                `<button type="button" onclick="resetSetting(${setting.id})" class="inline-flex items-center justify-center w-10 h-10 text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900 rounded-md transition-colors duration-200" title="รีเซ็ตเป็นค่าเริ่มต้น"><i class="fas fa-undo"></i></button>` : ''
             }
         </div>
     `;
@@ -793,15 +793,15 @@ function showSuggestions(suggestions, searchTerm) {
     
     suggestions.forEach(suggestion => {
         const item = document.createElement('div');
-        item.className = 'px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0';
+        item.className = 'px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-600 last:border-b-0';
         item.innerHTML = `
             <div class="flex items-center">
                 <i class="${suggestion.type_icon} text-gray-400 mr-2"></i>
                 <div class="flex-1">
-                    <div class="text-sm font-medium text-gray-900">${highlightText(suggestion.key, searchTerm)}</div>
-                    <div class="text-xs text-gray-500">${highlightText(suggestion.description || '', searchTerm)}</div>
+                    <div class="text-sm font-medium text-gray-900 dark:text-white">${highlightText(suggestion.key, searchTerm)}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">${highlightText(suggestion.description || '', searchTerm)}</div>
                 </div>
-                <span class="text-xs text-gray-400">${suggestion.type}</span>
+                <span class="text-xs text-gray-400 dark:text-gray-500">${suggestion.type}</span>
             </div>
         `;
         

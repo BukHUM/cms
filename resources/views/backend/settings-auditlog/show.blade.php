@@ -9,11 +9,11 @@
         <div class="mb-6">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">
-                        <i class="fas fa-history mr-2 text-blue-600"></i>
+                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+                        <i class="fas fa-history mr-2 text-blue-600 dark:text-blue-400"></i>
                         รายละเอียด Audit Log
                     </h1>
-                    <p class="text-sm text-gray-600 mt-1">ID: {{ $auditLog->id }}</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">ID: {{ $auditLog->id }}</p>
                 </div>
                 <div class="mt-4 sm:mt-0">
                     <a href="{{ route('backend.settings.auditlog.index') }}" class="btn-secondary">
@@ -39,12 +39,12 @@
                         <label class="form-label">เหตุการณ์</label>
                         @php
                             $eventColors = [
-                                'created' => 'bg-green-100 text-green-800',
-                                'updated' => 'bg-blue-100 text-blue-800',
-                                'deleted' => 'bg-red-100 text-red-800',
-                                'restored' => 'bg-yellow-100 text-yellow-800',
+                                'created' => 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
+                                'updated' => 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
+                                'deleted' => 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200',
+                                'restored' => 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200',
                             ];
-                            $color = $eventColors[$auditLog->event] ?? 'bg-gray-100 text-gray-800';
+                            $color = $eventColors[$auditLog->event] ?? 'bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200';
                         @endphp
                         <div class="mt-1">
                             <span class="badge {{ $color }} text-lg px-3 py-1">
@@ -58,7 +58,7 @@
                         <label class="form-label">วันที่/เวลา</label>
                         <div class="mt-1 text-sm">
                             <div class="font-medium">{{ $auditLog->created_at->format('d/m/Y H:i:s') }}</div>
-                            <div class="text-gray-500">{{ $auditLog->created_at->diffForHumans() }}</div>
+                            <div class="text-gray-500 dark:text-gray-400">{{ $auditLog->created_at->diffForHumans() }}</div>
                         </div>
                     </div>
 
@@ -68,16 +68,16 @@
                         <div class="mt-1">
                             @if($auditLog->user)
                                 <div class="flex items-center">
-                                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                                        <i class="fas fa-user text-blue-600"></i>
-                                    </div>
-                                    <div>
-                                        <div class="font-medium">{{ $auditLog->user->name }}</div>
-                                        <div class="text-sm text-gray-500">{{ $auditLog->user->email }}</div>
-                                    </div>
+                                <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-user text-blue-600 dark:text-blue-400"></i>
+                                </div>
+                                <div>
+                                    <div class="font-medium">{{ $auditLog->user->name }}</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ $auditLog->user->email }}</div>
+                                </div>
                                 </div>
                             @else
-                                <span class="text-gray-500">System</span>
+                                <span class="text-gray-500 dark:text-gray-400">System</span>
                             @endif
                         </div>
                     </div>
@@ -87,7 +87,7 @@
                         <label class="form-label">ประเภทข้อมูล</label>
                         <div class="mt-1">
                             <span class="text-sm font-medium">{{ class_basename($auditLog->auditable_type) }}</span>
-                            <div class="text-xs text-gray-500">{{ $auditLog->auditable_type }}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ $auditLog->auditable_type }}</div>
                         </div>
                     </div>
 
@@ -95,7 +95,7 @@
                     <div>
                         <label class="form-label">รหัสข้อมูล</label>
                         <div class="mt-1">
-                            <span class="text-sm font-mono bg-gray-100 px-2 py-1 rounded">{{ $auditLog->auditable_id }}</span>
+                            <span class="text-sm font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-900 dark:text-white">{{ $auditLog->auditable_id }}</span>
                         </div>
                     </div>
 
@@ -113,7 +113,7 @@
                     <div class="mt-6">
                         <label class="form-label">URL</label>
                         <div class="mt-1">
-                            <span class="text-sm text-blue-600 break-all">{{ $auditLog->url }}</span>
+                            <span class="text-sm text-blue-600 dark:text-blue-400 break-all">{{ $auditLog->url }}</span>
                         </div>
                     </div>
                 @endif
@@ -123,7 +123,7 @@
                     <div class="mt-6">
                         <label class="form-label">User Agent</label>
                         <div class="mt-1">
-                            <span class="text-sm text-gray-600 break-all">{{ $auditLog->user_agent }}</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400 break-all">{{ $auditLog->user_agent }}</span>
                         </div>
                     </div>
                 @endif
@@ -142,14 +142,14 @@
                 <div class="card-body">
                     @if($auditLog->event === 'created')
                         <!-- Created Event -->
-                        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div class="bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg p-4">
                             <div class="flex items-center mb-3">
-                                <i class="fas fa-plus text-green-600 mr-2"></i>
-                                <h4 class="font-medium text-green-800">ข้อมูลที่สร้างใหม่</h4>
+                                <i class="fas fa-plus text-green-600 dark:text-green-400 mr-2"></i>
+                                <h4 class="font-medium text-green-800 dark:text-green-200">ข้อมูลที่สร้างใหม่</h4>
                             </div>
                             @if($auditLog->new_values)
-                                <div class="bg-white rounded border p-4">
-                                    <pre class="text-sm text-gray-700 whitespace-pre-wrap">{{ json_encode($auditLog->new_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+                                <div class="bg-white dark:bg-gray-800 rounded border dark:border-gray-600 p-4">
+                                    <pre class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ json_encode($auditLog->new_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
                                 </div>
                             @endif
                         </div>
@@ -157,25 +157,25 @@
                         <!-- Updated Event -->
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             @if($auditLog->old_values)
-                                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                                <div class="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-4">
                                     <div class="flex items-center mb-3">
-                                        <i class="fas fa-minus text-red-600 mr-2"></i>
-                                        <h4 class="font-medium text-red-800">ค่าเดิม</h4>
+                                        <i class="fas fa-minus text-red-600 dark:text-red-400 mr-2"></i>
+                                        <h4 class="font-medium text-red-800 dark:text-red-200">ค่าเดิม</h4>
                                     </div>
-                                    <div class="bg-white rounded border p-4">
-                                        <pre class="text-sm text-gray-700 whitespace-pre-wrap">{{ json_encode($auditLog->old_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+                                    <div class="bg-white dark:bg-gray-800 rounded border dark:border-gray-600 p-4">
+                                        <pre class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ json_encode($auditLog->old_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
                                     </div>
                                 </div>
                             @endif
 
                             @if($auditLog->new_values)
-                                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                                <div class="bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg p-4">
                                     <div class="flex items-center mb-3">
-                                        <i class="fas fa-plus text-green-600 mr-2"></i>
-                                        <h4 class="font-medium text-green-800">ค่าใหม่</h4>
+                                        <i class="fas fa-plus text-green-600 dark:text-green-400 mr-2"></i>
+                                        <h4 class="font-medium text-green-800 dark:text-green-200">ค่าใหม่</h4>
                                     </div>
-                                    <div class="bg-white rounded border p-4">
-                                        <pre class="text-sm text-gray-700 whitespace-pre-wrap">{{ json_encode($auditLog->new_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+                                    <div class="bg-white dark:bg-gray-800 rounded border dark:border-gray-600 p-4">
+                                        <pre class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ json_encode($auditLog->new_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
                                     </div>
                                 </div>
                             @endif
@@ -184,7 +184,7 @@
                         <!-- Field-by-field comparison -->
                         @if($auditLog->old_values && $auditLog->new_values)
                             <div class="mt-6">
-                                <h4 class="font-medium text-gray-900 mb-4">
+                                <h4 class="font-medium text-gray-900 dark:text-white mb-4">
                                     <i class="fas fa-list mr-2"></i>
                                     การเปรียบเทียบฟิลด์
                                 </h4>
@@ -201,7 +201,7 @@
                                             $newValue = $auditLog->new_values[$key] ?? null;
                                             $hasChanged = $oldValue !== $newValue;
                                         @endphp
-                                        <div class="border rounded-lg p-4 {{ $hasChanged ? 'border-yellow-200 bg-yellow-50' : 'border-gray-200 bg-gray-50' }}">
+                                        <div class="border rounded-lg p-4 {{ $hasChanged ? 'border-yellow-200 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800' }}">
                                             <div class="flex items-center justify-between mb-2">
                                                 <span class="font-medium text-sm">{{ $key }}</span>
                                                 @if($hasChanged)
@@ -212,14 +212,14 @@
                                             </div>
                                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                                 <div>
-                                                    <span class="text-gray-600">เดิม:</span>
-                                                    <div class="mt-1 p-2 bg-white rounded border">
+                                                    <span class="text-gray-600 dark:text-gray-400">เดิม:</span>
+                                                    <div class="mt-1 p-2 bg-white dark:bg-gray-700 rounded border dark:border-gray-600 text-gray-900 dark:text-white">
                                                         {{ $oldValue ? json_encode($oldValue, JSON_UNESCAPED_UNICODE) : 'null' }}
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <span class="text-gray-600">ใหม่:</span>
-                                                    <div class="mt-1 p-2 bg-white rounded border">
+                                                    <span class="text-gray-600 dark:text-gray-400">ใหม่:</span>
+                                                    <div class="mt-1 p-2 bg-white dark:bg-gray-700 rounded border dark:border-gray-600 text-gray-900 dark:text-white">
                                                         {{ $newValue ? json_encode($newValue, JSON_UNESCAPED_UNICODE) : 'null' }}
                                                     </div>
                                                 </div>
@@ -231,27 +231,27 @@
                         @endif
                     @elseif($auditLog->event === 'deleted')
                         <!-- Deleted Event -->
-                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div class="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-4">
                             <div class="flex items-center mb-3">
-                                <i class="fas fa-trash text-red-600 mr-2"></i>
-                                <h4 class="font-medium text-red-800">ข้อมูลที่ถูกลบ</h4>
+                                <i class="fas fa-trash text-red-600 dark:text-red-400 mr-2"></i>
+                                <h4 class="font-medium text-red-800 dark:text-red-200">ข้อมูลที่ถูกลบ</h4>
                             </div>
                             @if($auditLog->old_values)
-                                <div class="bg-white rounded border p-4">
-                                    <pre class="text-sm text-gray-700 whitespace-pre-wrap">{{ json_encode($auditLog->old_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+                                <div class="bg-white dark:bg-gray-800 rounded border dark:border-gray-600 p-4">
+                                    <pre class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ json_encode($auditLog->old_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
                                 </div>
                             @endif
                         </div>
                     @else
                         <!-- Other Events -->
-                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <div class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                             <div class="flex items-center mb-3">
-                                <i class="fas fa-info-circle text-gray-600 mr-2"></i>
-                                <h4 class="font-medium text-gray-800">ข้อมูลเหตุการณ์</h4>
+                                <i class="fas fa-info-circle text-gray-600 dark:text-gray-400 mr-2"></i>
+                                <h4 class="font-medium text-gray-800 dark:text-gray-200">ข้อมูลเหตุการณ์</h4>
                             </div>
                             @if($auditLog->new_values)
-                                <div class="bg-white rounded border p-4">
-                                    <pre class="text-sm text-gray-700 whitespace-pre-wrap">{{ json_encode($auditLog->new_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+                                <div class="bg-white dark:bg-gray-700 rounded border dark:border-gray-600 p-4">
+                                    <pre class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ json_encode($auditLog->new_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
                                 </div>
                             @endif
                         </div>
@@ -270,18 +270,18 @@
                     </h3>
                 </div>
                 <div class="card-body">
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
                         <div class="flex items-center mb-3">
-                            <i class="fas fa-database text-blue-600 mr-2"></i>
-                            <h4 class="font-medium text-blue-800">{{ class_basename($auditLog->auditable_type) }}</h4>
+                            <i class="fas fa-database text-blue-600 dark:text-blue-400 mr-2"></i>
+                            <h4 class="font-medium text-blue-800 dark:text-blue-200">{{ class_basename($auditLog->auditable_type) }}</h4>
                         </div>
-                        <div class="text-sm text-gray-700">
+                        <div class="text-sm text-gray-700 dark:text-gray-300">
                             <p><strong>ID:</strong> {{ $auditLog->auditable_id }}</p>
                             @if(method_exists($auditLog->auditable, 'toArray'))
                                 <div class="mt-2">
                                     <strong>ข้อมูลปัจจุบัน:</strong>
-                                    <div class="mt-1 bg-white rounded border p-3">
-                                        <pre class="text-xs text-gray-600 whitespace-pre-wrap">{{ json_encode($auditLog->auditable->toArray(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+                                    <div class="mt-1 bg-white dark:bg-gray-700 rounded border dark:border-gray-600 p-3">
+                                        <pre class="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{{ json_encode($auditLog->auditable->toArray(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
                                     </div>
                                 </div>
                             @endif

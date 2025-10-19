@@ -80,18 +80,18 @@ class SettingsEmailController extends Controller
             );
 
             if ($result['success']) {
-                if ($request->expectsJson()) {
+                if ($request->expectsJson() || $request->ajax()) {
                     return response()->json(['message' => $result['message']]);
                 }
                 return redirect()->back()->with('success', $result['message']);
             } else {
-                if ($request->expectsJson()) {
+                if ($request->expectsJson() || $request->ajax()) {
                     return response()->json(['message' => $result['message']], 500);
                 }
                 return redirect()->back()->with('error', $result['message']);
             }
         } catch (\Exception $e) {
-            if ($request->expectsJson()) {
+            if ($request->expectsJson() || $request->ajax()) {
                 return response()->json(['message' => 'Failed to send test email: ' . $e->getMessage()], 500);
             }
 

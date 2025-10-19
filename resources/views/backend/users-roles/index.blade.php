@@ -6,42 +6,12 @@
 
 @section('content')
 <div class="space-y-6">
-    <!-- Header Actions -->
-    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center space-y-4 lg:space-y-0">
-        <!-- Search and Filters -->
-        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 lg:space-x-4">
-            <div class="relative flex-1 sm:max-w-xs">
-                <input type="text" 
-                       id="search" 
-                       placeholder="ค้นหาบทบาท..." 
-                       class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 pl-10"
-                       value="{{ request('search') }}">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <i class="fas fa-search text-gray-400"></i>
-                </div>
-            </div>
-            
-            <select id="status-filter" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:w-auto">
-                <option value="">ทุกสถานะ</option>
-                <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>ใช้งาน</option>
-                <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>ไม่ใช้งาน</option>
-            </select>
-            
-            <select id="type-filter" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:w-auto">
-                <option value="">ทุกประเภท</option>
-                <option value="system" {{ request('type') == 'system' ? 'selected' : '' }}>บทบาทระบบ</option>
-                <option value="custom" {{ request('type') == 'custom' ? 'selected' : '' }}>บทบาทกำหนดเอง</option>
-            </select>
-        </div>
-        
-        <!-- Add Button -->
-        <div class="flex justify-end">
-            <a href="{{ route('backend.roles.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full sm:w-auto">
-                <i class="fas fa-plus mr-2"></i>
-                <span class="hidden sm:inline">เพิ่มบทบาท</span>
-                <span class="sm:hidden">เพิ่ม</span>
-            </a>
-        </div>
+    <!-- Action Buttons -->
+    <div class="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2">
+        <a href="{{ route('backend.roles.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full sm:w-auto">
+            <i class="fas fa-plus mr-2"></i>
+            เพิ่มบทบาทใหม่
+        </a>
     </div>
 
     <!-- Success/Error Messages -->

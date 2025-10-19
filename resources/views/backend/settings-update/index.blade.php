@@ -1,22 +1,11 @@
 @extends('backend.layouts.app')
 
 @section('title', 'การอัพเดตระบบ')
+@section('page-title', 'การอัพเดตระบบ')
+@section('page-description', 'จัดการการอัพเดต Laravel Core, Packages และ Configuration')
 
 @section('content')
 <div class="main-content-area">
-    <!-- Page Header -->
-    <div class="flex justify-between items-center mb-6">
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-gray-900">
-                <i class="fas fa-sync-alt mr-2"></i>
-                การอัพเดตระบบ
-            </h1>
-            <p class="text-sm text-gray-600 mt-1 hidden sm:block">จัดการการอัพเดต Laravel Core, Packages และ Configuration</p>
-        </div>
-        <div class="flex space-x-3">
-            <!-- ปุ่มตรวจสอบการอัพเดตถูกลบออกแล้ว -->
-        </div>
-    </div>
 
     <!-- Quick Update Actions -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">

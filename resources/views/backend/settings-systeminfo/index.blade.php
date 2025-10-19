@@ -1,24 +1,17 @@
 @extends('backend.layouts.app')
 
 @section('title', 'ข้อมูลระบบ')
+@section('page-title', 'ข้อมูลระบบ')
+@section('page-description', 'ข้อมูลระบบและสถิติการทำงานของ Laravel CMS')
 
 @section('content')
 <div class="main-content-area">
-    <!-- Page Header -->
-    <div class="flex justify-between items-center mb-6">
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-gray-900">
-                <i class="fas fa-info-circle mr-2"></i>
-                ข้อมูลระบบ
-            </h1>
-            <p class="text-sm text-gray-600 mt-1 hidden sm:block">ข้อมูลระบบและสถิติการทำงานของ Laravel CMS</p>
-        </div>
-        <div class="flex space-x-3">
-            <a href="{{ route('backend.settings-systeminfo.export') }}" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                <i class="fas fa-download mr-2"></i>
-                Export ข้อมูล
-            </a>
-        </div>
+    <!-- Action Buttons -->
+    <div class="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2 mb-6">
+        <a href="{{ route('backend.settings-systeminfo.export') }}" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 w-full sm:w-auto">
+            <i class="fas fa-download mr-2"></i>
+            Export ข้อมูล
+        </a>
     </div>
 
     <!-- System Overview Cards -->

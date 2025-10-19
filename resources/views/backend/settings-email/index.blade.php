@@ -1,36 +1,27 @@
 @extends('backend.layouts.app')
 
 @section('title', 'การตั้งค่าอีเมล์')
+@section('page-title', 'การตั้งค่าอีเมล์')
+@section('page-description', 'จัดการการตั้งค่าการส่งอีเมล์และ SMTP')
 
 @section('content')
 <div class="main-content-area">
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6">
-        <div>
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">
-                <i class="fas fa-envelope mr-2"></i>
-                การตั้งค่าอีเมล์
-            </h1>
-            <p class="text-sm sm:text-base text-gray-600 mt-1">
-                จัดการการตั้งค่าการส่งอีเมล์และ SMTP
-            </p>
-        </div>
-        <div class="mt-4 sm:mt-0 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-            <button onclick="resetToDefault()" 
-                    class="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 w-full sm:w-auto">
-                <i class="fas fa-undo mr-2"></i>
-                รีเซ็ตเป็นค่าเริ่มต้น
-            </button>
-            <button onclick="testEmail()" 
-                    class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 w-full sm:w-auto">
-                <i class="fas fa-paper-plane mr-2"></i>
-                ทดสอบการส่งอีเมล์
-            </button>
-        </div>
+    <!-- Action Buttons -->
+    <div class="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2 mb-6">
+        <button onclick="resetToDefault()" 
+                class="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 w-full sm:w-auto">
+            <i class="fas fa-undo mr-2"></i>
+            รีเซ็ตเป็นค่าเริ่มต้น
+        </button>
+        <button onclick="testEmail()" 
+                class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 w-full sm:w-auto">
+            <i class="fas fa-paper-plane mr-2"></i>
+            ทดสอบการส่งอีเมล์
+        </button>
     </div>
 
     <!-- Email Settings Form -->
-    <div class="bg-white rounded-lg shadow">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
         <form action="{{ route('backend.settings-email.update') }}" method="POST" class="p-6">
             @csrf
             @method('PUT')
@@ -40,13 +31,13 @@
                 <div class="space-y-6">
                     <!-- Mail Driver -->
                     <div>
-                        <label for="mail_driver" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="mail_driver" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Mail Driver
                         </label>
                         <select id="mail_driver" 
                                 name="mail_driver" 
                                 onchange="updateMailConfig()"
-                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('mail_driver') border-red-500 @enderror">
+                                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white @error('mail_driver') border-red-500 @enderror">
                             <option value="gmail" {{ old('mail_driver', $emailSettings['mail_driver']->value ?? '') == 'gmail' ? 'selected' : '' }}>Gmail</option>
                             <option value="office365" {{ old('mail_driver', $emailSettings['mail_driver']->value ?? '') == 'office365' ? 'selected' : '' }}>Office 365</option>
                             <option value="mailtrap" {{ old('mail_driver', $emailSettings['mail_driver']->value ?? '') == 'mailtrap' ? 'selected' : '' }}>Mailtrap</option>
@@ -56,30 +47,30 @@
                         @error('mail_driver')
                             <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                         @enderror
-                        <p class="text-xs text-gray-500 mt-1">เลือกวิธีการส่งอีเมล ระบบจะตั้งค่าอัตโนมัติตามที่เลือก</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">เลือกวิธีการส่งอีเมล ระบบจะตั้งค่าอัตโนมัติตามที่เลือก</p>
                     </div>
 
                     <!-- Mail Port -->
                     <div>
-                        <label for="mail_smtp_port" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="mail_smtp_port" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Mail Port
                         </label>
                         <input type="number" 
                                id="mail_smtp_port" 
                                name="mail_smtp_port" 
                                value="{{ old('mail_smtp_port', $emailSettings['mail_smtp_port']->value ?? '') }}"
-                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('mail_smtp_port') border-red-500 @enderror"
+                               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white @error('mail_smtp_port') border-red-500 @enderror"
                                placeholder="587"
                                min="1" max="65535">
                         @error('mail_smtp_port')
                             <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                         @enderror
-                        <p class="text-xs text-gray-500 mt-1">พอร์ตมาตรฐาน: 587 (TLS), 465 (SSL), 25 (ไม่เข้ารหัส)</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">พอร์ตมาตรฐาน: 587 (TLS), 465 (SSL), 25 (ไม่เข้ารหัส)</p>
                     </div>
 
                     <!-- Password -->
                     <div>
-                        <label for="mail_smtp_password" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="mail_smtp_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Password
                         </label>
                         <div class="relative">
@@ -87,7 +78,7 @@
                                    id="mail_smtp_password" 
                                    name="mail_smtp_password" 
                                    value="{{ old('mail_smtp_password', $emailSettings['mail_smtp_password']->value ?? '') }}"
-                                   class="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('mail_smtp_password') border-red-500 @enderror"
+                                   class="block w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white @error('mail_smtp_password') border-red-500 @enderror"
                                    placeholder="รหัสผ่านอีเมล">
                             <button type="button" 
                                     onclick="togglePassword('mail_smtp_password')"
@@ -98,24 +89,24 @@
                         @error('mail_smtp_password')
                             <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                         @enderror
-                        <p class="text-xs text-gray-500 mt-1">รหัสผ่านอีเมล</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">รหัสผ่านอีเมล</p>
                     </div>
 
                     <!-- From Name -->
                     <div>
-                        <label for="mail_from_name" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="mail_from_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             From Name
                         </label>
                         <input type="text" 
                                id="mail_from_name" 
                                name="mail_from_name" 
                                value="{{ old('mail_from_name', $emailSettings['mail_from_name']->value ?? '') }}"
-                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('mail_from_name') border-red-500 @enderror"
+                               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white @error('mail_from_name') border-red-500 @enderror"
                                placeholder="Laravel Backend">
                         @error('mail_from_name')
                             <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                         @enderror
-                        <p class="text-xs text-gray-500 mt-1">ชื่อที่ผู้รับจะเห็น เช่น "ระบบแจ้งเตือน", "ทีมสนับสนุน"</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">ชื่อที่ผู้รับจะเห็น เช่น "ระบบแจ้งเตือน", "ทีมสนับสนุน"</p>
                     </div>
                 </div>
 
@@ -123,58 +114,58 @@
                 <div class="space-y-6">
                     <!-- Mail Host -->
                     <div>
-                        <label for="mail_smtp_host" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="mail_smtp_host" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Mail Host
                         </label>
                         <input type="text" 
                                id="mail_smtp_host" 
                                name="mail_smtp_host" 
                                value="{{ old('mail_smtp_host', $emailSettings['mail_smtp_host']->value ?? '') }}"
-                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('mail_smtp_host') border-red-500 @enderror"
+                               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white @error('mail_smtp_host') border-red-500 @enderror"
                                placeholder="smtp.gmail.com">
                         @error('mail_smtp_host')
                             <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                         @enderror
-                        <p class="text-xs text-gray-500 mt-1">ตัวอย่าง: smtp.gmail.com, smtp.outlook.com, mail.yourdomain.com</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">ตัวอย่าง: smtp.gmail.com, smtp.outlook.com, mail.yourdomain.com</p>
                     </div>
 
                     <!-- Username -->
                     <div>
-                        <label for="mail_smtp_username" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="mail_smtp_username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Username
                         </label>
                         <input type="text" 
                                id="mail_smtp_username" 
                                name="mail_smtp_username" 
                                value="{{ old('mail_smtp_username', $emailSettings['mail_smtp_username']->value ?? '') }}"
-                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('mail_smtp_username') border-red-500 @enderror"
+                               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white @error('mail_smtp_username') border-red-500 @enderror"
                                placeholder="your-email@gmail.com">
                         @error('mail_smtp_username')
                             <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                         @enderror
-                        <p class="text-xs text-gray-500 mt-1">อีเมลที่ใช้สำหรับการส่ง หรือ username ของเซิร์ฟเวอร์อีเมล</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">อีเมลที่ใช้สำหรับการส่ง หรือ username ของเซิร์ฟเวอร์อีเมล</p>
                     </div>
 
                     <!-- Encryption -->
                     <div>
-                        <label for="mail_smtp_encryption" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="mail_smtp_encryption" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Encryption
                         </label>
                         <input type="text" 
                                id="mail_smtp_encryption" 
                                name="mail_smtp_encryption" 
                                value="{{ old('mail_smtp_encryption', $emailSettings['mail_smtp_encryption']->value ?? '') }}"
-                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('mail_smtp_encryption') border-red-500 @enderror"
+                               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white @error('mail_smtp_encryption') border-red-500 @enderror"
                                placeholder="TLS">
                         @error('mail_smtp_encryption')
                             <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                         @enderror
-                        <p class="text-xs text-gray-500 mt-1">แนะนำใช้ TLS สำหรับความปลอดภัย หรือ SSL สำหรับพอร์ต 465</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">แนะนำใช้ TLS สำหรับความปลอดภัย หรือ SSL สำหรับพอร์ต 465</p>
                     </div>
 
                     <!-- Enable Notifications -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             การแจ้งเตือน
                         </label>
                         <div class="flex items-center">
@@ -183,19 +174,19 @@
                                    name="enable_email_notifications" 
                                    value="1"
                                    {{ old('enable_email_notifications', $emailSettings['enable_email_notifications']->value ?? 'true') == 'true' ? 'checked' : '' }}
-                                   class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                            <label for="enable_email_notifications" class="ml-2 block text-sm font-medium text-gray-700">
+                                   class="rounded border-gray-300 dark:border-gray-600 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                            <label for="enable_email_notifications" class="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 เปิดใช้งานการแจ้งเตือนทางอีเมล
                             </label>
                         </div>
-                        <p class="text-xs text-gray-500 mt-1">ส่งการแจ้งเตือนต่างๆ ทางอีเมล</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">ส่งการแจ้งเตือนต่างๆ ทางอีเมล</p>
                     </div>
                 </div>
             </div>
 
             <!-- Advanced Settings -->
-            <div class="mt-8 pt-6 border-t border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+            <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                     <i class="fas fa-cogs mr-2"></i>
                     การตั้งค่าขั้นสูง
                 </h3>
@@ -203,7 +194,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Queue Enabled -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             <i class="fas fa-tasks mr-1"></i>
                             Mail Queue
                         </label>
@@ -213,17 +204,17 @@
                                    name="mail_queue_enabled" 
                                    value="1"
                                    {{ old('mail_queue_enabled', $emailSettings['mail_queue_enabled']->value ?? 'false') == 'true' ? 'checked' : '' }}
-                                   class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                            <label for="mail_queue_enabled" class="ml-2 block text-sm font-medium text-gray-700">
+                                   class="rounded border-gray-300 dark:border-gray-600 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                            <label for="mail_queue_enabled" class="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 เปิดใช้งาน Mail Queue
                             </label>
                         </div>
-                        <p class="text-xs text-gray-500 mt-1">ส่งอีเมลผ่าน Queue เพื่อประสิทธิภาพที่ดีขึ้น</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">ส่งอีเมลผ่าน Queue เพื่อประสิทธิภาพที่ดีขึ้น</p>
                     </div>
 
                     <!-- Retry Attempts -->
                     <div>
-                        <label for="mail_retry_attempts" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="mail_retry_attempts" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             <i class="fas fa-redo mr-1"></i>
                             จำนวนครั้งลองใหม่
                         </label>
@@ -231,19 +222,19 @@
                                id="mail_retry_attempts" 
                                name="mail_retry_attempts" 
                                value="{{ old('mail_retry_attempts', $emailSettings['mail_retry_attempts']->value ?? '3') }}"
-                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('mail_retry_attempts') border-red-500 @enderror"
+                               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white @error('mail_retry_attempts') border-red-500 @enderror"
                                placeholder="3"
                                min="1" max="10">
                         @error('mail_retry_attempts')
                             <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                         @enderror
-                        <p class="text-xs text-gray-500 mt-1">จำนวนครั้งในการลองส่งอีเมลใหม่เมื่อล้มเหลว</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">จำนวนครั้งในการลองส่งอีเมลใหม่เมื่อล้มเหลว</p>
                     </div>
                 </div>
             </div>
 
             <!-- Form Actions -->
-            <div class="flex flex-col sm:flex-row sm:justify-end space-y-3 sm:space-y-0 sm:space-x-3 mt-8 pt-6 border-t border-gray-200">
+            <div class="flex flex-col sm:flex-row sm:justify-end space-y-3 sm:space-y-0 sm:space-x-3 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <button type="button" 
                         onclick="resetToDefault()"
                         class="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 w-full sm:w-auto">
@@ -262,9 +253,9 @@
     <!-- Test Email Modal -->
     <div id="test-email-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
         <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                         <i class="fas fa-paper-plane mr-2"></i>
                         ทดสอบการส่งอีเมล์
                     </h3>
@@ -273,35 +264,35 @@
                     @csrf
                     <div class="space-y-4">
                         <div>
-                            <label for="test_email" class="block text-sm font-medium text-gray-700 mb-1">
+                            <label for="test_email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 อีเมลปลายทาง <span class="text-red-500">*</span>
                             </label>
                             <input type="email" 
                                    id="test_email" 
                                    name="test_email" 
-                                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                   class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                    placeholder="test@example.com"
                                    required>
                         </div>
                         <div>
-                            <label for="test_subject" class="block text-sm font-medium text-gray-700 mb-1">
+                            <label for="test_subject" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 หัวข้อ <span class="text-red-500">*</span>
                             </label>
                             <input type="text" 
                                    id="test_subject" 
                                    name="test_subject" 
-                                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                   class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                    placeholder="ทดสอบการส่งอีเมล์"
                                    required>
                         </div>
                         <div>
-                            <label for="test_message" class="block text-sm font-medium text-gray-700 mb-1">
+                            <label for="test_message" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 ข้อความ <span class="text-red-500">*</span>
                             </label>
                             <textarea id="test_message" 
                                       name="test_message" 
                                       rows="4"
-                                      class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                       placeholder="นี่คือข้อความทดสอบการส่งอีเมล์"
                                       required></textarea>
                         </div>

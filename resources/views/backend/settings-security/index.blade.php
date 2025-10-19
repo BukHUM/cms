@@ -1,27 +1,18 @@
 @extends('backend.layouts.app')
 
 @section('title', 'การตั้งค่าความปลอดภัย')
+@section('page-title', 'การตั้งค่าความปลอดภัย')
+@section('page-description', 'จัดการการตั้งค่าความปลอดภัยและนโยบายรหัสผ่าน')
 
 @section('content')
 <div class="main-content-area">
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6">
-        <div>
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">
-                <i class="fas fa-shield-alt mr-2"></i>
-                การตั้งค่าความปลอดภัย
-            </h1>
-            <p class="text-sm sm:text-base text-gray-600 mt-1">
-                จัดการการตั้งค่าความปลอดภัยและนโยบายรหัสผ่าน
-            </p>
-        </div>
-        <div class="mt-4 sm:mt-0 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-            <button onclick="resetToDefault()" 
-                    class="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 w-full sm:w-auto">
-                <i class="fas fa-undo mr-2"></i>
-                รีเซ็ตเป็นค่าเริ่มต้น
-            </button>
-        </div>
+    <!-- Action Buttons -->
+    <div class="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2 mb-6">
+        <button onclick="resetToDefault()" 
+                class="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 w-full sm:w-auto">
+            <i class="fas fa-undo mr-2"></i>
+            รีเซ็ตเป็นค่าเริ่มต้น
+        </button>
     </div>
 
     <!-- Security Settings Form -->

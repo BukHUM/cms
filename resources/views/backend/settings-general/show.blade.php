@@ -23,18 +23,18 @@
                     
                     <div class="flex flex-wrap items-center gap-2 mt-3">
                         @if($setting->is_active)
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
                                 <i class="fas fa-check-circle mr-1"></i>
                                 เปิดใช้งาน
                             </span>
                         @else
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
                                 <i class="fas fa-times-circle mr-1"></i>
                                 ปิดใช้งาน
                             </span>
                         @endif
                         
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200">
                             {{ ucfirst($setting->group_name) }}
                         </span>
                         
@@ -85,23 +85,23 @@
                     
                     <div>
                         <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">ค่า</dt>
-                        <dd class="mt-1 text-sm text-gray-900">
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
                             @if($setting->type === 'boolean')
                                 @if($setting->value)
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
                                         <i class="fas fa-check mr-1"></i>
                                         เปิด ({{ $setting->value }})
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
                                         <i class="fas fa-times mr-1"></i>
                                         ปิด ({{ $setting->value }})
                                     </span>
                                 @endif
                             @elseif($setting->type === 'json')
-                                <pre class="bg-gray-50 p-3 rounded border text-xs overflow-x-auto">{{ json_encode(json_decode($setting->value), JSON_PRETTY_PRINT) }}</pre>
+                                <pre class="bg-gray-50 dark:bg-gray-700 p-3 rounded border dark:border-gray-600 text-xs overflow-x-auto text-gray-900 dark:text-white">{{ json_encode(json_decode($setting->value), JSON_PRETTY_PRINT) }}</pre>
                             @else
-                                <span class="font-mono bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded border dark:border-gray-600 block">{{ $setting->value }}</span>
+                                <span class="font-mono bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded border dark:border-gray-600 block text-gray-900 dark:text-white">{{ $setting->value }}</span>
                             @endif
                         </dd>
                     </div>
@@ -119,7 +119,7 @@
                     <div>
                         <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">กลุ่ม</dt>
                         <dd class="mt-1">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200">
                                 {{ ucfirst($setting->group_name) }}
                             </span>
                         </dd>
@@ -129,9 +129,9 @@
         </div>
 
         <!-- Additional Information -->
-        <div class="bg-white rounded-lg shadow">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white">
                     <i class="fas fa-clock mr-2"></i>
                     ข้อมูลเพิ่มเติม
                 </h3>
@@ -139,15 +139,15 @@
             <div class="p-6">
                 <dl class="space-y-4">
                     <div>
-                        <dt class="text-sm font-medium text-gray-500">สถานะ</dt>
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">สถานะ</dt>
                         <dd class="mt-1">
                             @if($setting->is_active)
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
                                     <i class="fas fa-check-circle mr-1"></i>
                                     เปิดใช้งาน
                                 </span>
                             @else
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
                                     <i class="fas fa-times-circle mr-1"></i>
                                     ปิดใช้งาน
                                 </span>
@@ -156,9 +156,9 @@
                     </div>
                     
                     <div>
-                        <dt class="text-sm font-medium text-gray-500">ประเภทการตั้งค่า</dt>
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">ประเภทการตั้งค่า</dt>
                         <dd class="mt-1">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200">
                                 <i class="fas fa-user-cog mr-1"></i>
                                 กำหนดเอง
                             </span>
@@ -166,13 +166,13 @@
                     </div>
                     
                     <div>
-                        <dt class="text-sm font-medium text-gray-500">สร้างเมื่อ</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $setting->created_at->format('d/m/Y H:i') }}</dd>
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">สร้างเมื่อ</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ $setting->created_at->format('d/m/Y H:i') }}</dd>
                     </div>
                     
                     <div>
-                        <dt class="text-sm font-medium text-gray-500">อัปเดตล่าสุด</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $setting->updated_at->format('d/m/Y H:i') }}</dd>
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">อัปเดตล่าสุด</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ $setting->updated_at->format('d/m/Y H:i') }}</dd>
                     </div>
                 </dl>
             </div>
@@ -181,15 +181,15 @@
 
     <!-- Description -->
     @if($setting->description)
-        <div class="bg-white rounded-lg shadow mt-6">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow mt-6">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white">
                     <i class="fas fa-align-left mr-2"></i>
                     คำอธิบาย
                 </h3>
             </div>
             <div class="p-6">
-                <p class="text-gray-700 leading-relaxed">{{ $setting->description }}</p>
+                <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ $setting->description }}</p>
             </div>
         </div>
     @endif

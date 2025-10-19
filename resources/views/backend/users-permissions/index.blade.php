@@ -1,20 +1,17 @@
 @extends('backend.layouts.app')
 
 @section('title', 'จัดการสิทธิ์การเข้าถึง')
+@section('page-title', 'จัดการสิทธิ์การเข้าถึง')
+@section('page-description', 'จัดการสิทธิ์การเข้าถึงระบบ')
 
 @section('content')
 <div class="main-content-area">
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-6">
-        <div>
-            <h1 class="page-title">จัดการสิทธิ์การเข้าถึง</h1>
-            <p class="page-description">จัดการสิทธิ์การเข้าถึงระบบ</p>
-        </div>
-        <div>
-            <a href="{{ route('backend.permissions.create') }}" class="btn-primary">
-                <i class="fas fa-plus mr-2"></i> เพิ่มสิทธิ์ใหม่
-            </a>
-        </div>
+    <!-- Action Buttons -->
+    <div class="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2 mb-6">
+        <a href="{{ route('backend.permissions.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full sm:w-auto">
+            <i class="fas fa-plus mr-2"></i>
+            เพิ่มสิทธิ์ใหม่
+        </a>
     </div>
 
     <!-- Filters -->

@@ -1,27 +1,18 @@
 @extends('backend.layouts.app')
 
 @section('title', 'Audit Log - การติดตามการเปลี่ยนแปลง')
+@section('page-title', 'Audit Log')
+@section('page-description', 'การติดตามการเปลี่ยนแปลงในระบบ')
 
 @section('content')
 <div class="main-content">
     <main class="main-content-area">
-        <!-- Header Section -->
-        <div class="mb-6">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">
-                        <i class="fas fa-history mr-2 text-blue-600"></i>
-                        Audit Log
-                    </h1>
-                    <p class="text-sm text-gray-600 mt-1">การติดตามการเปลี่ยนแปลงในระบบ</p>
-                </div>
-                <div class="mt-4 sm:mt-0">
-                    <button onclick="exportAuditLogs()" class="btn-secondary">
-                        <i class="fas fa-download mr-2"></i>
-                        Export CSV
-                    </button>
-                </div>
-            </div>
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2 mb-6">
+            <button onclick="exportAuditLogs()" class="btn-secondary">
+                <i class="fas fa-download mr-2"></i>
+                Export CSV
+            </button>
         </div>
 
         <!-- Filter Section -->
@@ -101,7 +92,7 @@
                 <h3 class="card-title">
                     <i class="fas fa-list mr-2"></i>
                     รายการ Audit Log
-                    <span class="text-sm font-normal text-gray-500 ml-2">
+                    <span class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
                         ({{ $auditLogs->total() }} รายการ)
                     </span>
                 </h3>
@@ -127,33 +118,33 @@
                                     <td class="table-cell">
                                         <div class="text-sm">
                                             <div class="font-medium">{{ $log->created_at->format('d/m/Y') }}</div>
-                                            <div class="text-gray-500">{{ $log->created_at->format('H:i:s') }}</div>
+                                            <div class="text-gray-500 dark:text-gray-400">{{ $log->created_at->format('H:i:s') }}</div>
                                         </div>
                                     </td>
                                     <td class="table-cell">
                                         @if($log->user)
                                             <div class="flex items-center">
-                                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                                                    <i class="fas fa-user text-blue-600 text-sm"></i>
+                                                <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mr-3">
+                                                    <i class="fas fa-user text-blue-600 dark:text-blue-400 text-sm"></i>
                                                 </div>
                                                 <div>
                                                     <div class="font-medium text-sm">{{ $log->user->name }}</div>
-                                                    <div class="text-xs text-gray-500">{{ $log->user->email }}</div>
+                                                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ $log->user->email }}</div>
                                                 </div>
                                             </div>
                                         @else
-                                            <span class="text-gray-500 text-sm">System</span>
+                                            <span class="text-gray-500 dark:text-gray-400 text-sm">System</span>
                                         @endif
                                     </td>
                                     <td class="table-cell">
                                         @php
                                             $eventColors = [
-                                                'created' => 'bg-green-100 text-green-800',
-                                                'updated' => 'bg-blue-100 text-blue-800',
-                                                'deleted' => 'bg-red-100 text-red-800',
-                                                'restored' => 'bg-yellow-100 text-yellow-800',
+                                                'created' => 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
+                                                'updated' => 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
+                                                'deleted' => 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200',
+                                                'restored' => 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200',
                                             ];
-                                            $color = $eventColors[$log->event] ?? 'bg-gray-100 text-gray-800';
+                                            $color = $eventColors[$log->event] ?? 'bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200';
                                         @endphp
                                         <span class="badge {{ $color }}">
                                             {{ ucfirst($log->event) }}
@@ -206,7 +197,7 @@
                             @empty
                                 <tr>
                                     <td colspan="8" class="table-cell text-center py-8">
-                                        <div class="text-gray-500">
+                                        <div class="text-gray-500 dark:text-gray-400">
                                             <i class="fas fa-inbox text-4xl mb-4"></i>
                                             <p class="text-lg font-medium">ไม่พบข้อมูล Audit Log</p>
                                             <p class="text-sm">ยังไม่มีการเปลี่ยนแปลงในระบบ</p>
@@ -221,7 +212,7 @@
             
             <div class="card-footer">
                 <div class="flex items-center justify-between">
-                    <div class="text-sm text-gray-700">
+                    <div class="text-sm text-gray-700 dark:text-gray-300">
                         แสดง {{ $auditLogs->firstItem() ?? 0 }} ถึง {{ $auditLogs->lastItem() ?? 0 }} จาก {{ $auditLogs->total() }} รายการ
                     </div>
                     <div class="flex items-center">
