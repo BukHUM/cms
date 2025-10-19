@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use App\Models\Setting;
 
 class CheckMaintenanceMode
 {
@@ -15,8 +16,9 @@ class CheckMaintenanceMode
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check if maintenance mode is enabled
-        $maintenanceMode = setting('maintenance_mode', false);
+        try {
+            // Check if maintenance mode is enabled
+            $maintenanceMode = Setting::get('maintenance_mode', false);
         
         if ($maintenanceMode) {
             // Allow access to backend routes
@@ -35,13 +37,18 @@ class CheckMaintenanceMode
             }
             
             // Show maintenance page for all other routes
-            $maintenanceMessage = setting('maintenance_message', 'ระบบกำลังปรับปรุง กรุณาติดต่อผู้ดูแลระบบ');
+            $maintenanceMessage = Setting::get('maintenance_message', 'ระบบกำลังปรับปรุง กรุณาติดต่อผู้ดูแลระบบ');
             
             return response()->view('maintenance', [
                 'message' => $maintenanceMessage,
-                'siteName' => setting('site_name', 'CMS Backend System'),
-                'siteDescription' => setting('site_description', 'ระบบจัดการเนื้อหาแบบครบวงจร'),
+                'siteName' => Setting::get('site_name', 'CMS Backend System'),
+                'siteDescription' => Setting::get('site_description', 'ระบบจัดการเนื้อหาแบบครบวงจร'),
             ], 503);
+        }
+        } catch (\Exception $e) {
+            // If there's an error accessing settings, continue normally
+            // This prevents the middleware from breaking the entire application
+            \Log::warning('Maintenance mode check failed: ' . $e->getMessage());
         }
 
         return $next($request);
