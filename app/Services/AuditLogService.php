@@ -15,11 +15,11 @@ class AuditLogService
     public static function log(
         string $event,
         Model $auditable,
-        array $oldValues = null,
-        array $newValues = null,
-        Model $user = null,
-        Request $request = null,
-        string $tags = null
+        ?array $oldValues = null,
+        ?array $newValues = null,
+        ?Model $user = null,
+        ?Request $request = null,
+        ?string $tags = null
     ): AuditLog {
         $auditLog = new AuditLog([
             'event' => $event,
@@ -53,9 +53,9 @@ class AuditLogService
      */
     public static function logCreated(
         Model $auditable,
-        Model $user = null,
-        Request $request = null,
-        string $tags = null
+        ?Model $user = null,
+        ?Request $request = null,
+        ?string $tags = null
     ): AuditLog {
         return self::log(
             'created',
