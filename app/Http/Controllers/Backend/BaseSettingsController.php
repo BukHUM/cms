@@ -38,13 +38,49 @@ abstract class BaseSettingsController extends Controller
                 $search = $request->search;
                 $query->where(function ($q) use ($search) {
                     $q->where('key', 'like', "%{$search}%")
-                      ->orWhere('description', 'like', "%{$search}%");
+                      ->orWhere('description', 'like', "%{$search}%")
+                      ->orWhere('value', 'like', "%{$search}%");
                 });
             }
 
             // Status filter
             if ($request->filled('status')) {
                 $query->where('is_active', $request->status === 'active');
+            }
+
+            // Handle AJAX requests for live search
+            if ($request->ajax() && $request->has('ajax')) {
+                $settings = $query->orderBy('sort_order')->orderBy('key')->get();
+                
+                // Generate suggestions (limit to 5)
+                $suggestions = $settings->take(5)->map(function ($setting) {
+                    return [
+                        'id' => $setting->id,
+                        'key' => $setting->key,
+                        'description' => $setting->description,
+                        'type' => $setting->type,
+                        'type_icon' => $setting->type_icon ?? 'fas fa-cog',
+                    ];
+                });
+
+                return response()->json([
+                    'success' => true,
+                    'settings' => $settings->map(function ($setting) {
+                        return [
+                            'id' => $setting->id,
+                            'key' => $setting->key,
+                            'description' => $setting->description,
+                            'value' => $setting->value,
+                            'formatted_value' => $setting->formatted_value,
+                            'type' => $setting->type,
+                            'type_icon' => $setting->type_icon ?? 'fas fa-cog',
+                            'group_name' => $setting->group_name,
+                            'is_active' => $setting->is_active,
+                            'default_value' => $setting->default_value,
+                        ];
+                    }),
+                    'suggestions' => $suggestions,
+                ]);
             }
 
             // Get pagination setting or use default

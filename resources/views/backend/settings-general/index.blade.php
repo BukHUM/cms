@@ -9,40 +9,45 @@
     <!-- Filters -->
     <div class="bg-white rounded-lg shadow mb-6">
         <div class="p-6">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <!-- Search -->
                 <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fas fa-search text-gray-400"></i>
-                    </div>
                     <input type="text" 
                            id="search" 
                            placeholder="ค้นหาการตั้งค่า..." 
-                           class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 pl-10"
-                           value="{{ request('search') }}">
+                           class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 h-10"
+                           value="{{ request('search') }}"
+                           autocomplete="off">
+                    
+                    <!-- Search Suggestions Dropdown -->
+                    <div id="search-suggestions" class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg hidden max-h-60 overflow-y-auto">
+                        <!-- Suggestions will be populated here -->
+                    </div>
+                    
+                    <!-- Loading Indicator -->
+                    <div id="search-loading" class="absolute inset-y-0 right-0 pr-3 flex items-center hidden">
+                        <i class="fas fa-spinner fa-spin text-gray-400"></i>
+                    </div>
+                    
+                    <!-- Search Hint -->
+                    <div class="mt-1 text-xs text-gray-500">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        ค้นหาได้จาก: คีย์ (site_name), คำอธิบาย (ชื่อเว็บไซต์), ค่า (Core Backend)
+                    </div>
                 </div>
 
                 <!-- Status Filter -->
                 <select id="status-filter" 
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 h-10">
                     <option value="">ทุกสถานะ</option>
                     <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>เปิดใช้งาน</option>
                     <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>ปิดใช้งาน</option>
                 </select>
-            </div>
 
-            <!-- Action Buttons -->
-            <div class="flex flex-wrap gap-2 mt-4">
-                <button type="button" 
-                        id="apply-filters"
-                        class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    <i class="fas fa-filter mr-2"></i>
-                    กรองข้อมูล
-                </button>
-                
+                <!-- Clear Filters Button -->
                 <button type="button" 
                         id="clear-filters"
-                        class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                        class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 flex items-center justify-center h-10">
                     <i class="fas fa-times mr-2"></i>
                     ล้างตัวกรอง
                 </button>
@@ -61,7 +66,8 @@
         </div>
 
         @if($settings_generals->count() > 0)
-        <div class="overflow-x-auto">
+        <!-- Desktop Table View -->
+        <div class="hidden md:block overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
@@ -170,13 +176,81 @@
             </table>
         </div>
 
+        <!-- Mobile Card View -->
+        <div class="md:hidden space-y-4 p-4">
+            @foreach($settings_generals as $settings_general)
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <!-- Header with Key and Status -->
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center flex-1">
+                        <i class="{{ $settings_general->type_icon }} text-gray-400 mr-3 text-lg"></i>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-base font-medium text-gray-900 truncate">{{ $settings_general->key }}</h3>
+                            @if($settings_general->description)
+                            <p class="text-sm text-gray-500 mt-1">{{ Str::limit($settings_general->description, 80) }}</p>
+                            @endif
+                        </div>
+                    </div>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ $settings_general->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                        {{ $settings_general->is_active ? 'เปิด' : 'ปิด' }}
+                    </span>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-center space-x-3 pt-3 border-t border-gray-200">
+                    <!-- View Button -->
+                    <a href="{{ route('backend.settings-general.show', $settings_general->id) }}" 
+                       class="inline-flex items-center justify-center w-10 h-10 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-md transition-colors duration-200"
+                       title="ดูรายละเอียด">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    
+                    <!-- Edit Button -->
+                    <button type="button" 
+                            onclick="openEditModal({{ $settings_general->id }})"
+                            class="inline-flex items-center justify-center w-10 h-10 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-md transition-colors duration-200"
+                            title="แก้ไข">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    
+                    <!-- Toggle Status Button -->
+                    @if($settings_general->is_active)
+                    <button type="button" 
+                            onclick="toggleStatus({{ $settings_general->id }})"
+                            class="inline-flex items-center justify-center w-10 h-10 bg-green-100 text-green-600 hover:bg-green-200 hover:text-green-700 rounded-md transition-colors duration-200"
+                            title="ปิดการใช้งาน">
+                        <i class="fas fa-toggle-off"></i>
+                    </button>
+                    @else
+                    <button type="button" 
+                            onclick="toggleStatus({{ $settings_general->id }})"
+                            class="inline-flex items-center justify-center w-10 h-10 bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 rounded-md transition-colors duration-200"
+                            title="เปิดการใช้งาน">
+                        <i class="fas fa-toggle-on"></i>
+                    </button>
+                    @endif
+                    
+                    <!-- Reset Button (if has default value) -->
+                    @if($settings_general->default_value)
+                    <button type="button" 
+                            onclick="resetSetting({{ $settings_general->id }})"
+                            class="inline-flex items-center justify-center w-10 h-10 text-purple-600 hover:text-purple-900 hover:bg-purple-50 rounded-md transition-colors duration-200"
+                            title="รีเซ็ตเป็นค่าเริ่มต้น">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                    @endif
+                </div>
+            </div>
+            @endforeach
+        </div>
+
         <!-- Pagination -->
         <div class="px-6 py-4 border-t border-gray-200">
-            <div class="flex items-center justify-between">
-                <div class="text-sm text-gray-700">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                <div class="text-sm text-gray-700 text-center sm:text-left">
                     แสดง {{ $settings_generals->firstItem() ?? 0 }} ถึง {{ $settings_generals->lastItem() ?? 0 }} จาก {{ $settings_generals->total() }} รายการ
                 </div>
-                <div class="flex items-center">
+                <div class="flex items-center justify-center">
                     {{ $settings_generals->links() }}
                 </div>
             </div>
@@ -193,7 +267,7 @@
 
 <!-- Edit Modal -->
 <div id="editModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
-    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white dark:bg-gray-800">
+    <div class="relative top-4 sm:top-20 mx-auto p-4 sm:p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white dark:bg-gray-800 max-h-[90vh] overflow-y-auto">
         <!-- Modal Header -->
         <div class="flex justify-between items-center pb-3 border-b dark:border-gray-700">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
@@ -211,7 +285,7 @@
                 @csrf
                 @method('PUT')
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <!-- Left Column -->
                     <div class="space-y-4">
                         <!-- Key (Read-only) -->
@@ -400,20 +474,407 @@
 </div>
 
 <script>
-// Filter functionality
-document.getElementById('apply-filters').addEventListener('click', function() {
-    const search = document.getElementById('search').value;
-    const status = document.getElementById('status-filter').value;
+// Search functionality
+let searchTimeout;
+let currentSearchTerm = '';
+let currentSettings = [];
+
+// Live search functionality
+document.getElementById('search').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.trim();
+    currentSearchTerm = searchTerm;
     
-    const url = new URL(window.location);
-    if (search) url.searchParams.set('search', search);
-    if (status) url.searchParams.set('status', status);
+    // Clear previous timeout
+    clearTimeout(searchTimeout);
     
-    window.location.href = url.toString();
+    // Hide suggestions if search is empty
+    if (searchTerm === '') {
+        hideSuggestions();
+        resetTableToAll();
+        return;
+    }
+    
+    // Show loading indicator
+    showSearchLoading();
+    
+    // Debounce search - wait 300ms after user stops typing
+    searchTimeout = setTimeout(() => {
+        performLiveSearch(searchTerm);
+    }, 300);
 });
 
+// Show suggestions on focus
+document.getElementById('search').addEventListener('focus', function() {
+    if (this.value.trim() !== '') {
+        performLiveSearch(this.value.trim());
+    }
+});
+
+// Status filter functionality
+document.getElementById('status-filter').addEventListener('change', function() {
+    const searchTerm = document.getElementById('search').value.trim();
+    const status = this.value;
+    
+    // Clear previous timeout
+    clearTimeout(searchTimeout);
+    
+    // If no search term and no status filter, reset to all
+    if (searchTerm === '' && status === '') {
+        resetTableToAll();
+        return;
+    }
+    
+    // Show loading indicator
+    showSearchLoading();
+    
+    // Debounce filter - wait 300ms after user stops changing
+    searchTimeout = setTimeout(() => {
+        if (searchTerm !== '') {
+            performLiveSearch(searchTerm, false);
+        } else {
+            // Only status filter, no search term
+            performStatusFilter(status);
+        }
+    }, 300);
+});
+
+// Perform status filter only
+function performStatusFilter(status) {
+    // If no status filter, show all settings
+    if (!status || status === '') {
+        resetTableToAll();
+        return;
+    }
+    
+    let url = `{{ route('backend.settings-general.index') }}?ajax=1&status=${encodeURIComponent(status)}`;
+    
+    fetch(url, {
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideSearchLoading();
+        if (data.success) {
+            updateTableWithResults(data.settings);
+        } else {
+            console.error('Status filter failed:', data);
+        }
+    })
+    .catch(error => {
+        console.error('Status filter error:', error);
+        hideSearchLoading();
+    });
+}
+
+// Perform live search
+function performLiveSearch(searchTerm, showSuggestions = true) {
+    // If no search term, check if we have status filter
+    if (searchTerm === '') {
+        hideSuggestions();
+        const status = document.getElementById('status-filter').value;
+        if (status && status !== '') {
+            performStatusFilter(status);
+        } else {
+            resetTableToAll();
+        }
+        return;
+    }
+    
+    const status = document.getElementById('status-filter').value;
+    let url = `{{ route('backend.settings-general.index') }}?search=${encodeURIComponent(searchTerm)}&ajax=1`;
+    if (status) {
+        url += `&status=${encodeURIComponent(status)}`;
+    }
+    
+    fetch(url, {
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideSearchLoading();
+        if (data.success) {
+            updateTableWithResults(data.settings);
+            if (showSuggestions) {
+                showSuggestions(data.suggestions, searchTerm);
+            }
+        } else {
+            console.error('Search failed:', data);
+        }
+    })
+    .catch(error => {
+        console.error('Search error:', error);
+        hideSearchLoading();
+    });
+}
+
+// Update table with search results
+function updateTableWithResults(settings) {
+    const tbody = document.querySelector('tbody');
+    const mobileCards = document.querySelector('.md\\:hidden .space-y-4');
+    const tableHeader = document.querySelector('.text-lg.font-medium.text-gray-900');
+    
+    // Store current settings
+    currentSettings = settings;
+    
+    // Only require tbody, mobileCards is optional
+    if (!tbody) {
+        console.error('tbody not found, cannot update table');
+        return;
+    }
+    
+    // Update table header with count
+    if (tableHeader) {
+        tableHeader.textContent = `รายการการตั้งค่า (${settings.length} รายการ)`;
+    }
+    
+    // Update desktop table
+    tbody.innerHTML = '';
+    settings.forEach(setting => {
+        const row = createTableRow(setting);
+        tbody.appendChild(row);
+    });
+    
+    // Update mobile cards if found
+    if (mobileCards) {
+        mobileCards.innerHTML = '';
+        settings.forEach(setting => {
+            const card = createMobileCard(setting);
+            mobileCards.appendChild(card);
+        });
+    }
+}
+
+// Create table row with highlighting
+function createTableRow(setting) {
+    const row = document.createElement('tr');
+    row.className = 'hover:bg-gray-50';
+    
+    const highlightedKey = highlightText(setting.key, currentSearchTerm);
+    const highlightedDescription = setting.description ? highlightText(setting.description, currentSearchTerm) : '';
+    const highlightedValue = highlightText(setting.formatted_value, currentSearchTerm);
+    
+    row.innerHTML = `
+        <td class="px-6 py-4 whitespace-nowrap">
+            <div class="flex items-center">
+                <i class="${setting.type_icon} text-gray-400 mr-2"></i>
+                <div>
+                    <div class="text-sm font-medium text-gray-900">${highlightedKey}</div>
+                    ${highlightedDescription ? `<div class="text-sm text-gray-500">${highlightedDescription}</div>` : ''}
+                </div>
+            </div>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-gray-900 max-w-xs truncate">
+                ${highlightedValue}
+            </div>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                ${setting.type.charAt(0).toUpperCase() + setting.type.slice(1)}
+            </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                ${setting.group_name}
+            </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${setting.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                ${setting.is_active ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}
+            </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+            <div class="flex items-center space-x-3">
+                <a href="/backend/settings-general/${setting.id}" 
+                   class="inline-flex items-center justify-center w-8 h-8 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-md transition-colors duration-200"
+                   title="ดูรายละเอียด">
+                    <i class="fas fa-eye text-sm"></i>
+                </a>
+                <button type="button" 
+                        onclick="openEditModal(${setting.id})"
+                        class="inline-flex items-center justify-center w-8 h-8 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-md transition-colors duration-200"
+                        title="แก้ไข">
+                    <i class="fas fa-edit text-sm"></i>
+                </button>
+                ${setting.is_active ? 
+                    `<button type="button" onclick="toggleStatus(${setting.id})" class="inline-flex items-center justify-center w-8 h-8 bg-green-100 text-green-600 hover:bg-green-200 hover:text-green-700 rounded-md transition-colors duration-200" title="ปิดการใช้งาน"><i class="fas fa-toggle-off text-sm"></i></button>` :
+                    `<button type="button" onclick="toggleStatus(${setting.id})" class="inline-flex items-center justify-center w-8 h-8 bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 rounded-md transition-colors duration-200" title="เปิดการใช้งาน"><i class="fas fa-toggle-on text-sm"></i></button>`
+                }
+                ${setting.default_value ? 
+                    `<button type="button" onclick="resetSetting(${setting.id})" class="inline-flex items-center justify-center w-8 h-8 text-purple-600 hover:text-purple-900 hover:bg-purple-50 rounded-md transition-colors duration-200" title="รีเซ็ตเป็นค่าเริ่มต้น"><i class="fas fa-undo text-sm"></i></button>` : ''
+                }
+            </div>
+        </td>
+    `;
+    
+    return row;
+}
+
+// Create mobile card with highlighting
+function createMobileCard(setting) {
+    const card = document.createElement('div');
+    card.className = 'bg-white rounded-lg shadow-sm border border-gray-200 p-4';
+    
+    const highlightedKey = highlightText(setting.key, currentSearchTerm);
+    const highlightedDescription = setting.description ? highlightText(setting.description, currentSearchTerm) : '';
+    
+    card.innerHTML = `
+        <div class="flex items-start justify-between mb-4">
+            <div class="flex items-center flex-1">
+                <i class="${setting.type_icon} text-gray-400 mr-3 text-lg"></i>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-base font-medium text-gray-900 truncate">${highlightedKey}</h3>
+                    ${highlightedDescription ? `<p class="text-sm text-gray-500 mt-1">${highlightedDescription}</p>` : ''}
+                </div>
+            </div>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${setting.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                ${setting.is_active ? 'เปิด' : 'ปิด'}
+            </span>
+        </div>
+        <div class="flex items-center justify-center space-x-3 pt-3 border-t border-gray-200">
+            <a href="/backend/settings-general/${setting.id}" 
+               class="inline-flex items-center justify-center w-10 h-10 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-md transition-colors duration-200"
+               title="ดูรายละเอียด">
+                <i class="fas fa-eye"></i>
+            </a>
+            <button type="button" 
+                    onclick="openEditModal(${setting.id})"
+                    class="inline-flex items-center justify-center w-10 h-10 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-md transition-colors duration-200"
+                    title="แก้ไข">
+                <i class="fas fa-edit"></i>
+            </button>
+            ${setting.is_active ? 
+                `<button type="button" onclick="toggleStatus(${setting.id})" class="inline-flex items-center justify-center w-10 h-10 bg-green-100 text-green-600 hover:bg-green-200 hover:text-green-700 rounded-md transition-colors duration-200" title="ปิดการใช้งาน"><i class="fas fa-toggle-off"></i></button>` :
+                `<button type="button" onclick="toggleStatus(${setting.id})" class="inline-flex items-center justify-center w-10 h-10 bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 rounded-md transition-colors duration-200" title="เปิดการใช้งาน"><i class="fas fa-toggle-on"></i></button>`
+            }
+            ${setting.default_value ? 
+                `<button type="button" onclick="resetSetting(${setting.id})" class="inline-flex items-center justify-center w-10 h-10 text-purple-600 hover:text-purple-900 hover:bg-purple-50 rounded-md transition-colors duration-200" title="รีเซ็ตเป็นค่าเริ่มต้น"><i class="fas fa-undo"></i></button>` : ''
+            }
+        </div>
+    `;
+    
+    return card;
+}
+
+// Highlight search terms in text
+function highlightText(text, searchTerm) {
+    if (!searchTerm || !text) return text;
+    
+    // Convert to string if not already
+    const textStr = String(text);
+    
+    const regex = new RegExp(`(${escapeRegExp(searchTerm)})`, 'gi');
+    return textStr.replace(regex, '<mark class="bg-yellow-200 px-1 rounded">$1</mark>');
+}
+
+// Escape special regex characters
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Show search suggestions
+function showSuggestions(suggestions, searchTerm) {
+    const suggestionsContainer = document.getElementById('search-suggestions');
+    
+    if (!suggestions || suggestions.length === 0) {
+        hideSuggestions();
+        return;
+    }
+    
+    suggestionsContainer.innerHTML = '';
+    
+    suggestions.forEach(suggestion => {
+        const item = document.createElement('div');
+        item.className = 'px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0';
+        item.innerHTML = `
+            <div class="flex items-center">
+                <i class="${suggestion.type_icon} text-gray-400 mr-2"></i>
+                <div class="flex-1">
+                    <div class="text-sm font-medium text-gray-900">${highlightText(suggestion.key, searchTerm)}</div>
+                    <div class="text-xs text-gray-500">${highlightText(suggestion.description || '', searchTerm)}</div>
+                </div>
+                <span class="text-xs text-gray-400">${suggestion.type}</span>
+            </div>
+        `;
+        
+        item.addEventListener('click', function() {
+            document.getElementById('search').value = suggestion.key;
+            currentSearchTerm = suggestion.key;
+            hideSuggestions();
+            // Perform search again to get the correct data, but don't show suggestions
+            performLiveSearch(suggestion.key, false);
+        });
+        
+        suggestionsContainer.appendChild(item);
+    });
+    
+    suggestionsContainer.classList.remove('hidden');
+}
+
+// Hide search suggestions
+function hideSuggestions() {
+    document.getElementById('search-suggestions').classList.add('hidden');
+}
+
+// Show search loading indicator
+function showSearchLoading() {
+    document.getElementById('search-loading').classList.remove('hidden');
+}
+
+// Hide search loading indicator
+function hideSearchLoading() {
+    document.getElementById('search-loading').classList.add('hidden');
+}
+
+// Reset table to show all settings
+function resetTableToAll() {
+    const tbody = document.querySelector('tbody');
+    const mobileCards = document.querySelector('.md\\:hidden .space-y-4');
+    const tableHeader = document.querySelector('.text-lg.font-medium.text-gray-900');
+    
+    if (!tbody) return;
+    
+    // Show loading indicator
+    showSearchLoading();
+    
+    // Fetch all settings without any filters
+    fetch(`{{ route('backend.settings-general.index') }}?ajax=1`, {
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideSearchLoading();
+        if (data.success) {
+            updateTableWithResults(data.settings);
+        } else {
+            console.error('Reset failed:', data);
+        }
+    })
+    .catch(error => {
+        console.error('Reset error:', error);
+        hideSearchLoading();
+    });
+}
+
+// Filter functionality
 document.getElementById('clear-filters').addEventListener('click', function() {
-    window.location.href = '{{ route('backend.settings-general.index') }}';
+    document.getElementById('search').value = '';
+    document.getElementById('status-filter').value = '';
+    currentSearchTerm = '';
+    hideSuggestions();
+    resetTableToAll();
 });
 
 function toggleStatus(id) {

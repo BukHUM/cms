@@ -29,13 +29,13 @@ class SettingsEmailController extends Controller
     public function update(Request $request)
     {
         $validated = $request->validate([
-            'mail_from_address' => ['required', 'email'],
+            'mail_driver' => ['required', 'string', 'in:gmail,office365,mailtrap,hotmail,smtp'],
             'mail_from_name' => ['required', 'string', 'max:255'],
             'mail_smtp_host' => ['required', 'string', 'max:255'],
             'mail_smtp_port' => ['required', 'integer', 'min:1', 'max:65535'],
             'mail_smtp_username' => ['nullable', 'string', 'max:255'],
             'mail_smtp_password' => ['nullable', 'string', 'max:255'],
-            'mail_smtp_encryption' => ['required', 'string', 'in:tls,ssl,none'],
+            'mail_smtp_encryption' => ['required', 'string', 'max:255'],
             'enable_email_notifications' => ['boolean'],
             'mail_queue_enabled' => ['boolean'],
             'mail_retry_attempts' => ['integer', 'min:1', 'max:10'],
@@ -60,7 +60,7 @@ class SettingsEmailController extends Controller
             return response()->json(['message' => 'Email settings updated successfully']);
         }
 
-        return redirect()->route('backend.email-settings.index')->with('success', 'อัปเดตการตั้งค่าอีเมล์เรียบร้อยแล้ว');
+        return redirect()->route('backend.settings-email.index')->with('success', 'อัปเดตการตั้งค่าอีเมล์เรียบร้อยแล้ว');
     }
 
     public function testEmail(Request $request)
@@ -101,14 +101,15 @@ class SettingsEmailController extends Controller
 
     public function resetToDefault(Request $request)
     {
+        $mailService = new MailService();
         $defaultSettings = [
-            'mail_from_address' => 'noreply@example.com',
-            'mail_from_name' => 'CMS Backend',
-            'mail_smtp_host' => 'smtp.gmail.com',
-            'mail_smtp_port' => '587',
-            'mail_smtp_username' => '',
-            'mail_smtp_password' => '',
-            'mail_smtp_encryption' => 'tls',
+            'mail_driver' => 'mailtrap',
+            'mail_from_name' => 'Laravel Backend',
+            'mail_smtp_host' => 'sandbox.smtp.mailtrap.io',
+            'mail_smtp_port' => '2525',
+            'mail_smtp_username' => 'your_mailtrap_username',
+            'mail_smtp_password' => 'your_mailtrap_password',
+            'mail_smtp_encryption' => 'TLS',
             'enable_email_notifications' => 'true',
             'mail_queue_enabled' => 'false',
             'mail_retry_attempts' => '3',
@@ -132,7 +133,7 @@ class SettingsEmailController extends Controller
             return response()->json(['message' => 'Email settings reset to default']);
         }
 
-        return redirect()->route('backend.email-settings.index')->with('success', 'รีเซ็ตการตั้งค่าอีเมล์เป็นค่าเริ่มต้นเรียบร้อยแล้ว');
+        return redirect()->route('backend.settings-email.index')->with('success', 'รีเซ็ตการตั้งค่าอีเมล์เป็นค่าเริ่มต้นเรียบร้อยแล้ว');
     }
 
     public function validateSettings(Request $request)
@@ -166,7 +167,7 @@ class SettingsEmailController extends Controller
     private function getSettingType($key)
     {
         $types = [
-            'mail_from_address' => 'email',
+            'mail_driver' => 'string',
             'mail_from_name' => 'string',
             'mail_smtp_host' => 'string',
             'mail_smtp_port' => 'integer',
@@ -184,7 +185,7 @@ class SettingsEmailController extends Controller
     private function getSettingDescription($key)
     {
         $descriptions = [
-            'mail_from_address' => 'อีเมลผู้ส่ง',
+            'mail_driver' => 'Mail Driver',
             'mail_from_name' => 'ชื่อผู้ส่งอีเมล',
             'mail_smtp_host' => 'SMTP Host Server',
             'mail_smtp_port' => 'SMTP Port',

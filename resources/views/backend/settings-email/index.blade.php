@@ -36,57 +36,145 @@
             @method('PUT')
             
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <!-- Left Column - Basic Settings -->
+                <!-- Left Column -->
                 <div class="space-y-6">
-                    <div class="border-b border-gray-200 pb-4">
-                        <h3 class="text-lg font-semibold text-gray-900">
-                            <i class="fas fa-cog mr-2"></i>
-                            การตั้งค่าพื้นฐาน
-                        </h3>
-                    </div>
-
-                    <!-- From Address -->
+                    <!-- Mail Driver -->
                     <div>
-                        <label for="mail_from_address" class="block text-sm font-medium text-gray-700 mb-1">
-                            <i class="fas fa-envelope mr-1"></i>
-                            อีเมลผู้ส่ง <span class="text-red-500">*</span>
+                        <label for="mail_driver" class="block text-sm font-medium text-gray-700 mb-1">
+                            Mail Driver
                         </label>
-                        <input type="email" 
-                               id="mail_from_address" 
-                               name="mail_from_address" 
-                               value="{{ old('mail_from_address', $emailSettings['mail_from_address']->value ?? '') }}"
-                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('mail_from_address') border-red-500 @enderror"
-                               placeholder="noreply@example.com"
-                               required>
-                        @error('mail_from_address')
+                        <select id="mail_driver" 
+                                name="mail_driver" 
+                                onchange="updateMailConfig()"
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('mail_driver') border-red-500 @enderror">
+                            <option value="gmail" {{ old('mail_driver', $emailSettings['mail_driver']->value ?? '') == 'gmail' ? 'selected' : '' }}>Gmail</option>
+                            <option value="office365" {{ old('mail_driver', $emailSettings['mail_driver']->value ?? '') == 'office365' ? 'selected' : '' }}>Office 365</option>
+                            <option value="mailtrap" {{ old('mail_driver', $emailSettings['mail_driver']->value ?? '') == 'mailtrap' ? 'selected' : '' }}>Mailtrap</option>
+                            <option value="hotmail" {{ old('mail_driver', $emailSettings['mail_driver']->value ?? '') == 'hotmail' ? 'selected' : '' }}>Hotmail</option>
+                            <option value="smtp" {{ old('mail_driver', $emailSettings['mail_driver']->value ?? '') == 'smtp' ? 'selected' : '' }}>SMTP (Custom)</option>
+                        </select>
+                        @error('mail_driver')
                             <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                         @enderror
-                        <p class="text-xs text-gray-500 mt-1">อีเมลที่ใช้เป็นผู้ส่ง</p>
+                        <p class="text-xs text-gray-500 mt-1">เลือกวิธีการส่งอีเมล ระบบจะตั้งค่าอัตโนมัติตามที่เลือก</p>
+                    </div>
+
+                    <!-- Mail Port -->
+                    <div>
+                        <label for="mail_smtp_port" class="block text-sm font-medium text-gray-700 mb-1">
+                            Mail Port
+                        </label>
+                        <input type="number" 
+                               id="mail_smtp_port" 
+                               name="mail_smtp_port" 
+                               value="{{ old('mail_smtp_port', $emailSettings['mail_smtp_port']->value ?? '') }}"
+                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('mail_smtp_port') border-red-500 @enderror"
+                               placeholder="587"
+                               min="1" max="65535">
+                        @error('mail_smtp_port')
+                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                        <p class="text-xs text-gray-500 mt-1">พอร์ตมาตรฐาน: 587 (TLS), 465 (SSL), 25 (ไม่เข้ารหัส)</p>
+                    </div>
+
+                    <!-- Password -->
+                    <div>
+                        <label for="mail_smtp_password" class="block text-sm font-medium text-gray-700 mb-1">
+                            Password
+                        </label>
+                        <div class="relative">
+                            <input type="password" 
+                                   id="mail_smtp_password" 
+                                   name="mail_smtp_password" 
+                                   value="{{ old('mail_smtp_password', $emailSettings['mail_smtp_password']->value ?? '') }}"
+                                   class="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('mail_smtp_password') border-red-500 @enderror"
+                                   placeholder="รหัสผ่านอีเมล">
+                            <button type="button" 
+                                    onclick="togglePassword('mail_smtp_password')"
+                                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-eye" id="mail_smtp_password_icon"></i>
+                            </button>
+                        </div>
+                        @error('mail_smtp_password')
+                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                        <p class="text-xs text-gray-500 mt-1">รหัสผ่านอีเมล</p>
                     </div>
 
                     <!-- From Name -->
                     <div>
                         <label for="mail_from_name" class="block text-sm font-medium text-gray-700 mb-1">
-                            <i class="fas fa-user mr-1"></i>
-                            ชื่อผู้ส่ง <span class="text-red-500">*</span>
+                            From Name
                         </label>
                         <input type="text" 
                                id="mail_from_name" 
                                name="mail_from_name" 
                                value="{{ old('mail_from_name', $emailSettings['mail_from_name']->value ?? '') }}"
                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('mail_from_name') border-red-500 @enderror"
-                               placeholder="CMS Backend"
-                               required>
+                               placeholder="Laravel Backend">
                         @error('mail_from_name')
                             <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                         @enderror
-                        <p class="text-xs text-gray-500 mt-1">ชื่อที่แสดงในอีเมล</p>
+                        <p class="text-xs text-gray-500 mt-1">ชื่อที่ผู้รับจะเห็น เช่น "ระบบแจ้งเตือน", "ทีมสนับสนุน"</p>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="space-y-6">
+                    <!-- Mail Host -->
+                    <div>
+                        <label for="mail_smtp_host" class="block text-sm font-medium text-gray-700 mb-1">
+                            Mail Host
+                        </label>
+                        <input type="text" 
+                               id="mail_smtp_host" 
+                               name="mail_smtp_host" 
+                               value="{{ old('mail_smtp_host', $emailSettings['mail_smtp_host']->value ?? '') }}"
+                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('mail_smtp_host') border-red-500 @enderror"
+                               placeholder="smtp.gmail.com">
+                        @error('mail_smtp_host')
+                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                        <p class="text-xs text-gray-500 mt-1">ตัวอย่าง: smtp.gmail.com, smtp.outlook.com, mail.yourdomain.com</p>
+                    </div>
+
+                    <!-- Username -->
+                    <div>
+                        <label for="mail_smtp_username" class="block text-sm font-medium text-gray-700 mb-1">
+                            Username
+                        </label>
+                        <input type="text" 
+                               id="mail_smtp_username" 
+                               name="mail_smtp_username" 
+                               value="{{ old('mail_smtp_username', $emailSettings['mail_smtp_username']->value ?? '') }}"
+                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('mail_smtp_username') border-red-500 @enderror"
+                               placeholder="your-email@gmail.com">
+                        @error('mail_smtp_username')
+                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                        <p class="text-xs text-gray-500 mt-1">อีเมลที่ใช้สำหรับการส่ง หรือ username ของเซิร์ฟเวอร์อีเมล</p>
+                    </div>
+
+                    <!-- Encryption -->
+                    <div>
+                        <label for="mail_smtp_encryption" class="block text-sm font-medium text-gray-700 mb-1">
+                            Encryption
+                        </label>
+                        <input type="text" 
+                               id="mail_smtp_encryption" 
+                               name="mail_smtp_encryption" 
+                               value="{{ old('mail_smtp_encryption', $emailSettings['mail_smtp_encryption']->value ?? '') }}"
+                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('mail_smtp_encryption') border-red-500 @enderror"
+                               placeholder="TLS">
+                        @error('mail_smtp_encryption')
+                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                        <p class="text-xs text-gray-500 mt-1">แนะนำใช้ TLS สำหรับความปลอดภัย หรือ SSL สำหรับพอร์ต 465</p>
                     </div>
 
                     <!-- Enable Notifications -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
-                            <i class="fas fa-bell mr-1"></i>
                             การแจ้งเตือน
                         </label>
                         <div class="flex items-center">
@@ -101,119 +189,6 @@
                             </label>
                         </div>
                         <p class="text-xs text-gray-500 mt-1">ส่งการแจ้งเตือนต่างๆ ทางอีเมล</p>
-                    </div>
-                </div>
-
-                <!-- Right Column - SMTP Settings -->
-                <div class="space-y-6">
-                    <div class="border-b border-gray-200 pb-4">
-                        <h3 class="text-lg font-semibold text-gray-900">
-                            <i class="fas fa-server mr-2"></i>
-                            การตั้งค่า SMTP
-                        </h3>
-                    </div>
-
-                    <!-- SMTP Host -->
-                    <div>
-                        <label for="mail_smtp_host" class="block text-sm font-medium text-gray-700 mb-1">
-                            <i class="fas fa-server mr-1"></i>
-                            SMTP Host <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text" 
-                               id="mail_smtp_host" 
-                               name="mail_smtp_host" 
-                               value="{{ old('mail_smtp_host', $emailSettings['mail_smtp_host']->value ?? '') }}"
-                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('mail_smtp_host') border-red-500 @enderror"
-                               placeholder="smtp.gmail.com"
-                               required>
-                        @error('mail_smtp_host')
-                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                        @enderror
-                        <p class="text-xs text-gray-500 mt-1">เซิร์ฟเวอร์ SMTP</p>
-                    </div>
-
-                    <!-- SMTP Port -->
-                    <div>
-                        <label for="mail_smtp_port" class="block text-sm font-medium text-gray-700 mb-1">
-                            <i class="fas fa-plug mr-1"></i>
-                            SMTP Port <span class="text-red-500">*</span>
-                        </label>
-                        <input type="number" 
-                               id="mail_smtp_port" 
-                               name="mail_smtp_port" 
-                               value="{{ old('mail_smtp_port', $emailSettings['mail_smtp_port']->value ?? '') }}"
-                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('mail_smtp_port') border-red-500 @enderror"
-                               placeholder="587"
-                               min="1" max="65535"
-                               required>
-                        @error('mail_smtp_port')
-                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                        @enderror
-                        <p class="text-xs text-gray-500 mt-1">พอร์ต SMTP (587 สำหรับ TLS, 465 สำหรับ SSL)</p>
-                    </div>
-
-                    <!-- SMTP Encryption -->
-                    <div>
-                        <label for="mail_smtp_encryption" class="block text-sm font-medium text-gray-700 mb-1">
-                            <i class="fas fa-lock mr-1"></i>
-                            การเข้ารหัส <span class="text-red-500">*</span>
-                        </label>
-                        <select id="mail_smtp_encryption" 
-                                name="mail_smtp_encryption" 
-                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('mail_smtp_encryption') border-red-500 @enderror"
-                                required>
-                            <option value="">เลือกการเข้ารหัส</option>
-                            <option value="tls" {{ old('mail_smtp_encryption', $emailSettings['mail_smtp_encryption']->value ?? '') == 'tls' ? 'selected' : '' }}>TLS</option>
-                            <option value="ssl" {{ old('mail_smtp_encryption', $emailSettings['mail_smtp_encryption']->value ?? '') == 'ssl' ? 'selected' : '' }}>SSL</option>
-                            <option value="none" {{ old('mail_smtp_encryption', $emailSettings['mail_smtp_encryption']->value ?? '') == 'none' ? 'selected' : '' }}>ไม่เข้ารหัส</option>
-                        </select>
-                        @error('mail_smtp_encryption')
-                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                        @enderror
-                        <p class="text-xs text-gray-500 mt-1">การเข้ารหัสการเชื่อมต่อ</p>
-                    </div>
-
-                    <!-- SMTP Username -->
-                    <div>
-                        <label for="mail_smtp_username" class="block text-sm font-medium text-gray-700 mb-1">
-                            <i class="fas fa-user mr-1"></i>
-                            SMTP Username
-                        </label>
-                        <input type="text" 
-                               id="mail_smtp_username" 
-                               name="mail_smtp_username" 
-                               value="{{ old('mail_smtp_username', $emailSettings['mail_smtp_username']->value ?? '') }}"
-                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('mail_smtp_username') border-red-500 @enderror"
-                               placeholder="your-email@gmail.com">
-                        @error('mail_smtp_username')
-                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                        @enderror
-                        <p class="text-xs text-gray-500 mt-1">ชื่อผู้ใช้ SMTP (ถ้าต้องการ)</p>
-                    </div>
-
-                    <!-- SMTP Password -->
-                    <div>
-                        <label for="mail_smtp_password" class="block text-sm font-medium text-gray-700 mb-1">
-                            <i class="fas fa-key mr-1"></i>
-                            SMTP Password
-                        </label>
-                        <div class="relative">
-                            <input type="password" 
-                                   id="mail_smtp_password" 
-                                   name="mail_smtp_password" 
-                                   value="{{ old('mail_smtp_password', $emailSettings['mail_smtp_password']->value ?? '') }}"
-                                   class="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 @error('mail_smtp_password') border-red-500 @enderror"
-                                   placeholder="รหัสผ่าน SMTP">
-                            <button type="button" 
-                                    onclick="togglePassword('mail_smtp_password')"
-                                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
-                                <i class="fas fa-eye" id="mail_smtp_password_icon"></i>
-                            </button>
-                        </div>
-                        @error('mail_smtp_password')
-                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                        @enderror
-                        <p class="text-xs text-gray-500 mt-1">รหัสผ่าน SMTP (ถ้าต้องการ)</p>
                     </div>
                 </div>
             </div>
@@ -391,6 +366,89 @@
             modal.classList.add('hidden');
         }
     };
+
+    // Mail Driver configurations
+    const mailConfigs = {
+        gmail: {
+            host: 'smtp.gmail.com',
+            port: '587',
+            encryption: 'TLS',
+            username: '',
+            password: '',
+            hint: 'สำหรับ Gmail ต้องใช้ App Password แทนรหัสผ่านปกติ'
+        },
+        office365: {
+            host: 'smtp.office365.com',
+            port: '587',
+            encryption: 'TLS',
+            username: '',
+            password: '',
+            hint: 'สำหรับ Office 365 ใช้ email และรหัสผ่านของบัญชี'
+        },
+        mailtrap: {
+            host: 'sandbox.smtp.mailtrap.io',
+            port: '2525',
+            encryption: 'TLS',
+            username: 'your_mailtrap_username',
+            password: 'your_mailtrap_password',
+            hint: 'สำหรับ Mailtrap.io ใช้ข้อมูลจาก Dashboard'
+        },
+        hotmail: {
+            host: 'smtp-mail.outlook.com',
+            port: '587',
+            encryption: 'TLS',
+            username: '',
+            password: '',
+            hint: 'สำหรับ Hotmail/Outlook ใช้ email และรหัสผ่านของบัญชี'
+        },
+        smtp: {
+            host: '',
+            port: '587',
+            encryption: 'TLS',
+            username: '',
+            password: '',
+            hint: 'สำหรับ SMTP แบบกำหนดเอง กรุณากรอกข้อมูลเอง'
+        }
+    };
+
+    // Update mail configuration based on selected driver
+    window.updateMailConfig = function() {
+        const driver = document.getElementById('mail_driver').value;
+        const config = mailConfigs[driver];
+        
+        if (config) {
+            document.getElementById('mail_smtp_host').value = config.host;
+            document.getElementById('mail_smtp_port').value = config.port;
+            document.getElementById('mail_smtp_encryption').value = config.encryption;
+            
+            // Update placeholders
+            document.getElementById('mail_smtp_host').placeholder = config.host;
+            document.getElementById('mail_smtp_port').placeholder = config.port;
+            document.getElementById('mail_smtp_encryption').placeholder = config.encryption;
+            
+            // Update hints
+            const usernameHint = document.querySelector('#mail_smtp_username').parentNode.querySelector('.text-xs');
+            const passwordHint = document.querySelector('#mail_smtp_password').parentNode.querySelector('.text-xs');
+            
+            if (usernameHint) {
+                usernameHint.textContent = config.hint;
+            }
+            if (passwordHint) {
+                passwordHint.textContent = config.hint;
+            }
+            
+            // Clear username and password for security
+            if (driver !== 'mailtrap') {
+                document.getElementById('mail_smtp_username').value = '';
+                document.getElementById('mail_smtp_password').value = '';
+            }
+        }
+    };
+
+    // Initialize configuration on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateMailConfig();
+    });
 
     // Reset to default
     window.resetToDefault = function() {

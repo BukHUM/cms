@@ -14,9 +14,12 @@ class MailService
     public function sendTestEmail($to, $subject, $message)
     {
         try {
+            // Configure SMTP settings dynamically
+            $this->configureSmtpSettings();
+            
             // Get email settings
-            $fromAddress = Setting::get('mail_from_address', 'noreply@example.com');
-            $fromName = Setting::get('mail_from_name', 'CMS Backend');
+            $fromName = Setting::get('mail_from_name', 'Laravel Backend');
+            $fromAddress = $to; // Use recipient email as from address for testing
 
             // Send email
             Mail::raw($message, function ($mail) use ($to, $subject, $fromAddress, $fromName) {
@@ -40,6 +43,29 @@ class MailService
     }
 
     /**
+     * Configure SMTP settings dynamically
+     */
+    private function configureSmtpSettings()
+    {
+        $smtpHost = Setting::get('mail_smtp_host');
+        $smtpPort = Setting::get('mail_smtp_port');
+        $smtpUsername = Setting::get('mail_smtp_username');
+        $smtpPassword = Setting::get('mail_smtp_password');
+        $smtpEncryption = Setting::get('mail_smtp_encryption');
+
+        if ($smtpHost && $smtpPort) {
+            config([
+                'mail.default' => 'smtp',
+                'mail.mailers.smtp.host' => $smtpHost,
+                'mail.mailers.smtp.port' => $smtpPort,
+                'mail.mailers.smtp.username' => $smtpUsername,
+                'mail.mailers.smtp.password' => $smtpPassword,
+                'mail.mailers.smtp.encryption' => strtolower($smtpEncryption),
+            ]);
+        }
+    }
+
+    /**
      * Send notification email
      */
     public function sendNotification($to, $subject, $message, $data = [])
@@ -53,8 +79,11 @@ class MailService
         }
 
         try {
-            $fromAddress = Setting::get('mail_from_address', 'noreply@example.com');
-            $fromName = Setting::get('mail_from_name', 'CMS Backend');
+            // Configure SMTP settings dynamically
+            $this->configureSmtpSettings();
+            
+            $fromName = Setting::get('mail_from_name', 'Laravel Backend');
+            $fromAddress = $to; // Use recipient email as from address for notifications
 
             Mail::send('emails.notification', [
                 'message' => $message,
@@ -154,7 +183,6 @@ class MailService
     public function validateEmailSettings()
     {
         $requiredSettings = [
-            'mail_from_address',
             'mail_from_name',
             'mail_smtp_host',
             'mail_smtp_port',
@@ -167,12 +195,6 @@ class MailService
             if (empty($value)) {
                 $errors[] = "Setting '{$setting}' is required";
             }
-        }
-
-        // Validate email format
-        $fromAddress = Setting::get('mail_from_address');
-        if ($fromAddress && !filter_var($fromAddress, FILTER_VALIDATE_EMAIL)) {
-            $errors[] = "Invalid email format for 'mail_from_address'";
         }
 
         // Validate port
@@ -193,7 +215,6 @@ class MailService
     public function getEmailSettingsSummary()
     {
         return [
-            'from_address' => Setting::get('mail_from_address'),
             'from_name' => Setting::get('mail_from_name'),
             'smtp_host' => Setting::get('mail_smtp_host'),
             'smtp_port' => Setting::get('mail_smtp_port'),
@@ -202,5 +223,68 @@ class MailService
             'queue_enabled' => Setting::get('mail_queue_enabled', false),
             'retry_attempts' => Setting::get('mail_retry_attempts', 3),
         ];
+    }
+
+    /**
+     * Get Mailtrap.io default settings
+     */
+    public function getMailtrapDefaults()
+    {
+        return [
+            'mail_driver' => 'mailtrap',
+            'mail_smtp_host' => 'sandbox.smtp.mailtrap.io',
+            'mail_smtp_port' => '2525',
+            'mail_smtp_username' => 'your_mailtrap_username',
+            'mail_smtp_password' => 'your_mailtrap_password',
+            'mail_smtp_encryption' => 'TLS',
+        ];
+    }
+
+    /**
+     * Get mail driver configurations
+     */
+    public function getMailDriverConfigs()
+    {
+        return [
+            'gmail' => [
+                'host' => 'smtp.gmail.com',
+                'port' => '587',
+                'encryption' => 'TLS',
+                'hint' => 'สำหรับ Gmail ต้องใช้ App Password แทนรหัสผ่านปกติ'
+            ],
+            'office365' => [
+                'host' => 'smtp.office365.com',
+                'port' => '587',
+                'encryption' => 'TLS',
+                'hint' => 'สำหรับ Office 365 ใช้ email และรหัสผ่านของบัญชี'
+            ],
+            'mailtrap' => [
+                'host' => 'sandbox.smtp.mailtrap.io',
+                'port' => '2525',
+                'encryption' => 'TLS',
+                'hint' => 'สำหรับ Mailtrap.io ใช้ข้อมูลจาก Dashboard'
+            ],
+            'hotmail' => [
+                'host' => 'smtp-mail.outlook.com',
+                'port' => '587',
+                'encryption' => 'TLS',
+                'hint' => 'สำหรับ Hotmail/Outlook ใช้ email และรหัสผ่านของบัญชี'
+            ],
+            'smtp' => [
+                'host' => '',
+                'port' => '587',
+                'encryption' => 'TLS',
+                'hint' => 'สำหรับ SMTP แบบกำหนดเอง กรุณากรอกข้อมูลเอง'
+            ]
+        ];
+    }
+
+    /**
+     * Check if current settings are using Mailtrap.io
+     */
+    public function isUsingMailtrap()
+    {
+        $smtpHost = Setting::get('mail_smtp_host');
+        return strpos($smtpHost, 'mailtrap.io') !== false;
     }
 }
