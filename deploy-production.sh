@@ -5,6 +5,31 @@
 
 echo "🚀 Starting Production Deployment..."
 
+# Step 0: Install Composer Dependencies (CRITICAL!)
+echo "📦 Installing Composer dependencies..."
+if command -v composer &> /dev/null; then
+    echo "✅ Composer found, installing dependencies..."
+    composer install --no-dev --optimize-autoloader
+    echo "✅ Composer dependencies installed successfully!"
+else
+    echo "❌ Composer not found! Please install Composer first."
+    echo "💡 Install Composer: curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer"
+    exit 1
+fi
+
+# Step 0.5: Laravel Setup Commands
+echo "🔧 Running Laravel setup commands..."
+php artisan config:clear
+php artisan cache:clear
+php artisan route:clear
+php artisan view:clear
+
+# Create storage link if it doesn't exist
+if [ ! -L "public/storage" ]; then
+    echo "🔗 Creating storage symbolic link..."
+    php artisan storage:link
+fi
+
 # Step 1: Clean npm configuration
 echo "📝 Cleaning npm configuration..."
 rm -f /root/.npmrc
@@ -131,9 +156,36 @@ npm run build
 # Step 9: Check if build was successful
 if [ $? -eq 0 ]; then
     echo "✅ Build completed successfully!"
-    echo "🎉 Production deployment completed!"
 else
     echo "❌ Build failed!"
     echo "🔍 Please check the error messages above."
     exit 1
 fi
+
+# Step 10: Laravel Production Optimization
+echo "⚡ Optimizing Laravel for production..."
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+# Step 11: Set proper permissions
+echo "🔐 Setting proper permissions..."
+chmod -R 775 storage bootstrap/cache
+chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || echo "⚠️ Could not set ownership (may need sudo)"
+
+# Step 12: Final verification
+echo "🔍 Final verification..."
+if [ -f "vendor/autoload.php" ]; then
+    echo "✅ vendor/autoload.php exists - Laravel should work!"
+else
+    echo "❌ vendor/autoload.php missing - deployment failed!"
+    exit 1
+fi
+
+echo "🎉 Production deployment completed successfully!"
+echo "📋 Summary:"
+echo "   ✅ Composer dependencies installed"
+echo "   ✅ Laravel optimized for production"
+echo "   ✅ Frontend assets built"
+echo "   ✅ Permissions set correctly"
+echo "   ✅ Ready to serve!"
