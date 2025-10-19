@@ -16,9 +16,20 @@ class CheckMaintenanceMode
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Default values
+        $maintenanceMode = false;
+        
         try {
-            // Check if maintenance mode is enabled
-            $maintenanceMode = Setting::get('maintenance_mode', false);
+            // Check if database is available
+            if (\DB::connection()->getPdo()) {
+                // Check if maintenance mode is enabled
+                $maintenanceMode = Setting::get('maintenance_mode', false);
+            }
+        } catch (\Exception $e) {
+            // If there's any error accessing settings, use default values
+            \Log::warning('Maintenance mode check failed: ' . $e->getMessage());
+            $maintenanceMode = false;
+        }
         
         if ($maintenanceMode) {
             // Allow access to backend routes
@@ -37,18 +48,25 @@ class CheckMaintenanceMode
             }
             
             // Show maintenance page for all other routes
-            $maintenanceMessage = Setting::get('maintenance_message', 'ระบบกำลังปรับปรุง กรุณาติดต่อผู้ดูแลระบบ');
+            $maintenanceMessage = 'ระบบกำลังปรับปรุง กรุณาติดต่อผู้ดูแลระบบ';
+            $siteName = 'CMS Backend System';
+            $siteDescription = 'ระบบจัดการเนื้อหาแบบครบวงจร';
+            
+            try {
+                if (\DB::connection()->getPdo()) {
+                    $maintenanceMessage = Setting::get('maintenance_message', $maintenanceMessage);
+                    $siteName = Setting::get('site_name', $siteName);
+                    $siteDescription = Setting::get('site_description', $siteDescription);
+                }
+            } catch (\Exception $e) {
+                // Use default values if settings can't be accessed
+            }
             
             return response()->view('maintenance', [
                 'message' => $maintenanceMessage,
-                'siteName' => Setting::get('site_name', 'CMS Backend System'),
-                'siteDescription' => Setting::get('site_description', 'ระบบจัดการเนื้อหาแบบครบวงจร'),
+                'siteName' => $siteName,
+                'siteDescription' => $siteDescription,
             ], 503);
-        }
-        } catch (\Exception $e) {
-            // If there's an error accessing settings, continue normally
-            // This prevents the middleware from breaking the entire application
-            \Log::warning('Maintenance mode check failed: ' . $e->getMessage());
         }
 
         return $next($request);
