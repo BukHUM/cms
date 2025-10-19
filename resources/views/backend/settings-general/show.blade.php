@@ -223,19 +223,16 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Left Column -->
                         <div class="space-y-4">
-                            <!-- Key -->
+                            <!-- Key (Read-only) -->
                             <div>
-                                <label for="edit_key" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     <i class="fas fa-key mr-1"></i>
                                     คีย์ <span class="text-red-500">*</span>
                                 </label>
-                                <input type="text" 
-                                       id="edit_key" 
-                                       name="key" 
-                                       class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white @error('key') border-red-500 @enderror"
-                                       placeholder="เช่น: site_name, email_from"
-                                       required>
-                                <div id="key_error" class="text-red-600 text-sm mt-1 hidden"></div>
+                                <div id="edit_key_display" class="block w-full px-3 py-2 bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 font-mono">
+                                    <!-- Key will be populated here -->
+                                </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">ไม่สามารถแก้ไขได้</p>
                             </div>
 
                             <!-- Value -->
@@ -253,46 +250,28 @@
                                 <div id="value_error" class="text-red-600 text-sm mt-1 hidden"></div>
                             </div>
 
-                            <!-- Type -->
+                            <!-- Type (Read-only) -->
                             <div>
-                                <label for="edit_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     <i class="fas fa-tag mr-1"></i>
                                     ประเภท <span class="text-red-500">*</span>
                                 </label>
-                                <select id="edit_type" 
-                                        name="type" 
-                                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white @error('type') border-red-500 @enderror"
-                                        required>
-                                    <option value="">เลือกประเภท</option>
-                                    <option value="string">String</option>
-                                    <option value="integer">Integer</option>
-                                    <option value="float">Float</option>
-                                    <option value="boolean">Boolean</option>
-                                    <option value="email">Email</option>
-                                    <option value="url">URL</option>
-                                    <option value="json">JSON</option>
-                                </select>
-                                <div id="type_error" class="text-red-600 text-sm mt-1 hidden"></div>
+                                <div id="edit_type_display" class="block w-full px-3 py-2 bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300">
+                                    <!-- Type will be populated here -->
+                                </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">ไม่สามารถแก้ไขได้</p>
                             </div>
 
-                            <!-- Group Name -->
+                            <!-- Group Name (Read-only) -->
                             <div>
-                                <label for="edit_group_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     <i class="fas fa-folder mr-1"></i>
                                     กลุ่ม <span class="text-red-500">*</span>
                                 </label>
-                                <select id="edit_group_name" 
-                                        name="group_name" 
-                                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white @error('group_name') border-red-500 @enderror"
-                                        required>
-                                    <option value="">เลือกกลุ่ม</option>
-                                    <option value="general">General</option>
-                                    <option value="email">Email</option>
-                                    <option value="security">Security</option>
-                                    <option value="performance">Performance</option>
-                                    <option value="system">System</option>
-                                </select>
-                                <div id="group_name_error" class="text-red-600 text-sm mt-1 hidden"></div>
+                                <div id="edit_group_display" class="block w-full px-3 py-2 bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300">
+                                    <!-- Group will be populated here -->
+                                </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">ไม่สามารถแก้ไขได้</p>
                             </div>
                         </div>
 
@@ -414,16 +393,18 @@
             .then(response => response.json())
             .then(data => {
                 // Populate form fields
-                document.getElementById('edit_key').value = data.key;
                 document.getElementById('edit_value').value = data.value;
-                document.getElementById('edit_type').value = data.type;
-                document.getElementById('edit_group_name').value = data.group_name;
                 document.getElementById('edit_description').value = data.description || '';
                 document.getElementById('edit_is_active').checked = data.is_active;
+
+                // Update read-only displays
+                document.getElementById('edit_key_display').textContent = data.key;
+                document.getElementById('edit_type_display').textContent = data.type.charAt(0).toUpperCase() + data.type.slice(1);
+                document.getElementById('edit_group_display').textContent = data.group_name.charAt(0).toUpperCase() + data.group_name.slice(1);
                 
                 // Update current values display
                 document.getElementById('current_type').textContent = data.type.charAt(0).toUpperCase() + data.type.slice(1);
-                document.getElementById('current_group').textContent = data.group_name;
+                document.getElementById('current_group').textContent = data.group_name.charAt(0).toUpperCase() + data.group_name.slice(1);
                 document.getElementById('current_value').textContent = data.type === 'boolean' ? (data.value ? 'true' : 'false') : data.value;
                 
                 // Update form action

@@ -50,7 +50,9 @@ class SettingsAuditLogController extends Controller
             });
         }
 
-        $auditLogs = $query->paginate(20);
+        // Get pagination setting or use default
+        $paginationPerPage = \App\Models\Setting::get('default_pagination', 20, 'general');
+        $auditLogs = $query->paginate($paginationPerPage);
 
         // Get filter options
         $eventTypes = AuditLog::distinct()->pluck('event')->sort();
@@ -110,7 +112,9 @@ class SettingsAuditLogController extends Controller
             });
         }
 
-        $auditLogs = $query->paginate(20);
+        // Get pagination setting or use default
+        $paginationPerPage = \App\Models\Setting::get('default_pagination', 20, 'general');
+        $auditLogs = $query->paginate($paginationPerPage);
 
         return response()->json([
             'success' => true,

@@ -54,7 +54,9 @@ class PermissionController extends Controller
             $query->orderBy($sortBy, $sortOrder);
         }
 
-        $permissions = $query->paginate(15)->withQueryString();
+        // Get pagination setting or use default
+        $paginationPerPage = \App\Models\Setting::get('default_pagination', 15, 'general');
+        $permissions = $query->paginate($paginationPerPage)->withQueryString();
 
         // Get all groups for filter dropdown
         $groups = Permission::distinct()->pluck('group')->filter()->sort()->values();

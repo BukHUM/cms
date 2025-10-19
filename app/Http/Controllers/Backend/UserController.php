@@ -38,7 +38,9 @@ class UserController extends Controller
             $query->where('is_active', $request->status === 'active');
         }
 
-        $users = $query->paginate(15);
+        // Get pagination setting or use default
+        $paginationPerPage = \App\Models\Setting::get('default_pagination', 15, 'general');
+        $users = $query->paginate($paginationPerPage);
 
         // Return JSON for API requests
         if ($request->expectsJson()) {

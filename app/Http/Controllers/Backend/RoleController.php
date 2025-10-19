@@ -53,7 +53,9 @@ class RoleController extends Controller
             $query->orderBy($sortBy, $sortDirection);
         }
 
-        $roles = $query->paginate(15);
+        // Get pagination setting or use default
+        $paginationPerPage = \App\Models\Setting::get('default_pagination', 15, 'general');
+        $roles = $query->paginate($paginationPerPage);
 
         // Return JSON for API requests
         if ($request->expectsJson()) {

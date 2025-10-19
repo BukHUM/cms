@@ -219,11 +219,16 @@
                 </div>
             </div>
             
-            @if($auditLogs->hasPages())
-                <div class="card-footer">
-                    {{ $auditLogs->appends(request()->query())->links() }}
+            <div class="card-footer">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-700">
+                        แสดง {{ $auditLogs->firstItem() ?? 0 }} ถึง {{ $auditLogs->lastItem() ?? 0 }} จาก {{ $auditLogs->total() }} รายการ
+                    </div>
+                    <div class="flex items-center">
+                        {{ $auditLogs->appends(request()->query())->links() }}
+                    </div>
                 </div>
-            @endif
+            </div>
         </div>
     </main>
 </div>

@@ -47,7 +47,9 @@ abstract class BaseSettingsController extends Controller
                 $query->where('is_active', $request->status === 'active');
             }
 
-            $settings_generals = $query->orderBy('sort_order')->orderBy('key')->paginate(20);
+            // Get pagination setting or use default
+            $paginationPerPage = \App\Models\Setting::get('default_pagination', 20, 'general');
+            $settings_generals = $query->orderBy('sort_order')->orderBy('key')->paginate($paginationPerPage);
 
             if ($request->expectsJson()) {
                 return response()->json($settings_generals);
@@ -73,23 +75,13 @@ abstract class BaseSettingsController extends Controller
         return view("{$this->viewPath}.show", compact('setting'));
     }
 
-    /**
-     * Show the form for editing the specified setting
-     */
-    public function edit(Setting $setting)
-    {
-        $groups = $this->getAvailableGroups();
-        $types = $this->getAvailableTypes();
-        
-        return view("{$this->viewPath}.edit", compact('setting', 'groups', 'types'));
-    }
 
     /**
      * Update the specified setting
      */
     public function update(Request $request, Setting $setting)
     {
-        $validator = Validator::make($request->all(), $this->getValidationRules($setting->id));
+        $validator = Validator::make($request->all(), $this->getUpdateValidationRules());
 
         if ($validator->fails()) {
             if ($request->expectsJson()) {
@@ -452,6 +444,23 @@ abstract class BaseSettingsController extends Controller
         }
 
         return $rules;
+    }
+
+    /**
+     * Get validation rules for update (excludes key, type, group_name)
+     */
+    protected function getUpdateValidationRules()
+    {
+        return [
+            'value' => ['required'],
+            'description' => ['nullable', 'string'],
+            'is_active' => ['boolean'],
+            'is_public' => ['boolean'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
+            'validation_rules' => ['nullable', 'array'],
+            'default_value' => ['nullable'],
+            'options' => ['nullable', 'array'],
+        ];
     }
 
     /**

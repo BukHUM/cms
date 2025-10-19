@@ -17,19 +17,17 @@ class GeneralSettingsSeeder extends Seeder
             'site_name' => 'CMS Backend System',
             'site_description' => 'ระบบจัดการเนื้อหาแบบครบวงจร',
             'site_keywords' => 'CMS, Backend, Laravel, Management',
-            'site_author' => 'Admin',
             'site_version' => '1.0.0',
             'site_language' => 'th',
             'site_timezone' => 'Asia/Bangkok',
-            'site_currency' => 'THB',
             'site_logo' => '',
             'site_favicon' => '',
             
             // การตั้งค่าระบบ
             'maintenance_mode' => 'false',
             'maintenance_message' => 'ระบบกำลังปรับปรุง กรุณาติดต่อผู้ดูแลระบบ',
-            'enable_registration' => 'true',
-            'enable_comments' => 'true',
+            'debug_mode' => 'false',
+            'debug_bar' => 'false',
             
             // การตั้งค่าการแสดงผล
             'default_pagination' => '20',
@@ -59,17 +57,15 @@ class GeneralSettingsSeeder extends Seeder
             'site_name' => 'string',
             'site_description' => 'string',
             'site_keywords' => 'string',
-            'site_author' => 'string',
             'site_version' => 'string',
             'site_language' => 'string',
             'site_timezone' => 'string',
-            'site_currency' => 'string',
             'site_logo' => 'string',
             'site_favicon' => 'string',
             'maintenance_mode' => 'boolean',
             'maintenance_message' => 'string',
-            'enable_registration' => 'boolean',
-            'enable_comments' => 'boolean',
+            'debug_mode' => 'boolean',
+            'debug_bar' => 'boolean',
             'default_pagination' => 'integer',
             'max_upload_size' => 'integer',
             'allowed_file_types' => 'string',
@@ -84,17 +80,15 @@ class GeneralSettingsSeeder extends Seeder
             'site_name' => 'ชื่อเว็บไซต์',
             'site_description' => 'คำอธิบายเว็บไซต์',
             'site_keywords' => 'คำสำคัญของเว็บไซต์',
-            'site_author' => 'ผู้เขียนเว็บไซต์',
             'site_version' => 'เวอร์ชันของเว็บไซต์',
             'site_language' => 'ภาษาหลักของเว็บไซต์',
             'site_timezone' => 'เขตเวลาของเว็บไซต์',
-            'site_currency' => 'สกุลเงินหลัก',
             'site_logo' => 'โลโก้เว็บไซต์',
             'site_favicon' => 'ไอคอนเว็บไซต์',
             'maintenance_mode' => 'โหมดบำรุงรักษา',
             'maintenance_message' => 'ข้อความโหมดบำรุงรักษา',
-            'enable_registration' => 'เปิดใช้งานการสมัครสมาชิก',
-            'enable_comments' => 'เปิดใช้งานระบบความคิดเห็น',
+            'debug_mode' => 'เปิดใช้งาน debug mode',
+            'debug_bar' => 'เปิดใช้งาน debug bar',
             'default_pagination' => 'จำนวนรายการต่อหน้า (เริ่มต้น)',
             'max_upload_size' => 'ขนาดไฟล์สูงสุดที่อัพโหลดได้ (MB)',
             'allowed_file_types' => 'ประเภทไฟล์ที่อนุญาตให้อัพโหลด',
@@ -109,17 +103,15 @@ class GeneralSettingsSeeder extends Seeder
             'site_name' => 'site',
             'site_description' => 'site',
             'site_keywords' => 'site',
-            'site_author' => 'site',
             'site_version' => 'site',
             'site_language' => 'site',
             'site_timezone' => 'site',
-            'site_currency' => 'site',
             'site_logo' => 'site',
             'site_favicon' => 'site',
             'maintenance_mode' => 'system',
             'maintenance_message' => 'system',
-            'enable_registration' => 'system',
-            'enable_comments' => 'system',
+            'debug_mode' => 'system',
+            'debug_bar' => 'system',
             'default_pagination' => 'display',
             'max_upload_size' => 'display',
             'allowed_file_types' => 'display',
@@ -133,7 +125,8 @@ class GeneralSettingsSeeder extends Seeder
         // บางการตั้งค่าควรปิดใช้งานตั้งแต่แรก
         $inactiveSettings = [
             'maintenance_mode', // ปิดโหมดบำรุงรักษา
-            'enable_comments',  // ปิดการแสดงความคิดเห็น
+            'debug_mode',       // ปิด debug mode
+            'debug_bar',        // ปิด debug bar
         ];
 
         return !in_array($key, $inactiveSettings);
@@ -145,11 +138,9 @@ class GeneralSettingsSeeder extends Seeder
             'site_name',
             'site_description',
             'site_keywords',
-            'site_author',
             'site_version',
             'site_language',
             'site_timezone',
-            'site_currency',
             'site_logo',
             'site_favicon',
         ];

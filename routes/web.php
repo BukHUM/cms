@@ -108,7 +108,7 @@ Route::prefix('backend')->name('backend.')->middleware(['auth'])->group(function
     Route::post('settings/auditlog/get-logs', [SettingsAuditLogController::class, 'getAuditLogs'])->name('settings.auditlog.get-logs');
     
     // Settings Management Routes
-    Route::resource('settings-general', SettingsGeneralController::class)->except(['create', 'store']);
+    Route::resource('settings-general', SettingsGeneralController::class)->except(['create', 'store', 'edit']);
     Route::patch('settings-general/{setting}/toggle-status', [SettingsGeneralController::class, 'toggleStatus'])->name('settings-general.toggle-status');
     Route::post('settings-general/bulk-update', [SettingsGeneralController::class, 'bulkUpdate'])->name('settings-general.bulk-update');
     Route::post('settings-general/{setting}/reset', [SettingsGeneralController::class, 'reset'])->name('settings-general.reset');
