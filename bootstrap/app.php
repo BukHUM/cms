@@ -19,6 +19,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth' => \Illuminate\Auth\Middleware\Authenticate::class,
             'settings.update.access' => \App\Http\Middleware\SettingsUpdateAccess::class,
             'settings.backup.access' => \App\Http\Middleware\SettingsBackupAccess::class,
+            'maintenance' => \App\Http\Middleware\CheckMaintenanceMode::class,
+        ]);
+        
+        // Add global middleware
+        $middleware->web(append: [
+            \App\Http\Middleware\CheckMaintenanceMode::class,
+            \App\Http\Middleware\CheckDebugMode::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

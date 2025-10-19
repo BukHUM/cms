@@ -207,7 +207,7 @@
 
         <!-- Modal Body -->
         <div class="mt-4">
-            <form id="editForm" method="POST">
+            <form id="editForm" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
 
@@ -232,12 +232,62 @@
                                 <i class="fas fa-edit mr-1"></i>
                                 ค่า <span class="text-red-500">*</span>
                             </label>
+                            
+                            <!-- Text Input (default) -->
                             <input type="text"
                                    id="edit_value"
                                    name="value"
                                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white @error('value') border-red-500 @enderror"
-                                   placeholder="ค่าของการตั้งค่า"
-                                   required>
+                                   placeholder="ค่าของการตั้งค่า">
+                            
+                            <!-- File Upload Input (for file types) -->
+                            <div id="file_upload_section" class="hidden">
+                                <div class="mt-2">
+                                    <input type="file"
+                                           id="edit_file"
+                                           name="file"
+                                           accept="image/*,.ico"
+                                           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-300">
+                                    <p class="text-xs text-gray-500 mt-1">รองรับไฟล์: JPG, PNG, GIF, ICO (ขนาดไม่เกิน 2MB)</p>
+                                </div>
+                                
+                                <!-- Current File Preview -->
+                                <div id="current_file_preview" class="mt-3 hidden">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        <i class="fas fa-image mr-1"></i>
+                                        ไฟล์ปัจจุบัน
+                                    </label>
+                                    <div class="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
+                                        <img id="current_file_image" src="" alt="Current file" class="w-12 h-12 object-cover rounded">
+                                        <div class="flex-1">
+                                            <p id="current_file_name" class="text-sm font-medium text-gray-900 dark:text-white"></p>
+                                            <p id="current_file_size" class="text-xs text-gray-500 dark:text-gray-400"></p>
+                                        </div>
+                                        <button type="button" id="remove_current_file" class="text-red-500 hover:text-red-700">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- New File Preview -->
+                                <div id="new_file_preview" class="mt-3 hidden">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        <i class="fas fa-upload mr-1"></i>
+                                        ไฟล์ใหม่
+                                    </label>
+                                    <div class="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900 rounded-md">
+                                        <img id="new_file_image" src="" alt="New file" class="w-12 h-12 object-cover rounded">
+                                        <div class="flex-1">
+                                            <p id="new_file_name" class="text-sm font-medium text-blue-900 dark:text-blue-100"></p>
+                                            <p id="new_file_size" class="text-xs text-blue-600 dark:text-blue-300"></p>
+                                        </div>
+                                        <button type="button" id="remove_new_file" class="text-red-500 hover:text-red-700">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <div id="value_error" class="text-red-600 text-sm mt-1 hidden"></div>
                         </div>
 
@@ -367,14 +417,56 @@ document.getElementById('clear-filters').addEventListener('click', function() {
 });
 
 function toggleStatus(id) {
+    // Get setting info from the table row
+    const row = document.querySelector(`button[onclick="toggleStatus(${id})"]`).closest('tr');
+    const settingKey = row.querySelector('.text-sm.font-medium').textContent;
+    const currentStatus = row.querySelector('.bg-green-100, .bg-red-100') ? 
+        (row.querySelector('.bg-green-100') ? 'เปิดใช้งาน' : 'ปิดใช้งาน') : 'ไม่ทราบสถานะ';
+    
+    let confirmText = 'คุณต้องการเปลี่ยนสถานะการตั้งค่านี้หรือไม่?';
+    let confirmButtonText = 'ใช่, เปลี่ยนสถานะ!';
+    
+    // Special handling for maintenance mode
+    if (settingKey === 'maintenance_mode') {
+        if (currentStatus === 'ปิดใช้งาน') {
+            confirmText = 'คุณต้องการเปิดโหมดบำรุงรักษาหรือไม่? ระบบจะแสดงหน้า maintenance สำหรับผู้ใช้ทั่วไป';
+            confirmButtonText = 'ใช่, เปิดโหมดบำรุงรักษา!';
+        } else {
+            confirmText = 'คุณต้องการปิดโหมดบำรุงรักษาหรือไม่? ระบบจะกลับมาทำงานปกติ';
+            confirmButtonText = 'ใช่, ปิดโหมดบำรุงรักษา!';
+        }
+    }
+    
+    // Special handling for debug mode
+    if (settingKey === 'debug_mode') {
+        if (currentStatus === 'ปิดใช้งาน') {
+            confirmText = 'คุณต้องการเปิด debug mode หรือไม่? ระบบจะแสดงข้อมูล debug และ error messages รายละเอียด';
+            confirmButtonText = 'ใช่, เปิด debug mode!';
+        } else {
+            confirmText = 'คุณต้องการปิด debug mode หรือไม่? ระบบจะซ่อนข้อมูล debug และแสดง error messages แบบสั้น';
+            confirmButtonText = 'ใช่, ปิด debug mode!';
+        }
+    }
+    
+    // Special handling for debug bar
+    if (settingKey === 'debug_bar') {
+        if (currentStatus === 'ปิดใช้งาน') {
+            confirmText = 'คุณต้องการเปิด debug bar หรือไม่? จะแสดง debug toolbar ที่ด้านล่างหน้าเว็บ';
+            confirmButtonText = 'ใช่, เปิด debug bar!';
+        } else {
+            confirmText = 'คุณต้องการปิด debug bar หรือไม่? จะซ่อน debug toolbar';
+            confirmButtonText = 'ใช่, ปิด debug bar!';
+        }
+    }
+    
     Swal.fire({
         title: 'คุณแน่ใจหรือไม่?',
-        text: 'คุณต้องการเปลี่ยนสถานะการตั้งค่านี้หรือไม่?',
+        text: confirmText,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#3085d6',
         cancelButtonColor: '#d33',
-        confirmButtonText: 'ใช่, เปลี่ยนสถานะ!',
+        confirmButtonText: confirmButtonText,
         cancelButtonText: 'ยกเลิก'
     }).then((result) => {
         if (result.isConfirmed) {
@@ -392,9 +484,38 @@ function toggleStatus(id) {
             .then(response => response.json())
             .then(data => {
                 if (data.message) {
+                    let successText = 'เปลี่ยนสถานะเรียบร้อยแล้ว';
+                    
+                    // Special message for maintenance mode
+                    if (settingKey === 'maintenance_mode') {
+                        if (currentStatus === 'ปิดใช้งาน') {
+                            successText = 'เปิดโหมดบำรุงรักษาเรียบร้อยแล้ว ระบบจะแสดงหน้า maintenance สำหรับผู้ใช้ทั่วไป';
+                        } else {
+                            successText = 'ปิดโหมดบำรุงรักษาเรียบร้อยแล้ว ระบบกลับมาทำงานปกติ';
+                        }
+                    }
+                    
+                    // Special message for debug mode
+                    if (settingKey === 'debug_mode') {
+                        if (currentStatus === 'ปิดใช้งาน') {
+                            successText = 'เปิด debug mode เรียบร้อยแล้ว ระบบจะแสดงข้อมูล debug และ error messages รายละเอียด';
+                        } else {
+                            successText = 'ปิด debug mode เรียบร้อยแล้ว ระบบจะซ่อนข้อมูล debug และแสดง error messages แบบสั้น';
+                        }
+                    }
+                    
+                    // Special message for debug bar
+                    if (settingKey === 'debug_bar') {
+                        if (currentStatus === 'ปิดใช้งาน') {
+                            successText = 'เปิด debug bar เรียบร้อยแล้ว จะแสดง debug toolbar ที่ด้านล่างหน้าเว็บ';
+                        } else {
+                            successText = 'ปิด debug bar เรียบร้อยแล้ว จะซ่อน debug toolbar';
+                        }
+                    }
+                    
                     Swal.fire({
                         title: 'สำเร็จ!',
-                        text: 'เปลี่ยนสถานะเรียบร้อยแล้ว',
+                        text: successText,
                         icon: 'success',
                         confirmButtonText: 'ตกลง'
                     }).then(() => {
@@ -433,8 +554,32 @@ function openEditModal(id) {
     })
     .then(response => response.json())
     .then(data => {
-        // Populate form fields
-        document.getElementById('edit_value').value = data.value;
+        // Reset form and file upload sections
+        resetFileUploadSections();
+        
+        // Check if this is a file type setting
+        const isFileType = ['site_logo', 'site_favicon'].includes(data.key);
+        
+        if (isFileType) {
+            // Show file upload section
+            document.getElementById('file_upload_section').classList.remove('hidden');
+            document.getElementById('edit_value').classList.add('hidden');
+            document.getElementById('edit_value').removeAttribute('required');
+            document.getElementById('edit_value').value = ''; // Clear value
+            
+            // Show current file if exists
+            if (data.value && data.value !== '') {
+                showCurrentFilePreview(data.value);
+            }
+        } else {
+            // Show text input section
+            document.getElementById('file_upload_section').classList.add('hidden');
+            document.getElementById('edit_value').classList.remove('hidden');
+            document.getElementById('edit_value').setAttribute('required', 'required');
+            document.getElementById('edit_value').value = data.value;
+        }
+        
+        // Populate other form fields
         document.getElementById('edit_description').value = data.description || '';
         document.getElementById('edit_is_active').checked = data.is_active;
 
@@ -466,12 +611,77 @@ function openEditModal(id) {
     });
 }
 
+// File Upload Functions
+function resetFileUploadSections() {
+    // Hide all file upload sections
+    document.getElementById('file_upload_section').classList.add('hidden');
+    document.getElementById('current_file_preview').classList.add('hidden');
+    document.getElementById('new_file_preview').classList.add('hidden');
+    
+    // Reset file input
+    document.getElementById('edit_file').value = '';
+    
+    // Reset text input
+    document.getElementById('edit_value').classList.remove('hidden');
+    document.getElementById('edit_value').setAttribute('required', 'required');
+    document.getElementById('edit_value').value = '';
+}
+
+function showCurrentFilePreview(filePath) {
+    const preview = document.getElementById('current_file_preview');
+    const image = document.getElementById('current_file_image');
+    const name = document.getElementById('current_file_name');
+    const size = document.getElementById('current_file_size');
+    
+    // Set image source
+    image.src = filePath.startsWith('http') ? filePath : `/storage/${filePath}`;
+    
+    // Extract filename from path
+    const fileName = filePath.split('/').pop();
+    name.textContent = fileName;
+    
+    // Set placeholder size (we don't have actual file size)
+    size.textContent = 'ขนาดไม่ทราบ';
+    
+    // Show preview
+    preview.classList.remove('hidden');
+}
+
+function showNewFilePreview(file) {
+    const preview = document.getElementById('new_file_preview');
+    const image = document.getElementById('new_file_image');
+    const name = document.getElementById('new_file_name');
+    const size = document.getElementById('new_file_size');
+    
+    // Create file URL for preview
+    const fileURL = URL.createObjectURL(file);
+    image.src = fileURL;
+    
+    // Set file info
+    name.textContent = file.name;
+    size.textContent = formatFileSize(file.size);
+    
+    // Show preview
+    preview.classList.remove('hidden');
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
 function closeEditModal() {
     document.getElementById('editModal').classList.add('hidden');
     document.body.style.overflow = '';
 
     // Clear form
     document.getElementById('editForm').reset();
+
+    // Reset file upload sections
+    resetFileUploadSections();
 
     // Clear errors
     const errorElements = document.querySelectorAll('[id$="_error"]');
@@ -481,12 +691,119 @@ function closeEditModal() {
     });
 }
 
+// File Upload Event Listeners
+document.getElementById('edit_file').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/x-icon', 'image/vnd.microsoft.icon'];
+        if (!allowedTypes.includes(file.type)) {
+            Swal.fire({
+                title: 'ไฟล์ไม่ถูกต้อง!',
+                text: 'กรุณาเลือกไฟล์รูปภาพ (JPG, PNG, GIF, ICO) เท่านั้น',
+                icon: 'error',
+                confirmButtonText: 'ตกลง'
+            });
+            this.value = '';
+            return;
+        }
+        
+        // Validate file size (2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            Swal.fire({
+                title: 'ไฟล์ใหญ่เกินไป!',
+                text: 'กรุณาเลือกไฟล์ที่มีขนาดไม่เกิน 2MB',
+                icon: 'error',
+                confirmButtonText: 'ตกลง'
+            });
+            this.value = '';
+            return;
+        }
+        
+        showNewFilePreview(file);
+    }
+});
+
+// Remove new file button
+document.getElementById('remove_new_file').addEventListener('click', function() {
+    document.getElementById('edit_file').value = '';
+    document.getElementById('new_file_preview').classList.add('hidden');
+});
+
+// Remove current file button
+document.getElementById('remove_current_file').addEventListener('click', function() {
+    document.getElementById('current_file_preview').classList.add('hidden');
+    // Set a flag to indicate current file should be removed
+    document.getElementById('edit_value').value = '';
+});
+
 // Form submission
 document.getElementById('editForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
+    // Check if this is a file type setting
+    const isFileType = document.getElementById('file_upload_section').classList.contains('hidden') === false;
+    
+    console.log('Form submission debug:', {
+        isFileType: isFileType,
+        hasFile: document.getElementById('edit_file').files.length > 0,
+        fileName: document.getElementById('edit_file').files[0]?.name,
+        valueInputHidden: document.getElementById('edit_value').classList.contains('hidden'),
+        valueInputRequired: document.getElementById('edit_value').hasAttribute('required')
+    });
+    
+    // For file type settings, temporarily remove required attribute
+    let wasRequired = false;
+    if (isFileType) {
+        const valueInput = document.getElementById('edit_value');
+        wasRequired = valueInput.hasAttribute('required');
+        valueInput.removeAttribute('required');
+    }
+
     const formData = new FormData(this);
     const url = this.action;
+    
+    if (isFileType) {
+        // For file type settings, check if file is uploaded
+        const fileInput = document.getElementById('edit_file');
+        if (fileInput.files[0]) {
+            formData.append('file', fileInput.files[0]);
+            // Remove value field completely for file uploads
+            formData.delete('value');
+        } else {
+            // If no new file, keep current value (even if empty)
+            const currentValue = document.getElementById('current_value').textContent || '';
+            formData.set('value', currentValue);
+        }
+        
+        // Restore required attribute if it was there
+        const valueInput = document.getElementById('edit_value');
+        if (wasRequired) {
+            valueInput.setAttribute('required', 'required');
+        }
+    } else {
+        // For text type settings, validate required field
+        const valueInput = document.getElementById('edit_value');
+        if (!valueInput.value.trim()) {
+            Swal.fire({
+                title: 'ข้อมูลไม่ครบถ้วน!',
+                text: 'กรุณากรอกค่าการตั้งค่า',
+                icon: 'error',
+                confirmButtonText: 'ตกลง'
+            });
+            return;
+        }
+    }
+
+    // Debug logging
+    console.log('Form submission details:', {
+        url: url,
+        method: 'POST',
+        hasFile: formData.has('file'),
+        hasValue: formData.has('value'),
+        csrfToken: document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        formDataEntries: Array.from(formData.entries())
+    });
 
     fetch(url, {
         method: 'POST',
@@ -496,7 +813,19 @@ document.getElementById('editForm').addEventListener('submit', function(e) {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
+        if (!response.ok) {
+            return response.text().then(text => {
+                console.error('Error response:', text);
+                throw new Error(`HTTP ${response.status}: ${text}`);
+            });
+        }
+        
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             closeEditModal();

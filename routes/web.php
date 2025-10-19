@@ -188,3 +188,6 @@ Route::prefix('api')->group(function () {
     Route::apiResource('audit-logs', SettingsAuditLogController::class);
     
 });
+
+// Maintenance API (accessible even during maintenance mode)
+Route::get('/api/maintenance-status', [App\Http\Controllers\Api\MaintenanceController::class, 'status']);

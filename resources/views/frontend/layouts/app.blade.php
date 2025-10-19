@@ -3,7 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'CMS Frontend')</title>
+    <title>@yield('title', setting('site_name', 'CMS Frontend'))</title>
+    
+    @if(setting('site_favicon'))
+    <link rel="icon" type="image/png" href="{{ asset('storage/' . setting('site_favicon')) }}">
+    @else
+    <link rel="icon" type="image/png" href="{{ asset('favicon.ico') }}">
+    @endif
+    
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
 </head>
@@ -15,7 +22,7 @@
                 <div class="flex items-center">
                     <a href="{{ route('frontend.home') }}" class="text-2xl font-bold text-gray-900">
                         <i class="fas fa-home mr-2"></i>
-                        CMS Frontend
+                        {{ setting('site_name', 'CMS Frontend') }}
                     </a>
                 </div>
                 
@@ -85,7 +92,7 @@
                 <div>
                     <h3 class="text-lg font-semibold mb-4">
                         <i class="fas fa-home mr-2"></i>
-                        CMS Frontend
+                        {{ setting('site_name', 'CMS Frontend') }}
                     </h3>
                     <p class="text-gray-400 text-sm">
                         ระบบจัดการเนื้อหาแบบครบวงจร พร้อมใช้งานง่าย
@@ -122,7 +129,7 @@
             </div>
             
             <div class="border-t border-gray-700 mt-8 pt-8 text-center text-sm text-gray-400">
-                <p>&copy; {{ date('Y') }} CMS Frontend. All rights reserved.</p>
+                <p>&copy; {{ date('Y') }} {{ setting('site_name', 'CMS Frontend') }}. All rights reserved.</p>
             </div>
         </div>
     </footer>

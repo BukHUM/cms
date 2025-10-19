@@ -4,7 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'CMS Backend')</title>
+    <title>@yield('title', setting('site_name', 'CMS Backend'))</title>
+    
+    @if(setting('site_favicon'))
+    <link rel="icon" type="image/png" href="{{ asset('storage/' . setting('site_favicon')) }}">
+    @else
+    <link rel="icon" type="image/png" href="{{ asset('favicon.ico') }}">
+    @endif
+    
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
 </head>
@@ -18,7 +25,7 @@
             <div class="p-6">
                 <h2 class="text-xl font-bold text-gray-900 dark:text-white">
                     <i class="fas fa-cogs mr-2"></i>
-                    CMS Backend
+                    {{ setting('site_name', 'CMS Backend') }}
                 </h2>
             </div>
             
@@ -111,7 +118,7 @@
                 <div class="flex items-center justify-between">
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white">
                         <i class="fas fa-cogs mr-2"></i>
-                        CMS Backend
+                        {{ setting('site_name', 'CMS Backend') }}
                     </h2>
                     <button id="close-mobile-sidebar" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
                         <i class="fas fa-times text-xl"></i>

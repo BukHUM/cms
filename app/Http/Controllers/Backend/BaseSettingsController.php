@@ -81,48 +81,97 @@ abstract class BaseSettingsController extends Controller
      */
     public function update(Request $request, Setting $setting)
     {
-        $validator = Validator::make($request->all(), $this->getUpdateValidationRules());
-
-        if ($validator->fails()) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-            
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
+        // Debug logging at the start
+        Log::info("=== UPDATE METHOD CALLED ===", [
+            'setting_id' => $setting->id,
+            'setting_key' => $setting->key,
+            'request_method' => $request->method(),
+            'request_url' => $request->url(),
+            'has_file' => $request->hasFile('file'),
+            'has_value' => $request->has('value'),
+            'all_request_data' => $request->all()
+        ]);
 
         try {
             DB::beginTransaction();
 
             $oldValue = $setting->value;
             
-            // Handle checkbox for is_active
-            $data = $request->all();
-            $data['is_active'] = $request->has('is_active') ? true : false;
+            // Debug logging
+            Log::info("Updating setting", [
+                'setting_id' => $setting->id,
+                'key' => $setting->key,
+                'has_file' => $request->hasFile('file'),
+                'has_value' => $request->has('value'),
+                'value' => $request->input('value'),
+                'file_name' => $request->hasFile('file') ? $request->file('file')->getClientOriginalName() : null,
+                'file_size' => $request->hasFile('file') ? $request->file('file')->getSize() : null,
+                'request_data' => $request->except(['file']),
+            ]);
             
-            $setting->fill($data);
+            // Handle file upload for specific settings
+            if (in_array($setting->key, ['site_logo', 'site_favicon'])) {
+                if ($request->hasFile('file')) {
+                    $file = $request->file('file');
+                    
+                    // Validate file and other fields (excluding value for file uploads)
+                    $request->validate([
+                        'file' => 'required|image|mimes:jpeg,png,gif,ico|max:2048',
+                        'description' => 'nullable|string|max:255',
+                        'is_active' => 'nullable|boolean'
+                    ]);
+                    
+                    // Generate unique filename
+                    $filename = $setting->key . '_' . time() . '.' . $file->getClientOriginalExtension();
+                    
+                    // Store file
+                    $path = $file->storeAs('public/settings', $filename);
+                    
+                    // Update setting value with file path
+                    $setting->value = 'settings/' . $filename;
+                } else {
+                    // No new file uploaded, update other fields only
+                    $request->validate([
+                        'description' => 'nullable|string|max:255',
+                        'is_active' => 'nullable|boolean'
+                    ]);
+                    
+                    $setting->description = $request->input('description', $setting->description);
+                    $setting->is_active = $request->has('is_active') ? true : false;
+                }
+            } else {
+                // Handle non-file settings
+                $request->validate([
+                    'value' => 'required',
+                    'description' => 'nullable|string|max:255',
+                    'is_active' => 'nullable|boolean'
+                ]);
+                
+                $data = $request->all();
+                $data['is_active'] = $request->has('is_active') ? true : false;
+                
+                $setting->fill($data);
+                
+                // Set typed value
+                $this->setTypedValue($setting, $request->value);
+            }
+            
             $setting->updated_by = Auth::id();
             
-            // Set typed value
-            $this->setTypedValue($setting, $request->value);
-            
-            // Validate value
-            if (!$this->validateValue($setting, $request->value)) {
-                if ($request->expectsJson()) {
-                    return response()->json([
-                        'success' => false,
-                        'errors' => ['value' => 'The value does not meet validation requirements.']
-                    ], 422);
+            // Validate value (only for non-file settings and when value is provided)
+            if (!in_array($setting->key, ['site_logo', 'site_favicon']) && $request->has('value')) {
+                if (!$this->validateValue($setting, $request->value)) {
+                    if ($request->expectsJson()) {
+                        return response()->json([
+                            'success' => false,
+                            'errors' => ['value' => 'The value does not meet validation requirements.']
+                        ], 422);
+                    }
+                    
+                    return redirect()->back()
+                        ->withErrors(['value' => 'The value does not meet validation requirements.'])
+                        ->withInput();
                 }
-                
-                return redirect()->back()
-                    ->withErrors(['value' => 'The value does not meet validation requirements.'])
-                    ->withInput();
             }
 
             $setting->save();
@@ -152,12 +201,34 @@ abstract class BaseSettingsController extends Controller
             return redirect()->route("{$this->routePrefix}.index")
                 ->with('success', 'อัปเดตการตั้งค่าเรียบร้อยแล้ว');
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            
+            Log::error("Validation error updating setting", [
+                'setting_id' => $setting->id,
+                'key' => $setting->key,
+                'errors' => $e->errors(),
+                'request_data' => $request->except(['file']),
+            ]);
+            
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $e->errors()
+                ], 422);
+            }
+
+            return redirect()->back()
+                ->withErrors($e->errors())
+                ->withInput();
+                
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Error updating setting ({$this->category})", [
                 'error' => $e->getMessage(),
                 'setting_id' => $setting->id,
                 'user_id' => Auth::id(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             if ($request->expectsJson()) {
@@ -220,8 +291,14 @@ abstract class BaseSettingsController extends Controller
         try {
             DB::beginTransaction();
             
-            // Toggle status directly
+            // Toggle both status and value for boolean settings
             $setting->is_active = !$setting->is_active;
+            
+            // For boolean settings, also toggle the value
+            if ($setting->type === 'boolean') {
+                $setting->value = $setting->is_active ? '1' : '0';
+            }
+            
             $setting->updated_by = Auth::id();
             $setting->save();
             
