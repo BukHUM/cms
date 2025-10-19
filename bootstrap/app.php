@@ -24,8 +24,8 @@ return Application::configure(basePath: dirname(__DIR__))
         
         // Add global middleware
         $middleware->web(append: [
-            \App\Http\Middleware\CheckMaintenanceMode::class,
-            \App\Http\Middleware\CheckDebugMode::class,
+            // \App\Http\Middleware\CheckMaintenanceMode::class,
+            // \App\Http\Middleware\CheckDebugMode::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
