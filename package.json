@@ -4,7 +4,8 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "debugbar:publish": "php artisan vendor:publish --provider=\"Barryvdh\\Debugbar\\ServiceProvider\" --tag=config --force"
     },
     "devDependencies": {
         "autoprefixer": "^10.4.21",

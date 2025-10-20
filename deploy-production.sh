@@ -9,7 +9,13 @@ echo "🚀 Starting Production Deployment..."
 echo "📦 Installing Composer dependencies..."
 if command -v composer &> /dev/null; then
     echo "✅ Composer found, installing dependencies..."
-    composer install --no-dev --optimize-autoloader
+    # If ENABLE_DEBUGBAR=true or INSTALL_DEV_PACKAGES=true, install dev packages (includes Debugbar)
+    if [ "$ENABLE_DEBUGBAR" = "true" ] || [ "$INSTALL_DEV_PACKAGES" = "true" ]; then
+        echo "🔧 ENABLE_DEBUGBAR detected → installing with dev dependencies"
+        composer install --optimize-autoloader
+    else
+        composer install --no-dev --optimize-autoloader
+    fi
     echo "✅ Composer dependencies installed successfully!"
 else
     echo "❌ Composer not found! Please install Composer first."
@@ -23,6 +29,16 @@ php artisan config:clear
 php artisan cache:clear
 php artisan route:clear
 php artisan view:clear
+
+# Optionally publish Debugbar config when enabled and package is installed
+if [ "$ENABLE_DEBUGBAR" = "true" ]; then
+    if php -r "exit(class_exists('Barryvdh\\\\Debugbar\\\\ServiceProvider') ? 0 : 1);"; then
+        echo "🛠️ Publishing Debugbar config..."
+        php artisan vendor:publish --provider="Barryvdh\\Debugbar\\ServiceProvider" --tag=config --force || true
+    else
+        echo "ℹ️ Debugbar not installed; skipping publish"
+    fi
+fi
 
 # Create storage link if it doesn't exist
 if [ ! -L "public/storage" ]; then
