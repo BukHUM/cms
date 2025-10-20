@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -147,7 +148,30 @@ abstract class BaseSettingsController extends Controller
             
             // Handle file upload for specific settings
             if (in_array($setting->key, ['site_logo', 'site_favicon'])) {
-                if ($request->hasFile('file')) {
+                // If request indicates removal, delete existing file and clear value
+                if ($request->boolean('remove_file')) {
+                    try {
+                        if (!empty($oldValue)) {
+                            // $oldValue is like 'settings/filename.ext' on public disk
+                            Storage::disk('public')->delete($oldValue);
+                        }
+                    } catch (\Throwable $t) {
+                        Log::warning('Failed to delete old setting file', [
+                            'key' => $setting->key,
+                            'path' => $oldValue,
+                            'error' => $t->getMessage(),
+                        ]);
+                    }
+                    // Clear value and allow updating other fields
+                    $setting->value = '';
+                    $request->validate([
+                        'description' => 'nullable|string|max:255',
+                        'is_active' => 'nullable|boolean'
+                    ]);
+                    $setting->description = $request->input('description', $setting->description);
+                    $setting->is_active = $request->has('is_active') ? true : false;
+
+                } elseif ($request->hasFile('file')) {
                     $file = $request->file('file');
                     
                     // Validate file and other fields (excluding value for file uploads)
