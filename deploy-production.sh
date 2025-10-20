@@ -41,6 +41,11 @@ if [ "$ENABLE_DEBUGBAR" = "true" ]; then
 fi
 
 # Create storage link if it doesn't exist
+# Ensure destination directories exist before linking
+mkdir -p storage/app/public/settings
+mkdir -p storage/app/public/backups
+mkdir -p storage/app/public/uploads
+
 if [ ! -L "public/storage" ]; then
     echo "🔗 Creating storage symbolic link..."
     php artisan storage:link

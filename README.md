@@ -88,6 +88,9 @@ chmod +x deploy-production.sh
 
 # Run the deployment script
 ./deploy-production.sh
+
+# Ensure storage symlink exists (script already does this, but you can run manually)
+php artisan storage:link
 ```
 
 ### Manual Production Setup
@@ -108,10 +111,16 @@ npm run build
 # 5. Run migrations
 php artisan migrate --force
 
-# 6. Seed production data (simplified)
+# 6. Ensure storage directories and symlink exist
+mkdir -p storage/app/public/settings
+mkdir -p storage/app/public/backups
+mkdir -p storage/app/public/uploads
+php artisan storage:link
+
+# 7. Seed production data (simplified)
 php artisan db:seed --force
 
-# 7. Optimize application
+# 8. Optimize application
 php artisan optimize
 ```
 

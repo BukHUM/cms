@@ -1249,14 +1249,25 @@ function resetFileUploadSections() {
     document.getElementById('edit_value').value = '';
 }
 
+function normalizeStoragePath(path) {
+    if (!path) return '';
+    // Remove any leading "/" and leading "storage/" to avoid double prefixing
+    return String(path).replace(/^\/+/, '').replace(/^storage\//, '');
+}
+
 function showCurrentFilePreview(filePath) {
     const preview = document.getElementById('current_file_preview');
     const image = document.getElementById('current_file_image');
     const name = document.getElementById('current_file_name');
     const size = document.getElementById('current_file_size');
     
-    // Set image source
-    image.src = filePath.startsWith('http') ? filePath : `/storage/${filePath}`;
+    // Set image source with normalized path
+    if (filePath.startsWith('http')) {
+        image.src = filePath;
+    } else {
+        const normalized = normalizeStoragePath(filePath);
+        image.src = `/storage/${normalized}`;
+    }
     
     // Extract filename from path
     const fileName = filePath.split('/').pop();
