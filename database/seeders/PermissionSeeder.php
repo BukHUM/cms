@@ -136,16 +136,30 @@ class PermissionSeeder extends Seeder
 
             // Settings
             [
-                'name' => 'setting.view',
+                'name' => 'settings.view',
                 'display_name' => 'ดูการตั้งค่า',
                 'description' => 'สามารถดูการตั้งค่าระบบ',
                 'group' => 'Settings',
                 'is_active' => true,
             ],
             [
-                'name' => 'setting.edit',
+                'name' => 'settings.create',
+                'display_name' => 'สร้างการตั้งค่า',
+                'description' => 'สามารถสร้างการตั้งค่าใหม่',
+                'group' => 'Settings',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'settings.edit',
                 'display_name' => 'แก้ไขการตั้งค่า',
                 'description' => 'สามารถแก้ไขการตั้งค่าระบบ',
+                'group' => 'Settings',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'settings.delete',
+                'display_name' => 'ลบการตั้งค่า',
+                'description' => 'สามารถลบการตั้งค่า',
                 'group' => 'Settings',
                 'is_active' => true,
             ],
@@ -198,7 +212,7 @@ class PermissionSeeder extends Seeder
                 'dashboard.view',
                 'dashboard.statistics',
                 'user.view',
-                'setting.view',
+                'settings.view',
             ])->pluck('id');
             
             $editorRole->permissions()->sync($editorPermissions);
