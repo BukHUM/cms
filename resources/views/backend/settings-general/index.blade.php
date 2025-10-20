@@ -284,6 +284,7 @@
             <form id="editForm" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
+                <input type="hidden" id="remove_file_flag" name="remove_file" value="0">
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <!-- Left Column -->
@@ -1188,6 +1189,7 @@ function openEditModal(id) {
             document.getElementById('edit_value').classList.add('hidden');
             document.getElementById('edit_value').removeAttribute('required');
             document.getElementById('edit_value').value = ''; // Clear value
+            document.getElementById('remove_file_flag').value = '0'; // reset remove flag
             
             // Show current file if exists
             if (data.value && data.value !== '') {
@@ -1247,6 +1249,9 @@ function resetFileUploadSections() {
     document.getElementById('edit_value').classList.remove('hidden');
     document.getElementById('edit_value').setAttribute('required', 'required');
     document.getElementById('edit_value').value = '';
+    // Reset remove flag
+    const removeFlag = document.getElementById('remove_file_flag');
+    if (removeFlag) removeFlag.value = '0';
 }
 
 function normalizeStoragePath(path) {
@@ -1514,7 +1519,12 @@ document.addEventListener('DOMContentLoaded', function() {
         addManagedEventListener(removeCurrentFileBtn, 'click', function() {
             document.getElementById('current_file_preview').classList.add('hidden');
             // Set a flag to indicate current file should be removed
+            const removeFlag = document.getElementById('remove_file_flag');
+            if (removeFlag) removeFlag.value = '1';
             document.getElementById('edit_value').value = '';
+            // Clear current value display as visual feedback
+            const currentValueEl = document.getElementById('current_value');
+            if (currentValueEl) currentValueEl.textContent = '';
         });
     }
     
@@ -1546,9 +1556,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Remove value field completely for file uploads
                     formData.delete('value');
                 } else {
-                    // If no new file, keep current value (even if empty)
-                    const currentValue = document.getElementById('current_value').textContent || '';
-                    formData.set('value', currentValue);
+                    // If no new file, check remove flag; if set, clear value
+                    const removeFlag = document.getElementById('remove_file_flag')?.value === '1';
+                    if (removeFlag) {
+                        formData.set('value', '');
+                    } else {
+                        const currentValue = document.getElementById('current_value').textContent || '';
+                        formData.set('value', currentValue);
+                    }
                 }
                 
                 // Restore required attribute if it was there
