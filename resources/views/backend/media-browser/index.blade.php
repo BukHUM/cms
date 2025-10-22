@@ -19,7 +19,7 @@
 
 <div class="space-y-6">
     <!-- Drag and Drop Zone -->
-    <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-colors duration-200 hover:border-blue-400 hover:bg-blue-50 {{ $mediaFiles->count() > 0 ? 'hidden' : '' }}">
+    <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-colors duration-200 hover:border-blue-400 hover:bg-blue-50">
         <div class="space-y-4">
             <div class="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
                 <i class="fas fa-cloud-upload-alt text-gray-400 text-2xl"></i>
@@ -65,7 +65,7 @@
                         <div class="flex items-center p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200" data-path="{{ $directory['path'] }}">
                             <i class="fas fa-folder text-yellow-500 mr-3"></i>
                             <div class="flex-1">
-                                <p class="font-medium text-gray-900">{{ $directory['name'] }}</p>
+                                <p class="font-medium text-gray-900">{{ \Carbon\Carbon::parse($directory['name'])->format('d/m/Y') }}</p>
                                 <p class="text-sm text-gray-500">{{ number_format($directory['size'] / 1024, 2) }} KB</p>
                             </div>
                         </div>

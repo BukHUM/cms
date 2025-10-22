@@ -45,7 +45,7 @@ class MediaBrowserController extends Controller
     }
 
     /**
-     * Get directories from storage - same as SimpleMediaController
+     * Get directories from storage - organized by date
      */
     private function getDirectories($path)
     {
@@ -55,14 +55,23 @@ class MediaBrowserController extends Controller
             $items = scandir($path);
             foreach ($items as $item) {
                 if ($item != '.' && $item != '..' && is_dir($path . '/' . $item)) {
-                    $directories[] = [
-                        'name' => $item,
-                        'path' => $path . '/' . $item,
-                        'size' => $this->getDirectorySize($path . '/' . $item)
-                    ];
+                    // Only show date-based folders (YYYY-MM-DD format)
+                    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $item)) {
+                        $directories[] = [
+                            'name' => $item,
+                            'path' => $path . '/' . $item,
+                            'size' => $this->getDirectorySize($path . '/' . $item),
+                            'date' => $item
+                        ];
+                    }
                 }
             }
         }
+        
+        // Sort by date (newest first)
+        usort($directories, function($a, $b) {
+            return strcmp($b['date'], $a['date']);
+        });
         
         return $directories;
     }
@@ -108,8 +117,39 @@ class MediaBrowserController extends Controller
                 $mediaModel->save();
 
                 foreach ($request->file('media') as $file) {
-                    $media = $mediaModel->addMedia($file)
-                        ->toMediaCollection($collection);
+                    // Create date-based folder structure
+                    $dateFolder = now()->format('Y-m-d');
+                    $storagePath = storage_path('app/public/' . $dateFolder);
+                    
+                    // Create folder if it doesn't exist
+                    if (!File::exists($storagePath)) {
+                        File::makeDirectory($storagePath, 0755, true);
+                    }
+
+                    // Move file to date-based folder manually
+                    $fileName = time() . '_' . $file->getClientOriginalName();
+                    $filePath = $dateFolder . '/' . $fileName;
+                    
+                    // Store file in date-based folder
+                    $file->storeAs($dateFolder, $fileName, 'public');
+                    
+                    // Create media record manually
+                    $media = new Media();
+                    $media->model_type = get_class($mediaModel);
+                    $media->model_id = $mediaModel->id;
+                    $media->uuid = \Str::uuid();
+                    $media->collection_name = $collection;
+                    $media->name = $file->getClientOriginalName();
+                    $media->file_name = $fileName;
+                    $media->mime_type = $file->getMimeType();
+                    $media->disk = 'public';
+                    $media->conversions_disk = 'public';
+                    $media->size = $file->getSize();
+                    $media->manipulations = [];
+                    $media->custom_properties = [];
+                    $media->generated_conversions = [];
+                    $media->responsive_images = [];
+                    $media->save();
                     
                     $uploadedFiles[] = [
                         'id' => $media->id,

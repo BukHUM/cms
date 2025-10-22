@@ -52,4 +52,21 @@ class MediaModel extends Model implements HasMedia
             ->height(300)
             ->sharpen(10);
     }
+
+    /**
+     * Override the path generator to use date-based folders
+     */
+    public function getPathGeneratorClass(): string
+    {
+        return \App\Services\DateBasedPathGenerator::class;
+    }
+
+    /**
+     * Override the media path to use date-based folders
+     */
+    public function getMediaPath(string $collectionName = 'default'): string
+    {
+        $dateFolder = now()->format('Y-m-d');
+        return $dateFolder . '/';
+    }
 }
