@@ -1072,7 +1072,7 @@ function highlightText(text, searchTerm) {
     const textStr = String(text);
     
     const regex = new RegExp(`(${escapeRegExp(searchTerm)})`, 'gi');
-    return textStr.replace(regex, '<mark class="bg-yellow-200 px-1 rounded">$1</mark>');
+    return textStr.replace(regex, '<span class="bg-yellow-200 px-1 rounded">$1</span>');
 }
 
 // Escape special regex characters
@@ -1237,7 +1237,7 @@ function toggleStatus(id) {
         cancelButtonText: 'ยกเลิก'
     }).then((result) => {
         if (result.isConfirmed) {
-            const url = `{{ route('backend.settings-performance.toggle-status', ':id') }}`.replace(':id', id);
+            const url = '{{ route('backend.settings-performance.toggle-status', 1) }}'.replace('1', id);
             console.log('Toggle URL:', url);
             
             fetch(url, {
@@ -1385,7 +1385,7 @@ function setupValueInput(data) {
 // Edit Modal functionality
 function openEditModal(id) {
     // Fetch setting data
-    fetch(`{{ route('backend.settings-performance.show', ':id') }}`.replace(':id', id), {
+    fetch('{{ route('backend.settings-performance.show', 1) }}'.replace('1', id), {
         headers: {
             'Accept': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
@@ -1422,7 +1422,7 @@ function openEditModal(id) {
         }
 
         // Update form action - use update route for AJAX update
-        document.getElementById('editForm').action = `{{ route('backend.settings-performance.update', ':id') }}`.replace(':id', id);
+        document.getElementById('editForm').action = '{{ route('backend.settings-performance.update', 1) }}'.replace('1', id);
 
         // Show modal
         document.getElementById('editModal').classList.remove('hidden');
@@ -1656,7 +1656,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const formData = new FormData(this);
             const settingId = document.getElementById('edit_id').value;
-            const url = `{{ route('backend.settings-performance.update', ':id') }}`.replace(':id', settingId);
+            const url = '{{ route('backend.settings-performance.update', 1) }}'.replace('1', settingId);
 
             fetch(url, {
                 method: 'POST',
