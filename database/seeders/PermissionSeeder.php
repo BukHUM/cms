@@ -134,6 +134,15 @@ class PermissionSeeder extends Seeder
                 'is_active' => true,
             ],
 
+            // Backend Access
+            [
+                'name' => 'backend.access',
+                'display_name' => 'เข้าถึง Backend',
+                'description' => 'สามารถเข้าถึงระบบ Backend',
+                'group' => 'Backend Access',
+                'is_active' => true,
+            ],
+
             // Settings
             [
                 'name' => 'settings.view',
@@ -160,6 +169,27 @@ class PermissionSeeder extends Seeder
                 'name' => 'settings.delete',
                 'display_name' => 'ลบการตั้งค่า',
                 'description' => 'สามารถลบการตั้งค่า',
+                'group' => 'Settings',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'performance.view',
+                'display_name' => 'ดูการตั้งค่าประสิทธิภาพ',
+                'description' => 'สามารถดูการตั้งค่าประสิทธิภาพ',
+                'group' => 'Settings',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'performance.edit',
+                'display_name' => 'แก้ไขการตั้งค่าประสิทธิภาพ',
+                'description' => 'สามารถแก้ไขการตั้งค่าประสิทธิภาพ',
+                'group' => 'Settings',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'performance.cache-clear',
+                'display_name' => 'ล้าง Cache',
+                'description' => 'สามารถล้าง Cache ของระบบ',
                 'group' => 'Settings',
                 'is_active' => true,
             ],

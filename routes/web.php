@@ -115,28 +115,13 @@ Route::prefix('backend')->name('backend.')->middleware(['auth'])->group(function
     Route::post('settings-general/{setting}/reset', [SettingsGeneralController::class, 'reset'])->name('settings-general.reset');
     Route::get('settings-general-export', [SettingsGeneralController::class, 'export'])->name('settings-general.export');
     
-    // Laravel File Manager Routes
-    Route::group(['prefix' => 'laravel-filemanager', 'middleware' => ['web', 'auth']], function () {
-        \UniSharp\LaravelFilemanager\Lfm::routes();
-    });
-    
-    // Elfinder Routes
-    Route::group(['prefix' => 'elfinder', 'middleware' => ['web', 'auth']], function () {
-        Route::get('connector', [\Barryvdh\Elfinder\ElfinderController::class, 'showConnector'])->name('elfinder.connector');
-        Route::any('connector', [\Barryvdh\Elfinder\ElfinderController::class, 'showConnector']);
-    });
-    
-    // Media Browser Routes (Enhanced with LFM)
+    // Media Browser Routes (Spatie Media Library)
     Route::prefix('media-browser')->name('media-browser.')->group(function () {
         Route::get('/', [MediaBrowserController::class, 'index'])->name('index');
         Route::post('/upload', [MediaBrowserController::class, 'upload'])->name('upload');
-        Route::post('/create-folder', [MediaBrowserController::class, 'createFolder'])->name('create-folder');
-        Route::delete('/delete', [MediaBrowserController::class, 'delete'])->name('delete');
-        Route::put('/rename', [MediaBrowserController::class, 'rename'])->name('rename');
-        Route::get('/lfm', [MediaBrowserController::class, 'lfm'])->name('lfm');
-        Route::get('/elfinder', function() {
-            return redirect('/elfinder');
-        })->name('elfinder');
+        Route::get('/media/{media}', [MediaBrowserController::class, 'show'])->name('show');
+        Route::get('/download/{media}', [MediaBrowserController::class, 'download'])->name('download');
+        Route::delete('/delete/{media}', [MediaBrowserController::class, 'delete'])->name('delete');
     });
     
     // Performance Settings Routes
@@ -220,3 +205,4 @@ Route::prefix('api')->group(function () {
 
 // Maintenance API (accessible even during maintenance mode)
 Route::get('/api/maintenance-status', [App\Http\Controllers\Api\MaintenanceController::class, 'status']);
+

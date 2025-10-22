@@ -7,7 +7,7 @@ use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
-use App\Services\LoggingService;
+use Illuminate\Support\Facades\Log;
 
 class SettingsPerformanceController extends BaseSettingsController
 {

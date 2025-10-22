@@ -114,7 +114,7 @@
                         <span class="truncate">Performance</span>
                     </a>
                     
-                    <a href="/elfinder" class="flex items-center px-6 py-3 text-white  hover:bg-blue-800  transition-colors duration-200 {{ request()->routeIs('backend.media-browser.*') ? 'bg-blue-700  border-r-4 border-blue-300' : '' }}">
+                    <a href="{{ route('backend.media-browser.index') }}" class="flex items-center px-6 py-3 text-white  hover:bg-blue-800  transition-colors duration-200 {{ request()->routeIs('backend.media-browser.*') ? 'bg-blue-700  border-r-4 border-blue-300' : '' }}">
                         <i class="fas fa-images mr-3 w-5 text-center"></i>
                         <span class="truncate">Media Browser</span>
                     </a>
@@ -222,7 +222,7 @@
                         <span class="truncate">Performance</span>
                     </a>
                     
-                    <a href="/elfinder" class="flex items-center px-6 py-3 text-white  hover:bg-blue-800  transition-colors duration-200 {{ request()->routeIs('backend.media-browser.*') ? 'bg-blue-700  border-r-4 border-blue-300' : '' }}">
+                    <a href="{{ route('backend.media-browser.index') }}" class="flex items-center px-6 py-3 text-white  hover:bg-blue-800  transition-colors duration-200 {{ request()->routeIs('backend.media-browser.*') ? 'bg-blue-700  border-r-4 border-blue-300' : '' }}">
                         <i class="fas fa-images mr-3 w-5 text-center"></i>
                         <span class="truncate">Media Browser</span>
                     </a>

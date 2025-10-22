@@ -7,15 +7,9 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "blueimp/jquery-file-upload": "^10.32",
-        "ckeditor/ckeditor": "^4.25",
-        "froala/wysiwyg-editor": "^4.6",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
-        "moxiecode/plupload": "^3.1",
-        "summernote/summernote": "^0.8.8",
-        "tinymce/tinymce": "^8.1",
-        "unisharp/laravel-filemanager": "^2.11"
+        "spatie/laravel-medialibrary": "^11.16"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.16",
