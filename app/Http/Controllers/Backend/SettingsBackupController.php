@@ -7,6 +7,7 @@ use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 
 class SettingsBackupController extends BaseSettingsController
@@ -40,13 +41,148 @@ class SettingsBackupController extends BaseSettingsController
     }
 
     /**
+     * Display a listing of settings
+     */
+    public function index(Request $request)
+    {
+        try {
+            // Get backup settings grouped by category
+            $settings = $this->model->where('category', $this->category)
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('key')
+                ->get()
+                ->groupBy('group_name');
+
+            // Get backup statistics
+            $backupStats = $this->getBackupStatistics();
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'settings' => $settings,
+                    'statistics' => $backupStats
+                ]);
+            }
+
+            return view("{$this->viewPath}.index", compact('settings', 'backupStats'));
+
+        } catch (\Exception $e) {
+            \Log::error("Settings Controller Index Error ({$this->category}): " . $e->getMessage());
+            return redirect()->back()->with('error', 'เกิดข้อผิดพลาดในการโหลดข้อมูล: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get backup statistics
+     */
+    private function getBackupStatistics()
+    {
+        try {
+            $backupPath = storage_path('app/backups');
+            
+            if (!is_dir($backupPath)) {
+                return [
+                    'total_backups' => 0,
+                    'total_size' => 0,
+                    'last_backup' => null,
+                    'storage_path' => $backupPath
+                ];
+            }
+
+            $files = glob($backupPath . '/*');
+            $totalSize = 0;
+            $lastBackup = null;
+
+            foreach ($files as $file) {
+                if (is_file($file)) {
+                    $totalSize += filesize($file);
+                    $fileTime = filemtime($file);
+                    if (!$lastBackup || $fileTime > $lastBackup) {
+                        $lastBackup = $fileTime;
+                    }
+                }
+            }
+
+            return [
+                'total_backups' => count($files),
+                'total_size' => $totalSize,
+                'last_backup' => $lastBackup ? Carbon::createFromTimestamp($lastBackup) : null,
+                'storage_path' => $backupPath
+            ];
+
+        } catch (\Exception $e) {
+            \Log::error("Error getting backup statistics: " . $e->getMessage());
+            return [
+                'total_backups' => 0,
+                'total_size' => 0,
+                'last_backup' => null,
+                'storage_path' => storage_path('app/backups')
+            ];
+        }
+    }
+
+    /**
+     * Update backup settings
+     */
+    public function updateSettings(Request $request)
+    {
+        try {
+            $validator = \Validator::make($request->all(), [
+                'settings' => 'required|array',
+                'settings.*.key' => 'required|string',
+                'settings.*.value' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ข้อมูลไม่ถูกต้อง',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $updatedCount = 0;
+            foreach ($request->settings as $settingData) {
+                $setting = Setting::where('key', $settingData['key'])
+                    ->where('category', $this->category)
+                    ->first();
+
+                if ($setting) {
+                    $setting->value = $settingData['value'];
+                    $setting->updated_by = auth()->id();
+                    $setting->save();
+                    $updatedCount++;
+                }
+            }
+
+            // Clear cache
+            \App\Services\SettingsService::clearCache();
+
+            return response()->json([
+                'success' => true,
+                'message' => "บันทึกการตั้งค่าเรียบร้อยแล้ว",
+                'updated_count' => $updatedCount
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error("Error updating backup settings: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในการอัปเดตการตั้งค่า: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Create database backup
      */
     public function createBackup(Request $request)
     {
-        $validator = \Validator::make($request->all(), [
+        $validator = Validator::make($request->all(), [
             'backup_name' => 'nullable|string|max:255',
-            'include_files' => 'boolean',
+            'include_files' => 'required|in:true,false,1,0',
+            'include_database' => 'required|in:true,false,1,0',
         ]);
 
         if ($validator->fails()) {
@@ -60,28 +196,63 @@ class SettingsBackupController extends BaseSettingsController
         try {
             $backupName = $request->backup_name ?: 'backup_' . Carbon::now()->format('Y-m-d_H-i-s');
             $backupPath = 'backups/' . $backupName;
+            $backupZipPath = 'backups/' . $backupName . '.zip';
             
-            // Create backup directory
-            Storage::makeDirectory($backupPath);
+            \Log::info("Starting backup process", [
+                'backup_name' => $backupName,
+                'include_database' => $request->include_database,
+                'include_files' => $request->include_files
+            ]);
+            
+            // Create temporary directory for backup files
+            $tempPath = 'backups/temp_' . $backupName;
+            Storage::makeDirectory($tempPath);
+            
+            \Log::info("Created temporary directory", ['temp_path' => $tempPath]);
 
-            // Export database
-            $this->exportDatabase($backupPath);
+            // Export database if requested
+            if ($request->include_database === 'true' || $request->include_database === '1') {
+                \Log::info("Exporting database");
+                $this->exportDatabase($tempPath);
+                \Log::info("Database export completed");
+            }
 
             // Include files if requested
-            if ($request->include_files) {
-                $this->backupFiles($backupPath);
+            if ($request->include_files === 'true' || $request->include_files === '1') {
+                \Log::info("Backing up files");
+                $this->backupFiles($tempPath);
+                \Log::info("Files backup completed");
             }
 
             // Create backup info file
-            $this->createBackupInfo($backupPath, $backupName, $request->include_files);
+            \Log::info("Creating backup info file");
+            $this->createBackupInfo($tempPath, $backupName, 
+                $request->include_files === 'true' || $request->include_files === '1',
+                $request->include_database === 'true' || $request->include_database === '1'
+            );
+
+            // Create ZIP archive
+            \Log::info("Creating ZIP archive", ['zip_path' => $backupZipPath]);
+            $this->createZipArchive($tempPath, $backupZipPath);
+            
+            // Clean up temporary directory (commented for debugging)
+            \Log::info("Skipping cleanup for debugging");
+            // Storage::deleteDirectory($tempPath);
+
+            \Log::info("Backup process completed successfully", ['backup_name' => $backupName . '.zip']);
 
             return response()->json([
                 'success' => true,
                 'message' => 'สำรองข้อมูลเรียบร้อยแล้ว',
-                'backup_name' => $backupName
+                'backup_name' => $backupName . '.zip'
             ]);
 
         } catch (\Exception $e) {
+            \Log::error("Backup process failed", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'เกิดข้อผิดพลาดในการสำรองข้อมูล: ' . $e->getMessage()
@@ -90,46 +261,93 @@ class SettingsBackupController extends BaseSettingsController
     }
 
     /**
+     * Display the specified backup setting
+     */
+    public function show(Setting $settingsBackup)
+    {
+        if (request()->expectsJson()) {
+            return response()->json($settingsBackup);
+        }
+        
+        return view("{$this->viewPath}.show", compact('settingsBackup'));
+    }
+
+    /**
      * Get backup list
      */
     public function getBackups()
     {
-        $backups = [];
-        $backupPath = storage_path('app/backups');
+        try {
+            $backups = [];
+            $backupPath = storage_path('app/backups');
 
-        if (is_dir($backupPath)) {
-            $directories = array_diff(scandir($backupPath), ['.', '..']);
-            
-            foreach ($directories as $dir) {
-                $dirPath = $backupPath . '/' . $dir;
-                if (is_dir($dirPath)) {
-                    $infoFile = $dirPath . '/backup_info.json';
-                    $info = [];
+            // Create backup directory if it doesn't exist
+            if (!is_dir($backupPath)) {
+                mkdir($backupPath, 0755, true);
+            }
+
+            if (is_dir($backupPath)) {
+                $files = array_diff(scandir($backupPath), ['.', '..']);
+                
+                foreach ($files as $file) {
+                    $filePath = $backupPath . '/' . $file;
                     
-                    if (file_exists($infoFile)) {
-                        $info = json_decode(file_get_contents($infoFile), true);
+                    // Handle ZIP files
+                    if (is_file($filePath) && pathinfo($file, PATHINFO_EXTENSION) === 'zip') {
+                        $backups[] = [
+                            'name' => $file,
+                            'path' => $file,
+                            'created_at' => date('Y-m-d H:i:s', filemtime($filePath)),
+                            'size' => filesize($filePath),
+                            'include_files' => true, // Assume ZIP contains both database and files
+                            'type' => 'zip'
+                        ];
                     }
-                    
-                    $backups[] = [
-                        'name' => $dir,
-                        'path' => $dir,
-                        'created_at' => $info['created_at'] ?? filemtime($dirPath),
-                        'size' => $this->getDirectorySize($dirPath),
-                        'include_files' => $info['include_files'] ?? false,
-                    ];
+                    // Handle directories (legacy support)
+                    elseif (is_dir($filePath)) {
+                        $infoFile = $filePath . '/backup_info.json';
+                        $info = [];
+                        
+                        if (file_exists($infoFile)) {
+                            $infoContent = file_get_contents($infoFile);
+                            if ($infoContent !== false) {
+                                $info = json_decode($infoContent, true) ?: [];
+                            }
+                        }
+                        
+                        $backups[] = [
+                            'name' => $file,
+                            'path' => $file,
+                            'created_at' => $info['created_at'] ?? date('Y-m-d H:i:s', filemtime($filePath)),
+                            'size' => $this->getDirectorySize($filePath),
+                            'include_files' => $info['include_files'] ?? false,
+                            'type' => 'directory'
+                        ];
+                    }
                 }
             }
+
+            // Sort by creation date (newest first)
+            usort($backups, function($a, $b) {
+                return strtotime($b['created_at']) - strtotime($a['created_at']);
+            });
+
+            return response()->json([
+                'success' => true,
+                'backups' => $backups
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error in getBackups: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในการโหลดรายการสำรองข้อมูล: ' . $e->getMessage(),
+                'backups' => []
+            ], 500);
         }
-
-        // Sort by creation date (newest first)
-        usort($backups, function($a, $b) {
-            return strtotime($b['created_at']) - strtotime($a['created_at']);
-        });
-
-        return response()->json([
-            'success' => true,
-            'backups' => $backups
-        ]);
     }
 
     /**
@@ -139,6 +357,19 @@ class SettingsBackupController extends BaseSettingsController
     {
         $backupPath = storage_path('app/backups/' . $backupName);
         
+        // Check if it's a ZIP file
+        if (is_file($backupPath) && pathinfo($backupName, PATHINFO_EXTENSION) === 'zip') {
+            if (!file_exists($backupPath)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ไม่พบไฟล์สำรองข้อมูล'
+                ], 404);
+            }
+            
+            return response()->download($backupPath, $backupName);
+        }
+        
+        // Handle directory (legacy)
         if (!is_dir($backupPath)) {
             return response()->json([
                 'success' => false,
@@ -160,14 +391,32 @@ class SettingsBackupController extends BaseSettingsController
     {
         $backupPath = storage_path('app/backups/' . $backupName);
         
-        if (!is_dir($backupPath)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่พบไฟล์สำรองข้อมูล'
-            ], 404);
-        }
-
         try {
+            // Check if it's a ZIP file
+            if (is_file($backupPath) && pathinfo($backupName, PATHINFO_EXTENSION) === 'zip') {
+                if (!file_exists($backupPath)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'ไม่พบไฟล์สำรองข้อมูล'
+                    ], 404);
+                }
+                
+                unlink($backupPath);
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'ลบไฟล์สำรองข้อมูลเรียบร้อยแล้ว'
+                ]);
+            }
+            
+            // Handle directory (legacy)
+            if (!is_dir($backupPath)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ไม่พบไฟล์สำรองข้อมูล'
+                ], 404);
+            }
+
             $this->deleteDirectory($backupPath);
             
             return response()->json([
@@ -188,13 +437,246 @@ class SettingsBackupController extends BaseSettingsController
      */
     private function exportDatabase($backupPath)
     {
-        $database = config('database.connections.sqlite.database');
-        $backupFile = storage_path('app/' . $backupPath . '/database.sql');
+        $connection = config('database.default');
+        $config = config("database.connections.{$connection}");
         
-        // For SQLite, we can simply copy the database file
-        if (file_exists($database)) {
-            copy($database, storage_path('app/' . $backupPath . '/database.sqlite'));
+        \Log::info("Exporting database", [
+            'connection' => $connection,
+            'backup_path' => $backupPath
+        ]);
+        
+        $backupFile = Storage::path($backupPath . '/database.sql');
+        
+        \Log::info("Backup file path", ['backup_file' => $backupFile]);
+        
+        try {
+            switch ($connection) {
+                case 'mysql':
+                case 'mariadb':
+                    \Log::info("Using MySQL/MariaDB export");
+                    $this->exportMySQLDatabase($config, $backupFile);
+                    break;
+                    
+                case 'sqlite':
+                    \Log::info("Using SQLite export");
+                    $this->exportSQLiteDatabase($config, $backupPath);
+                    break;
+                    
+                case 'pgsql':
+                    \Log::info("Using PostgreSQL export");
+                    $this->exportPostgreSQLDatabase($config, $backupFile);
+                    break;
+                    
+                default:
+                    throw new \Exception("Unsupported database connection: {$connection}");
+            }
+            
+            \Log::info("Database export completed successfully");
+            
+        } catch (\Exception $e) {
+            \Log::error("Database export failed", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
         }
+    }
+    
+    /**
+     * Export MySQL/MariaDB database
+     */
+    private function exportMySQLDatabase($config, $backupFile)
+    {
+        $host = $config['host'];
+        $port = $config['port'];
+        $database = $config['database'];
+        $username = $config['username'];
+        $password = $config['password'];
+        
+        // Find mysqldump executable
+        $mysqldump = $this->findMySQLDump();
+        
+        // Build mysqldump command for Windows (simplified)
+        $command = sprintf(
+            '"%s" --host=%s --port=%s --user=%s --password=%s --single-transaction --no-tablespaces --skip-routines --skip-triggers %s',
+            $mysqldump,
+            escapeshellarg($host),
+            escapeshellarg($port),
+            escapeshellarg($username),
+            escapeshellarg($password),
+            escapeshellarg($database)
+        );
+        
+        // Execute command and capture output
+        $output = [];
+        $returnCode = 0;
+        exec($command . ' 2>&1', $output, $returnCode);
+        
+        // Filter out warnings and check for actual errors
+        $filteredOutput = array_filter($output, function($line) {
+            return !preg_match('/^WARNING:/', $line) && !preg_match('/^mysqldump\.exe :/', $line);
+        });
+        
+        // Check if we have actual SQL content
+        $sqlContent = implode("\n", $output);
+        $hasSqlContent = preg_match('/^-- MariaDB dump|^-- MySQL dump|^CREATE TABLE|^INSERT INTO/i', $sqlContent);
+        
+        if ($returnCode !== 0 && !$hasSqlContent) {
+            throw new \Exception("MySQL dump failed with return code: {$returnCode}. Output: " . implode("\n", $output));
+        }
+        
+        // Write output to file
+        if (empty($sqlContent)) {
+            throw new \Exception("MySQL dump produced empty output");
+        }
+        
+        // Ensure directory exists
+        $backupDir = dirname($backupFile);
+        if (!is_dir($backupDir)) {
+            mkdir($backupDir, 0755, true);
+        }
+        
+        // Write content to file
+        $bytesWritten = file_put_contents($backupFile, $sqlContent);
+        
+        if ($bytesWritten === false || $bytesWritten === 0) {
+            throw new \Exception("Failed to write MySQL dump to file");
+        }
+        
+        if (!file_exists($backupFile) || filesize($backupFile) === 0) {
+            throw new \Exception("MySQL dump file was not created or is empty");
+        }
+    }
+    
+    /**
+     * Find mysqldump executable
+     */
+    private function findMySQLDump()
+    {
+        $possiblePaths = [
+            'C:\\xampp\\mysql\\bin\\mysqldump.exe',
+            'C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqldump.exe',
+            'C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysqldump.exe',
+            'mysqldump', // Try PATH
+        ];
+        
+        foreach ($possiblePaths as $path) {
+            if ($path === 'mysqldump') {
+                // Check if it's in PATH
+                $output = [];
+                $returnCode = 0;
+                exec('where mysqldump 2>nul', $output, $returnCode);
+                if ($returnCode === 0 && !empty($output)) {
+                    return $output[0];
+                }
+            } else {
+                if (file_exists($path)) {
+                    return $path;
+                }
+            }
+        }
+        
+        throw new \Exception("mysqldump executable not found. Please ensure MySQL is installed and mysqldump is available.");
+    }
+    
+    /**
+     * Export SQLite database
+     */
+    private function exportSQLiteDatabase($config, $backupPath)
+    {
+        $database = $config['database'];
+        
+        if (file_exists($database)) {
+            Storage::copy($database, $backupPath . '/database.sqlite');
+        } else {
+            throw new \Exception("SQLite database file not found: {$database}");
+        }
+    }
+    
+    /**
+     * Export PostgreSQL database
+     */
+    private function exportPostgreSQLDatabase($config, $backupFile)
+    {
+        $host = $config['host'];
+        $port = $config['port'];
+        $database = $config['database'];
+        $username = $config['username'];
+        $password = $config['password'];
+        
+        // Set password environment variable
+        putenv("PGPASSWORD={$password}");
+        
+        // Find pg_dump executable
+        $pgDump = $this->findPostgreSQLDump();
+        
+        // Build pg_dump command
+        $command = sprintf(
+            '"%s" --host=%s --port=%s --username=%s --dbname=%s',
+            $pgDump,
+            escapeshellarg($host),
+            escapeshellarg($port),
+            escapeshellarg($username),
+            escapeshellarg($database)
+        );
+        
+        // Execute command and capture output
+        $output = [];
+        $returnCode = 0;
+        exec($command . ' 2>&1', $output, $returnCode);
+        
+        if ($returnCode !== 0) {
+            throw new \Exception("PostgreSQL dump failed with return code: {$returnCode}");
+        }
+        
+        // Write output to file
+        $sqlContent = implode("\n", $output);
+        if (empty($sqlContent)) {
+            throw new \Exception("PostgreSQL dump produced empty output");
+        }
+        
+        // Ensure directory exists
+        $backupDir = dirname($backupFile);
+        if (!is_dir($backupDir)) {
+            mkdir($backupDir, 0755, true);
+        }
+        
+        file_put_contents($backupFile, $sqlContent);
+        
+        if (!file_exists($backupFile) || filesize($backupFile) === 0) {
+            throw new \Exception("PostgreSQL dump file was not created or is empty");
+        }
+    }
+    
+    /**
+     * Find pg_dump executable
+     */
+    private function findPostgreSQLDump()
+    {
+        $possiblePaths = [
+            'C:\\Program Files\\PostgreSQL\\15\\bin\\pg_dump.exe',
+            'C:\\Program Files\\PostgreSQL\\14\\bin\\pg_dump.exe',
+            'C:\\Program Files\\PostgreSQL\\13\\bin\\pg_dump.exe',
+            'pg_dump', // Try PATH
+        ];
+        
+        foreach ($possiblePaths as $path) {
+            if ($path === 'pg_dump') {
+                // Check if it's in PATH
+                $output = [];
+                $returnCode = 0;
+                exec('where pg_dump 2>nul', $output, $returnCode);
+                if ($returnCode === 0 && !empty($output)) {
+                    return $output[0];
+                }
+            } else {
+                if (file_exists($path)) {
+                    return $path;
+                }
+            }
+        }
+        
+        throw new \Exception("pg_dump executable not found. Please ensure PostgreSQL is installed and pg_dump is available.");
     }
 
     /**
@@ -243,22 +725,99 @@ class SettingsBackupController extends BaseSettingsController
     }
 
     /**
-     * Create backup info file
+     * Create ZIP archive from backup directory
      */
-    private function createBackupInfo($backupPath, $backupName, $includeFiles)
+    private function createZipArchive($sourcePath, $zipPath)
+    {
+        \Log::info("Creating ZIP archive", [
+            'source_path' => $sourcePath,
+            'zip_path' => $zipPath
+        ]);
+        
+        $zip = new \ZipArchive();
+        $zipFile = Storage::path($zipPath);
+        
+        \Log::info("ZIP file path", ['zip_file' => $zipFile]);
+        
+        // Ensure directory exists
+        $zipDir = dirname($zipFile);
+        if (!is_dir($zipDir)) {
+            mkdir($zipDir, 0755, true);
+            \Log::info("Created ZIP directory", ['zip_dir' => $zipDir]);
+        }
+        
+        $result = $zip->open($zipFile, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        if ($result !== TRUE) {
+            \Log::error("Failed to open ZIP file", [
+                'result' => $result,
+                'zip_file' => $zipFile,
+                'error_message' => $zip->getStatusString()
+            ]);
+            throw new \Exception("Cannot create ZIP file: {$zipFile} (Result: {$result})");
+        }
+        
+        $sourceDir = Storage::path($sourcePath);
+        \Log::info("Source directory", ['source_dir' => $sourceDir, 'exists' => is_dir($sourceDir)]);
+        
+        if (!is_dir($sourceDir)) {
+            throw new \Exception("Source directory does not exist: {$sourceDir}");
+        }
+        
+        $this->addDirectoryToZip($zip, $sourceDir, '');
+        
+        $zip->close();
+        
+        if (!file_exists($zipFile) || filesize($zipFile) === 0) {
+            \Log::error("ZIP file was not created or is empty", [
+                'zip_file' => $zipFile,
+                'exists' => file_exists($zipFile),
+                'size' => file_exists($zipFile) ? filesize($zipFile) : 0
+            ]);
+            throw new \Exception("ZIP file was not created or is empty");
+        }
+        
+        \Log::info("ZIP file created successfully", [
+            'zip_file' => $zipFile,
+            'size' => filesize($zipFile)
+        ]);
+    }
+    
+    /**
+     * Add directory to ZIP recursively
+     */
+    private function addDirectoryToZip($zip, $dir, $zipPath)
+    {
+        $files = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::SELF_FIRST
+        );
+        
+        foreach ($files as $file) {
+            $filePath = $file->getRealPath();
+            $relativePath = $zipPath . substr($filePath, strlen($dir) + 1);
+            
+            if ($file->isDir()) {
+                $zip->addEmptyDir($relativePath);
+            } else {
+                $zip->addFile($filePath, $relativePath);
+            }
+        }
+    }
+    private function createBackupInfo($backupPath, $backupName, $includeFiles, $includeDatabase = true)
     {
         $info = [
             'name' => $backupName,
             'created_at' => Carbon::now()->toISOString(),
             'include_files' => $includeFiles,
+            'include_database' => $includeDatabase,
             'database_type' => config('database.default'),
             'app_version' => config('app.version', '1.0.0'),
             'php_version' => PHP_VERSION,
             'laravel_version' => app()->version(),
         ];
 
-        file_put_contents(
-            storage_path('app/' . $backupPath . '/backup_info.json'),
+        Storage::put(
+            $backupPath . '/backup_info.json',
             json_encode($info, JSON_PRETTY_PRINT)
         );
     }
@@ -268,16 +827,28 @@ class SettingsBackupController extends BaseSettingsController
      */
     private function getDirectorySize($directory)
     {
-        $size = 0;
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($directory, \RecursiveDirectoryIterator::SKIP_DOTS)
-        );
+        try {
+            $size = 0;
+            
+            if (!is_dir($directory)) {
+                return '0 B';
+            }
+            
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($directory, \RecursiveDirectoryIterator::SKIP_DOTS)
+            );
 
-        foreach ($iterator as $file) {
-            $size += $file->getSize();
+            foreach ($iterator as $file) {
+                if ($file->isFile()) {
+                    $size += $file->getSize();
+                }
+            }
+
+            return $this->formatBytes($size);
+        } catch (\Exception $e) {
+            \Log::error('Error calculating directory size: ' . $e->getMessage());
+            return 'Unknown';
         }
-
-        return $this->formatBytes($size);
     }
 
     /**

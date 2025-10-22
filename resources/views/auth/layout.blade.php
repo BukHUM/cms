@@ -45,10 +45,22 @@
         <div class="rounded-2xl shadow-2xl p-8 border border-white/20 auth-card auth-transition">
             <!-- Logo and Title -->
             <div class="text-center mb-8">
-                <div class="w-16 h-16 @yield('logo-color', 'bg-blue-600') rounded-full flex items-center justify-center mx-auto mb-4 auth-transition">
-                    <i class="@yield('logo-icon', 'fas fa-cogs') text-white text-2xl"></i>
-                </div>
-                <h1 class="text-2xl font-bold text-gray-900 mb-2">@yield('page-title', 'CMS Backend')</h1>
+                @if(setting('site_logo'))
+                    <div class="flex items-center justify-center mx-auto mb-4 auth-transition">
+                        <img src="{{ asset('storage/' . setting('site_logo')) }}" alt="{{ setting('site_name', 'CMS Backend') }}" class="h-16 w-auto max-w-full">
+                    </div>
+                @else
+                    <div class="w-16 h-16 @yield('logo-color', 'bg-blue-600') rounded-full flex items-center justify-center mx-auto mb-4 auth-transition">
+                        <i class="@yield('logo-icon', 'fas fa-cogs') text-white text-2xl"></i>
+                    </div>
+                @endif
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">
+                    @if(setting('site_logo'))
+                        @yield('page-title', setting('site_name', 'CMS Backend'))
+                    @else
+                        @yield('page-title', 'CMS Backend')
+                    @endif
+                </h1>
                 <p class="text-gray-600">@yield('page-description', 'เข้าสู่ระบบเพื่อจัดการระบบ')</p>
             </div>
 

@@ -179,6 +179,57 @@ class PermissionSeeder extends Seeder
                 'group' => 'Audit Logs',
                 'is_active' => true,
             ],
+
+            // Backup Settings
+            [
+                'name' => 'backup.view',
+                'display_name' => 'ดูการตั้งค่าสำรองข้อมูล',
+                'description' => 'สามารถดูการตั้งค่าสำรองข้อมูล',
+                'group' => 'Backup Settings',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'backup.create',
+                'display_name' => 'สร้างการตั้งค่าสำรองข้อมูล',
+                'description' => 'สามารถสร้างการตั้งค่าสำรองข้อมูลใหม่',
+                'group' => 'Backup Settings',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'backup.edit',
+                'display_name' => 'แก้ไขการตั้งค่าสำรองข้อมูล',
+                'description' => 'สามารถแก้ไขการตั้งค่าสำรองข้อมูล',
+                'group' => 'Backup Settings',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'backup.delete',
+                'display_name' => 'ลบการตั้งค่าสำรองข้อมูล',
+                'description' => 'สามารถลบการตั้งค่าสำรองข้อมูล',
+                'group' => 'Backup Settings',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'settings-backup-access',
+                'display_name' => 'เข้าถึงการตั้งค่าสำรองข้อมูล',
+                'description' => 'สามารถเข้าถึงหน้าตั้งค่าสำรองข้อมูล',
+                'group' => 'Backup Settings',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'backup-manage',
+                'display_name' => 'จัดการสำรองข้อมูล',
+                'description' => 'สามารถจัดการการสำรองข้อมูล',
+                'group' => 'Backup Settings',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'system-backup',
+                'display_name' => 'สำรองข้อมูลระบบ',
+                'description' => 'สามารถสำรองข้อมูลระบบ',
+                'group' => 'Backup Settings',
+                'is_active' => true,
+            ],
         ];
 
         // Create permissions

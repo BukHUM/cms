@@ -48,11 +48,10 @@ class SettingsEmailController extends Controller
         // Update email settings
         foreach ($validated as $key => $value) {
             Setting::updateOrCreate(
-                ['key' => $key],
+                ['key' => $key, 'category' => 'email'],
                 [
                     'value' => $value,
                     'type' => $this->getSettingType($key),
-                    'category' => 'email',
                     'group_name' => 'smtp',
                     'description' => $this->getSettingDescription($key),
                     'is_public' => $this->isPublicSetting($key),
@@ -121,11 +120,10 @@ class SettingsEmailController extends Controller
 
         foreach ($defaultSettings as $key => $value) {
             Setting::updateOrCreate(
-                ['key' => $key],
+                ['key' => $key, 'category' => 'email'],
                 [
                     'value' => $value,
                     'type' => $this->getSettingType($key),
-                    'category' => 'email',
                     'group_name' => 'smtp',
                     'description' => $this->getSettingDescription($key),
                     'is_public' => $this->isPublicSetting($key),

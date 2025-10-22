@@ -6,14 +6,6 @@
 
 @section('content')
 <div class="main-content-area">
-    <!-- Action Buttons -->
-    <div class="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2 mb-6">
-        <button onclick="resetToDefault()" 
-                class="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 w-full sm:w-auto">
-            <i class="fas fa-undo mr-2"></i>
-            รีเซ็ตเป็นค่าเริ่มต้น
-        </button>
-    </div>
 
     <!-- Security Settings Form -->
     <div class="bg-white rounded-lg shadow">

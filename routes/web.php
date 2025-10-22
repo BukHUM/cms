@@ -12,6 +12,7 @@ use App\Http\Controllers\Backend\SettingsEmailController;
 use App\Http\Controllers\Backend\SettingsSecurityController;
 use App\Http\Controllers\Backend\SettingsAuditLogController;
 use App\Http\Controllers\Backend\SettingsSystemInfoController;
+use App\Http\Controllers\Backend\MediaBrowserController;
 use App\Http\Controllers\Auth\AuthController;
 
 // Test route for Performance (without auth)
@@ -114,23 +115,45 @@ Route::prefix('backend')->name('backend.')->middleware(['auth'])->group(function
     Route::post('settings-general/{setting}/reset', [SettingsGeneralController::class, 'reset'])->name('settings-general.reset');
     Route::get('settings-general-export', [SettingsGeneralController::class, 'export'])->name('settings-general.export');
     
+    // Laravel File Manager Routes
+    Route::group(['prefix' => 'laravel-filemanager', 'middleware' => ['web', 'auth']], function () {
+        \UniSharp\LaravelFilemanager\Lfm::routes();
+    });
+    
+    // Elfinder Routes
+    Route::group(['prefix' => 'elfinder', 'middleware' => ['web', 'auth']], function () {
+        Route::get('connector', [\Barryvdh\Elfinder\ElfinderController::class, 'showConnector'])->name('elfinder.connector');
+        Route::any('connector', [\Barryvdh\Elfinder\ElfinderController::class, 'showConnector']);
+    });
+    
+    // Media Browser Routes (Enhanced with LFM)
+    Route::prefix('media-browser')->name('media-browser.')->group(function () {
+        Route::get('/', [MediaBrowserController::class, 'index'])->name('index');
+        Route::post('/upload', [MediaBrowserController::class, 'upload'])->name('upload');
+        Route::post('/create-folder', [MediaBrowserController::class, 'createFolder'])->name('create-folder');
+        Route::delete('/delete', [MediaBrowserController::class, 'delete'])->name('delete');
+        Route::put('/rename', [MediaBrowserController::class, 'rename'])->name('rename');
+        Route::get('/lfm', [MediaBrowserController::class, 'lfm'])->name('lfm');
+        Route::get('/elfinder', function() {
+            return redirect('/elfinder');
+        })->name('elfinder');
+    });
+    
     // Performance Settings Routes
-    Route::resource('settings-performance', SettingsPerformanceController::class);
+    Route::resource('settings-performance', SettingsPerformanceController::class)->except(['create', 'store', 'edit', 'update', 'destroy']);
     Route::patch('settings-performance/{setting}/toggle-status', [SettingsPerformanceController::class, 'toggleStatus'])->name('settings-performance.toggle-status');
     Route::post('settings-performance/bulk-update', [SettingsPerformanceController::class, 'bulkUpdate'])->name('settings-performance.bulk-update');
     Route::post('settings-performance/{setting}/reset', [SettingsPerformanceController::class, 'reset'])->name('settings-performance.reset');
     Route::get('settings-performance-export', [SettingsPerformanceController::class, 'export'])->name('settings-performance.export');
     
-    // Backup Settings Routes
-    Route::resource('settings-backup', SettingsBackupController::class);
-    Route::patch('settings-backup/{setting}/toggle-status', [SettingsBackupController::class, 'toggleStatus'])->name('settings-backup.toggle-status');
-    Route::post('settings-backup/bulk-update', [SettingsBackupController::class, 'bulkUpdate'])->name('settings-backup.bulk-update');
-    Route::post('settings-backup/{setting}/reset', [SettingsBackupController::class, 'reset'])->name('settings-backup.reset');
-    Route::get('settings-backup-export', [SettingsBackupController::class, 'export'])->name('settings-backup.export');
-    Route::post('settings-backup/create-backup', [SettingsBackupController::class, 'createBackup'])->name('settings-backup.create-backup');
-    Route::get('settings-backup/get-backups', [SettingsBackupController::class, 'getBackups'])->name('settings-backup.get-backups');
-    Route::get('settings-backup/download/{backupName}', [SettingsBackupController::class, 'downloadBackup'])->name('settings-backup.download');
-    Route::delete('settings-backup/delete/{backupName}', [SettingsBackupController::class, 'deleteBackup'])->name('settings-backup.delete-backup');
+    // Add update route for AJAX form submission
+    Route::put('settings-performance/{settings_performance}', [SettingsPerformanceController::class, 'update'])->name('settings-performance.update');
+    
+    // Cache Management Routes
+    Route::post('settings-performance/clear-cache', [SettingsPerformanceController::class, 'clearAllCache'])->name('settings-performance.clear-cache');
+    Route::post('settings-performance/clear-performance-cache', [SettingsPerformanceController::class, 'clearPerformanceCache'])->name('settings-performance.clear-performance-cache');
+    
+    // Backup Settings Routes (moved to middleware group below)
     
     // Email Settings Routes
     Route::get('settings-email', [SettingsEmailController::class, 'index'])->name('settings-email.index');
@@ -154,14 +177,20 @@ Route::prefix('backend')->name('backend.')->middleware(['auth'])->group(function
     Route::get('settings-systeminfo', [SettingsSystemInfoController::class, 'index'])->name('settings-systeminfo.index');
     Route::get('settings-systeminfo/export', [SettingsSystemInfoController::class, 'export'])->name('settings-systeminfo.export');
     
-    // Settings Backup Routes
-    Route::middleware(['settings.backup.access'])->group(function () {
+    // Settings Backup Routes - API routes first (before resource routes)
+    Route::get('settings-backup/get-backups', [SettingsBackupController::class, 'getBackups'])->name('settings-backup.get-backups');
+    Route::post('settings-backup/create-backup', [SettingsBackupController::class, 'createBackup'])->name('settings-backup.create-backup');
+    Route::post('settings-backup/update-settings', [SettingsBackupController::class, 'updateSettings'])->name('settings-backup.update-settings');
+    Route::get('settings-backup/download/{backupName}', [SettingsBackupController::class, 'downloadBackup'])->name('settings-backup.download');
+    Route::delete('settings-backup/delete/{backupName}', [SettingsBackupController::class, 'deleteBackup'])->name('settings-backup.delete-backup');
+    
+    // Settings Backup Resource Routes
+    Route::group([], function () {
         Route::resource('settings-backup', SettingsBackupController::class);
-        Route::post('settings-backup/bulk-update', [SettingsBackupController::class, 'updateBulk'])->name('settings-backup.bulk-update');
-        Route::post('settings-backup/create-backup', [SettingsBackupController::class, 'createBackup'])->name('settings-backup.create-backup');
-        Route::get('settings-backup/get-backups', [SettingsBackupController::class, 'getBackups'])->name('settings-backup.get-backups');
-        Route::get('settings-backup/download/{backupName}', [SettingsBackupController::class, 'downloadBackup'])->name('settings-backup.download');
-        Route::delete('settings-backup/delete/{backupName}', [SettingsBackupController::class, 'deleteBackup'])->name('settings-backup.delete');
+        Route::patch('settings-backup/{setting}/toggle-status', [SettingsBackupController::class, 'toggleStatus'])->name('settings-backup.toggle-status');
+        Route::post('settings-backup/bulk-update', [SettingsBackupController::class, 'bulkUpdate'])->name('settings-backup.bulk-update');
+        Route::post('settings-backup/{setting}/reset', [SettingsBackupController::class, 'reset'])->name('settings-backup.reset');
+        Route::get('settings-backup-export', [SettingsBackupController::class, 'export'])->name('settings-backup.export');
     });
 });
 

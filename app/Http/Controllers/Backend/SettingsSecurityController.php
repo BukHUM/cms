@@ -61,11 +61,10 @@ class SettingsSecurityController extends Controller
         // Update security settings
         foreach ($validated as $key => $value) {
             Setting::updateOrCreate(
-                ['key' => $key],
+                ['key' => $key, 'category' => 'security'],
                 [
                     'value' => $value,
                     'type' => $this->getSettingType($key),
-                    'category' => 'security',
                     'description' => $this->getSettingDescription($key),
                     'is_public' => $this->isPublicSetting($key),
                 ]
@@ -166,11 +165,10 @@ class SettingsSecurityController extends Controller
 
         foreach ($defaultSettings as $key => $value) {
             Setting::updateOrCreate(
-                ['key' => $key],
+                ['key' => $key, 'category' => 'security'],
                 [
                     'value' => $value,
                     'type' => $this->getSettingType($key),
-                    'category' => 'security',
                     'description' => $this->getSettingDescription($key),
                     'is_public' => $this->isPublicSetting($key),
                 ]
@@ -287,16 +285,34 @@ class SettingsSecurityController extends Controller
         ];
 
         foreach ($defaultSettings as $key => $value) {
-            Setting::updateOrCreate(
-                ['key' => $key],
-                [
+            // Check if setting exists (including soft-deleted)
+            $existingSetting = Setting::withTrashed()
+                ->where('key', $key)
+                ->where('category', 'security')
+                ->first();
+            
+            if ($existingSetting) {
+                // If soft-deleted, restore it and update
+                if ($existingSetting->trashed()) {
+                    $existingSetting->restore();
+                }
+                $existingSetting->update([
                     'value' => $value,
                     'type' => $this->getSettingType($key),
-                    'category' => 'security',
                     'description' => $this->getSettingDescription($key),
                     'is_public' => $this->isPublicSetting($key),
-                ]
-            );
+                ]);
+            } else {
+                // Create new setting
+                Setting::create([
+                    'key' => $key,
+                    'category' => 'security',
+                    'value' => $value,
+                    'type' => $this->getSettingType($key),
+                    'description' => $this->getSettingDescription($key),
+                    'is_public' => $this->isPublicSetting($key),
+                ]);
+            }
         }
     }
 }

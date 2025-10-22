@@ -49,35 +49,40 @@ abstract class BaseSettingsController extends Controller
                 $query->where('is_active', $request->status === 'active');
             }
 
+            // Group filter
+            if ($request->filled('group')) {
+                $query->where('group_name', $request->group);
+            }
+
             // Handle AJAX requests for live search
             if ($request->ajax() && $request->has('ajax')) {
-                $settings = $query->orderBy('sort_order')->orderBy('key')->get();
+                $settings_performances = $query->orderBy('sort_order')->orderBy('key')->get();
                 
                 // Generate suggestions (limit to 5)
-                $suggestions = $settings->take(5)->map(function ($setting) {
+                $suggestions = $settings_performances->take(5)->map(function ($settings_performance) {
                     return [
-                        'id' => $setting->id,
-                        'key' => $setting->key,
-                        'description' => $setting->description,
-                        'type' => $setting->type,
-                        'type_icon' => $setting->type_icon ?? 'fas fa-cog',
+                        'id' => $settings_performance->id,
+                        'key' => $settings_performance->key,
+                        'description' => $settings_performance->description,
+                        'type' => $settings_performance->type,
+                        'type_icon' => $settings_performance->type_icon ?? 'fas fa-cog',
                     ];
                 });
 
                 return response()->json([
                     'success' => true,
-                    'settings' => $settings->map(function ($setting) {
+                    'settings' => $settings_performances->map(function ($settings_performance) {
                         return [
-                            'id' => $setting->id,
-                            'key' => $setting->key,
-                            'description' => $setting->description,
-                            'value' => $setting->value,
-                            'formatted_value' => $setting->formatted_value,
-                            'type' => $setting->type,
-                            'type_icon' => $setting->type_icon ?? 'fas fa-cog',
-                            'group_name' => $setting->group_name,
-                            'is_active' => $setting->is_active,
-                            'default_value' => $setting->default_value,
+                            'id' => $settings_performance->id,
+                            'key' => $settings_performance->key,
+                            'description' => $settings_performance->description,
+                            'value' => $settings_performance->value,
+                            'formatted_value' => $settings_performance->formatted_value,
+                            'type' => $settings_performance->type,
+                            'type_icon' => $settings_performance->type_icon ?? 'fas fa-cog',
+                            'group_name' => $settings_performance->group_name,
+                            'is_active' => $settings_performance->is_active,
+                            'default_value' => $settings_performance->default_value,
                         ];
                     }),
                     'suggestions' => $suggestions,
@@ -103,25 +108,25 @@ abstract class BaseSettingsController extends Controller
     /**
      * Display the specified setting
      */
-    public function show(Setting $setting)
+    public function show(Setting $settings_performance)
     {
         if (request()->expectsJson()) {
-            return response()->json($setting);
+            return response()->json($settings_performance);
         }
         
-        return view("{$this->viewPath}.show", compact('setting'));
+        return view("{$this->viewPath}.show", compact('settings_performance'));
     }
 
 
     /**
      * Update the specified setting
      */
-    public function update(Request $request, Setting $setting)
+    public function update(Request $request, Setting $settings_performance)
     {
         // Debug logging at the start
         Log::info("=== UPDATE METHOD CALLED ===", [
-            'setting_id' => $setting->id,
-            'setting_key' => $setting->key,
+            'setting_id' => $settings_performance->id,
+            'setting_key' => $settings_performance->key,
             'request_method' => $request->method(),
             'request_url' => $request->url(),
             'has_file' => $request->hasFile('file'),
@@ -132,12 +137,12 @@ abstract class BaseSettingsController extends Controller
         try {
             DB::beginTransaction();
 
-            $oldValue = $setting->value;
+            $oldValue = $settings_performance->value;
             
             // Debug logging
             Log::info("Updating setting", [
-                'setting_id' => $setting->id,
-                'key' => $setting->key,
+                'setting_id' => $settings_performance->id,
+                'key' => $settings_performance->key,
                 'has_file' => $request->hasFile('file'),
                 'has_value' => $request->has('value'),
                 'value' => $request->input('value'),
@@ -147,7 +152,7 @@ abstract class BaseSettingsController extends Controller
             ]);
             
             // Handle file upload for specific settings
-            if (in_array($setting->key, ['site_logo', 'site_favicon'])) {
+            if (in_array($settings_performance->key, ['site_logo', 'site_favicon'])) {
                 // If request indicates removal, delete existing file and clear value
                 if ($request->boolean('remove_file')) {
                     try {
@@ -157,24 +162,35 @@ abstract class BaseSettingsController extends Controller
                         }
                     } catch (\Throwable $t) {
                         Log::warning('Failed to delete old setting file', [
-                            'key' => $setting->key,
+                            'key' => $settings_performance->key,
                             'path' => $oldValue,
                             'error' => $t->getMessage(),
                         ]);
                     }
                     // Clear value and allow updating other fields
-                    $setting->value = '';
+                    $settings_performance->value = '';
                     $request->validate([
                         'description' => 'nullable|string|max:255',
                         'is_active' => 'nullable|boolean'
                     ]);
-                    $setting->description = $request->input('description', $setting->description);
-                    $setting->is_active = $request->has('is_active') ? true : false;
+                    $settings_performance->description = $request->input('description', $settings_performance->description);
+                    $settings_performance->is_active = $request->has('is_active') ? true : false;
 
+                } elseif ($request->has('value') && $request->input('value')) {
+                    // Media browser file path (already in public/media/)
+                    $mediaPath = $request->input('value');
+                    
+                    // Validate that the file exists in media directory
+                    if (Storage::disk('public')->exists("media/{$mediaPath}")) {
+                        $settings_performance->value = "media/{$mediaPath}";
+                    } else {
+                        throw new \Exception('ไฟล์ที่เลือกไม่พบในระบบ');
+                    }
                 } elseif ($request->hasFile('file')) {
+                    // Traditional file upload (fallback)
                     $file = $request->file('file');
                     
-                    // Validate file and other fields (excluding value for file uploads)
+                    // Validate file
                     $request->validate([
                         'file' => 'required|image|mimes:jpeg,png,gif,ico|max:2048',
                         'description' => 'nullable|string|max:255',
@@ -182,13 +198,13 @@ abstract class BaseSettingsController extends Controller
                     ]);
                     
                     // Generate unique filename
-                    $filename = $setting->key . '_' . time() . '.' . $file->getClientOriginalExtension();
+                    $filename = $settings_performance->key . '_' . time() . '.' . $file->getClientOriginalExtension();
                     
-                    // Store file
-                    $path = $file->storeAs('public/settings', $filename);
+                    // Store file in media directory
+                    $path = $file->storeAs('media', $filename, 'public');
                     
                     // Update setting value with file path
-                    $setting->value = 'settings/' . $filename;
+                    $settings_performance->value = 'media/' . $filename;
                 } else {
                     // No new file uploaded, update other fields only
                     $request->validate([
@@ -196,8 +212,8 @@ abstract class BaseSettingsController extends Controller
                         'is_active' => 'nullable|boolean'
                     ]);
                     
-                    $setting->description = $request->input('description', $setting->description);
-                    $setting->is_active = $request->has('is_active') ? true : false;
+                    $settings_performance->description = $request->input('description', $settings_performance->description);
+                    $settings_performance->is_active = $request->has('is_active') ? true : false;
                 }
             } else {
                 // Handle non-file settings
@@ -210,17 +226,17 @@ abstract class BaseSettingsController extends Controller
                 $data = $request->all();
                 $data['is_active'] = $request->has('is_active') ? true : false;
                 
-                $setting->fill($data);
+                $settings_performance->fill($data);
                 
                 // Set typed value
-                $this->setTypedValue($setting, $request->value);
+                $this->setTypedValue($settings_performance, $request->value);
             }
             
-            $setting->updated_by = Auth::id();
+            $settings_performance->updated_by = Auth::id();
             
             // Validate value (only for non-file settings and when value is provided)
-            if (!in_array($setting->key, ['site_logo', 'site_favicon']) && $request->has('value')) {
-                if (!$this->validateValue($setting, $request->value)) {
+            if (!in_array($settings_performance->key, ['site_logo', 'site_favicon']) && $request->has('value')) {
+                if (!$this->validateValue($settings_performance, $request->value)) {
                     if ($request->expectsJson()) {
                         return response()->json([
                             'success' => false,
@@ -234,20 +250,20 @@ abstract class BaseSettingsController extends Controller
                 }
             }
 
-            $setting->save();
+            $settings_performance->save();
 
             // Clear cache using SettingsService
-            \App\Services\SettingsService::clearCache($setting->key);
+            \App\Services\SettingsService::clearCache($settings_performance->key);
             \App\Services\SettingsService::clearCache(); // Clear all category cache
 
             DB::commit();
 
             // Log activity
             Log::info("Setting updated ({$this->category})", [
-                'id' => $setting->id,
-                'key' => $setting->key,
+                'id' => $settings_performance->id,
+                'key' => $settings_performance->key,
                 'old_value' => $oldValue,
-                'new_value' => $setting->value,
+                'new_value' => $settings_performance->value,
                 'user_id' => Auth::id(),
             ]);
 
@@ -265,8 +281,8 @@ abstract class BaseSettingsController extends Controller
             DB::rollBack();
             
             Log::error("Validation error updating setting", [
-                'setting_id' => $setting->id,
-                'key' => $setting->key,
+                'setting_id' => $settings_performance->id,
+                'key' => $settings_performance->key,
                 'errors' => $e->errors(),
                 'request_data' => $request->except(['file']),
             ]);
@@ -286,7 +302,7 @@ abstract class BaseSettingsController extends Controller
             DB::rollBack();
             Log::error("Error updating setting ({$this->category})", [
                 'error' => $e->getMessage(),
-                'setting_id' => $setting->id,
+                'setting_id' => $settings_performance->id,
                 'user_id' => Auth::id(),
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -307,13 +323,13 @@ abstract class BaseSettingsController extends Controller
     /**
      * Remove the specified setting
      */
-    public function destroy(Setting $setting)
+    public function destroy(Setting $settings_performance)
     {
         try {
             DB::beginTransaction();
 
-            $settingKey = $setting->key;
-            $setting->delete();
+            $settings_performanceKey = $settings_performance->key;
+            $settings_performance->delete();
 
             // Clear cache
             $this->clearCache();
@@ -322,8 +338,8 @@ abstract class BaseSettingsController extends Controller
 
             // Log activity
             Log::info("Setting deleted ({$this->category})", [
-                'id' => $setting->id,
-                'key' => $settingKey,
+                'id' => $settings_performance->id,
+                'key' => $settings_performanceKey,
                 'user_id' => Auth::id(),
             ]);
 
@@ -334,7 +350,7 @@ abstract class BaseSettingsController extends Controller
             DB::rollBack();
             Log::error("Error deleting setting ({$this->category})", [
                 'error' => $e->getMessage(),
-                'setting_id' => $setting->id,
+                'setting_id' => $settings_performance->id,
                 'user_id' => Auth::id(),
             ]);
 
@@ -359,12 +375,12 @@ abstract class BaseSettingsController extends Controller
                 $setting->value = $setting->is_active ? '1' : '0';
             }
             
-            $setting->updated_by = Auth::id();
+            $setting->updated_by = auth()->id() ?? 1;
             $setting->save();
             
             // Clear cache
-            \App\Services\SettingsService::clearCache($setting->key);
-            \App\Services\SettingsService::clearCache(); // Clear all category cache
+            Cache::forget("settings_{$this->category}");
+            Cache::forget('settings_all');
             
             DB::commit();
 
@@ -381,8 +397,8 @@ abstract class BaseSettingsController extends Controller
             DB::rollBack();
             Log::error("Error toggling setting status ({$this->category})", [
                 'error' => $e->getMessage(),
-                'setting_id' => $setting->id,
-                'user_id' => Auth::id(),
+                'setting_id' => $setting->id ?? null,
+                'user_id' => auth()->id(),
             ]);
 
             if ($request->expectsJson()) {
@@ -419,14 +435,14 @@ abstract class BaseSettingsController extends Controller
             DB::beginTransaction();
 
             $updatedCount = 0;
-            foreach ($request->settings as $settingData) {
-                $setting = Setting::find($settingData['id']);
-                if ($setting && $setting->category === $this->category) {
-                    $this->setTypedValue($setting, $settingData['value']);
+            foreach ($request->settings as $settings_performanceData) {
+                $settings_performance = Setting::find($settings_performanceData['id']);
+                if ($settings_performance && $settings_performance->category === $this->category) {
+                    $this->setTypedValue($settings_performance, $settings_performanceData['value']);
                     
-                    if ($this->validateValue($setting, $settingData['value'])) {
-                        $setting->updated_by = Auth::id();
-                        $setting->save();
+                    if ($this->validateValue($settings_performance, $settings_performanceData['value'])) {
+                        $settings_performance->updated_by = Auth::id();
+                        $settings_performance->save();
                         $updatedCount++;
                     }
                 }
@@ -466,15 +482,15 @@ abstract class BaseSettingsController extends Controller
     /**
      * Reset setting to default value
      */
-    public function reset(Setting $setting)
+    public function reset(Setting $settings_performance)
     {
         try {
             DB::beginTransaction();
 
-            $oldValue = $setting->value;
-            $setting->value = $setting->default_value;
-            $setting->updated_by = Auth::id();
-            $setting->save();
+            $oldValue = $settings_performance->value;
+            $settings_performance->value = $settings_performance->default_value;
+            $settings_performance->updated_by = Auth::id();
+            $settings_performance->save();
 
             // Clear cache
             $this->clearCache();
@@ -483,12 +499,20 @@ abstract class BaseSettingsController extends Controller
 
             // Log activity
             Log::info("Setting reset to default ({$this->category})", [
-                'id' => $setting->id,
-                'key' => $setting->key,
+                'id' => $settings_performance->id,
+                'key' => $settings_performance->key,
                 'old_value' => $oldValue,
-                'default_value' => $setting->default_value,
+                'default_value' => $settings_performance->default_value,
                 'user_id' => Auth::id(),
             ]);
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'รีเซ็ตการตั้งค่าเป็นค่าเริ่มต้นเรียบร้อยแล้ว',
+                    'setting' => $settings_performance->fresh()
+                ]);
+            }
 
             return redirect()->back()
                 ->with('success', 'รีเซ็ตการตั้งค่าเป็นค่าเริ่มต้นเรียบร้อยแล้ว');
@@ -497,9 +521,16 @@ abstract class BaseSettingsController extends Controller
             DB::rollBack();
             Log::error("Error resetting setting ({$this->category})", [
                 'error' => $e->getMessage(),
-                'setting_id' => $setting->id,
+                'setting_id' => $settings_performance->id ?? null,
                 'user_id' => Auth::id(),
             ]);
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'เกิดข้อผิดพลาดในการรีเซ็ตการตั้งค่า: ' . $e->getMessage()
+                ], 500);
+            }
 
             return redirect()->back()
                 ->with('error', 'เกิดข้อผิดพลาดในการรีเซ็ตการตั้งค่า: ' . $e->getMessage());
@@ -522,20 +553,20 @@ abstract class BaseSettingsController extends Controller
             $query->where('type', $request->type);
         }
 
-        $settings = $query->orderBy('sort_order')->orderBy('key')->get();
+        $settings_performances = $query->orderBy('sort_order')->orderBy('key')->get();
 
         $csvData = [];
         $csvData[] = ['Key', 'Value', 'Type', 'Group', 'Description', 'Active', 'Sort Order'];
 
-        foreach ($settings as $setting) {
+        foreach ($settings_performances as $settings_performance) {
             $csvData[] = [
-                $setting->key,
-                $setting->value,
-                $setting->type,
-                $setting->group_name,
-                $setting->description,
-                $setting->is_active ? 'Yes' : 'No',
-                $setting->sort_order,
+                $settings_performance->key,
+                $settings_performance->value,
+                $settings_performance->type,
+                $settings_performance->group_name,
+                $settings_performance->description,
+                $settings_performance->is_active ? 'Yes' : 'No',
+                $settings_performance->sort_order,
             ];
         }
 
@@ -628,37 +659,37 @@ abstract class BaseSettingsController extends Controller
     /**
      * Set typed value
      */
-    protected function setTypedValue($setting, $value)
+    protected function setTypedValue($settings_performance, $value)
     {
-        switch ($setting->type) {
+        switch ($settings_performance->type) {
             case 'boolean':
-                $setting->value = $value ? '1' : '0';
+                $settings_performance->value = $value ? '1' : '0';
                 break;
             case 'integer':
-                $setting->value = (string) (int) $value;
+                $settings_performance->value = (string) (int) $value;
                 break;
             case 'float':
-                $setting->value = (string) (float) $value;
+                $settings_performance->value = (string) (float) $value;
                 break;
             case 'array':
             case 'json':
-                $setting->value = json_encode($value);
+                $settings_performance->value = json_encode($value);
                 break;
             default:
-                $setting->value = (string) $value;
+                $settings_performance->value = (string) $value;
         }
     }
 
     /**
      * Validate setting value
      */
-    protected function validateValue($setting, $value)
+    protected function validateValue($settings_performance, $value)
     {
-        if (empty($setting->validation_rules)) {
+        if (empty($settings_performance->validation_rules)) {
             return true;
         }
 
-        $rules = $setting->validation_rules;
+        $rules = $settings_performance->validation_rules;
         
         // Basic validation
         if (isset($rules['required']) && $rules['required'] && empty($value)) {

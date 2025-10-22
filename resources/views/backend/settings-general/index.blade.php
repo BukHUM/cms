@@ -159,15 +159,6 @@
                                 </button>
                                 @endif
                                 
-                                <!-- Reset Button (if has default value) -->
-                                @if($settings_general->default_value)
-                                <button type="button" 
-                                        onclick="resetSetting({{ $settings_general->id }})"
-                                        class="inline-flex items-center justify-center w-8 h-8 text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900 rounded-md transition-colors duration-200"
-                                        title="รีเซ็ตเป็นค่าเริ่มต้น">
-                                    <i class="fas fa-undo text-sm"></i>
-                                </button>
-                                @endif
                             </div>
                         </td>
                     </tr>
@@ -230,15 +221,6 @@
                     </button>
                     @endif
                     
-                    <!-- Reset Button (if has default value) -->
-                    @if($settings_general->default_value)
-                    <button type="button" 
-                            onclick="resetSetting({{ $settings_general->id }})"
-                            class="inline-flex items-center justify-center w-10 h-10 text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900 rounded-md transition-colors duration-200"
-                            title="รีเซ็ตเป็นค่าเริ่มต้น">
-                        <i class="fas fa-undo"></i>
-                    </button>
-                    @endif
                 </div>
             </div>
             @endforeach
@@ -315,15 +297,16 @@
                                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white @error('value') border-red-500 @enderror"
                                    placeholder="ค่าของการตั้งค่า">
                             
-                            <!-- File Upload Input (for file types) -->
+                            <!-- Media Browser Section (for file types) -->
                             <div id="file_upload_section" class="hidden">
                                 <div class="mt-2">
-                                    <input type="file"
-                                           id="edit_file"
-                                           name="file"
-                                           accept="image/*,.ico"
-                                           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-300">
-                                    <p class="text-xs text-gray-500 mt-1">รองรับไฟล์: JPG, PNG, GIF, ICO (ขนาดไม่เกิน 2MB)</p>
+                                    <button type="button" 
+                                            onclick="openMediaBrowserForFile()"
+                                            class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-center">
+                                        <i class="fas fa-images mr-2"></i>
+                                        เลือกไฟล์จาก Media Browser
+                                    </button>
+                                    <p class="text-xs text-gray-500 mt-1">คลิกเพื่อเลือกไฟล์จาก Media Browser หรืออัปโหลดไฟล์ใหม่</p>
                                 </div>
                                 
                                 <!-- Current File Preview -->
@@ -336,7 +319,7 @@
                                         <img id="current_file_image" src="" alt="Current file" class="w-12 h-12 object-cover rounded">
                                         <div class="flex-1">
                                             <p id="current_file_name" class="text-sm font-medium text-gray-900 dark:text-white"></p>
-                                            <p id="current_file_size" class="text-xs text-gray-500 dark:text-gray-400"></p>
+                                            <p id="current_file_path" class="text-xs text-gray-500 dark:text-gray-400"></p>
                                         </div>
                                         <button type="button" id="remove_current_file" class="text-red-500 hover:text-red-700">
                                             <i class="fas fa-times"></i>
@@ -344,19 +327,19 @@
                                     </div>
                                 </div>
                                 
-                                <!-- New File Preview -->
-                                <div id="new_file_preview" class="mt-3 hidden">
+                                <!-- Selected File Preview -->
+                                <div id="selected_file_preview" class="mt-3 hidden">
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        <i class="fas fa-upload mr-1"></i>
-                                        ไฟล์ใหม่
+                                        <i class="fas fa-check-circle mr-1"></i>
+                                        ไฟล์ที่เลือก
                                     </label>
-                                    <div class="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900 rounded-md">
-                                        <img id="new_file_image" src="" alt="New file" class="w-12 h-12 object-cover rounded">
+                                    <div class="flex items-center space-x-3 p-3 bg-green-50 dark:bg-green-900 rounded-md">
+                                        <img id="selected_file_image" src="" alt="Selected file" class="w-12 h-12 object-cover rounded">
                                         <div class="flex-1">
-                                            <p id="new_file_name" class="text-sm font-medium text-blue-900 dark:text-blue-100"></p>
-                                            <p id="new_file_size" class="text-xs text-blue-600 dark:text-blue-300"></p>
+                                            <p id="selected_file_name" class="text-sm font-medium text-green-900 dark:text-green-100"></p>
+                                            <p id="selected_file_path" class="text-xs text-green-600 dark:text-green-300"></p>
                                         </div>
-                                        <button type="button" id="remove_new_file" class="text-red-500 hover:text-red-700">
+                                        <button type="button" id="remove_selected_file" class="text-red-500 hover:text-red-700">
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </div>
@@ -802,17 +785,6 @@ function createActionsCell(setting) {
     
     container.appendChild(toggleBtn);
     
-    // Reset button (if has default value)
-    if (setting.default_value) {
-        const resetBtn = document.createElement('button');
-        resetBtn.type = 'button';
-        resetBtn.className = 'inline-flex items-center justify-center w-8 h-8 text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900 rounded-md transition-colors duration-200';
-        resetBtn.title = 'รีเซ็ตเป็นค่าเริ่มต้น';
-        resetBtn.innerHTML = '<i class="fas fa-undo text-sm"></i>';
-        resetBtn.onclick = () => resetSetting(setting.id);
-        
-        container.appendChild(resetBtn);
-    }
     
     cell.appendChild(container);
     return cell;
@@ -894,17 +866,6 @@ function createMobileCard(setting) {
     
     actions.appendChild(toggleBtn);
     
-    // Reset button (if has default value)
-    if (setting.default_value) {
-        const resetBtn = document.createElement('button');
-        resetBtn.type = 'button';
-        resetBtn.className = 'inline-flex items-center justify-center w-10 h-10 text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900 rounded-md transition-colors duration-200';
-        resetBtn.title = 'รีเซ็ตเป็นค่าเริ่มต้น';
-        resetBtn.innerHTML = '<i class="fas fa-undo"></i>';
-        resetBtn.onclick = () => resetSetting(setting.id);
-        
-        actions.appendChild(resetBtn);
-    }
     
     card.appendChild(header);
     card.appendChild(actions);
@@ -1040,11 +1001,21 @@ function resetTableToAll() {
 // Filter functionality - moved to DOMContentLoaded
 
 function toggleStatus(id) {
-    // Get setting info from the table row
-    const row = document.querySelector(`button[onclick="toggleStatus(${id})"]`).closest('tr');
-    const settingKey = row.querySelector('.text-sm.font-medium').textContent;
-    const currentStatus = row.querySelector('.bg-green-100, .bg-red-100') ? 
-        (row.querySelector('.bg-green-100') ? 'เปิดใช้งาน' : 'ปิดใช้งาน') : 'ไม่ทราบสถานะ';
+    // Get setting info from currentSettings array instead of DOM
+    const setting = currentSettings.find(s => s.id === id);
+    if (!setting) {
+        console.error('Setting not found:', id);
+        Swal.fire({
+            title: 'เกิดข้อผิดพลาด!',
+            text: 'ไม่พบการตั้งค่าที่ต้องการ',
+            icon: 'error',
+            confirmButtonText: 'ตกลง'
+        });
+        return;
+    }
+    
+    const settingKey = setting.key;
+    const currentStatus = setting.is_active ? 'เปิดใช้งาน' : 'ปิดใช้งาน';
     
     let confirmText = 'คุณต้องการเปลี่ยนสถานะการตั้งค่านี้หรือไม่?';
     let confirmButtonText = 'ใช่, เปลี่ยนสถานะ!';
@@ -1142,7 +1113,8 @@ function toggleStatus(id) {
                         icon: 'success',
                         confirmButtonText: 'ตกลง'
                     }).then(() => {
-                        location.reload();
+                        // Refresh the table instead of reloading the page
+                        resetTableToAll();
                     });
                 } else if (data.success === false) {
                     Swal.fire({
@@ -1235,20 +1207,70 @@ function openEditModal(id) {
     });
 }
 
+// Media Browser Functions
+let selectedMediaFile = null;
+
+function openMediaBrowserForFile() {
+    // Open media browser with callback
+    if (typeof openMediaBrowser === 'function') {
+        openMediaBrowser(handleMediaSelection);
+    } else {
+        // Fallback: open media browser page
+        window.open('{{ route("backend.media-browser.index") }}', '_blank', 'width=1200,height=800');
+    }
+}
+
+function handleMediaSelection(file) {
+    selectedMediaFile = file;
+    showSelectedFilePreview(file);
+}
+
+function showSelectedFilePreview(file) {
+    const preview = document.getElementById('selected_file_preview');
+    const image = document.getElementById('selected_file_image');
+    const name = document.getElementById('selected_file_name');
+    const path = document.getElementById('selected_file_path');
+    
+    // Set image source
+    if (file.type === 'images') {
+        image.src = file.url;
+        image.style.display = 'block';
+    } else {
+        image.style.display = 'none';
+    }
+    
+    // Set file info
+    name.textContent = file.name;
+    path.textContent = file.path;
+    
+    // Show preview
+    preview.classList.remove('hidden');
+    
+    // Update form value
+    document.getElementById('edit_value').value = file.path;
+}
+
+function removeSelectedFile() {
+    selectedMediaFile = null;
+    document.getElementById('selected_file_preview').classList.add('hidden');
+    document.getElementById('edit_value').value = '';
+}
+
 // File Upload Functions
 function resetFileUploadSections() {
     // Hide all file upload sections
     document.getElementById('file_upload_section').classList.add('hidden');
     document.getElementById('current_file_preview').classList.add('hidden');
-    document.getElementById('new_file_preview').classList.add('hidden');
-    
-    // Reset file input
-    document.getElementById('edit_file').value = '';
+    document.getElementById('selected_file_preview').classList.add('hidden');
     
     // Reset text input
     document.getElementById('edit_value').classList.remove('hidden');
     document.getElementById('edit_value').setAttribute('required', 'required');
     document.getElementById('edit_value').value = '';
+    
+    // Reset selected file
+    selectedMediaFile = null;
+    
     // Reset remove flag
     const removeFlag = document.getElementById('remove_file_flag');
     if (removeFlag) removeFlag.value = '0';
@@ -1331,48 +1353,6 @@ function closeEditModal() {
 
 // File Upload Event Listeners - moved to DOMContentLoaded
 
-function resetSetting(id) {
-    Swal.fire({
-        title: 'คุณแน่ใจหรือไม่?',
-        text: 'คุณต้องการรีเซ็ตการตั้งค่านี้เป็นค่าเริ่มต้นหรือไม่?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'ใช่, รีเซ็ต!',
-        cancelButtonText: 'ยกเลิก'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch(`{{ route('backend.settings-general.reset', ':id') }}`.replace(':id', id), {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            })
-            .then(response => {
-                if (response.ok) {
-                    Swal.fire({
-                        title: 'สำเร็จ!',
-                        text: 'รีเซ็ตการตั้งค่าเรียบร้อยแล้ว',
-                        icon: 'success',
-                        confirmButtonText: 'ตกลง'
-                    }).then(() => {
-                        location.reload();
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                Swal.fire({
-                    title: 'เกิดข้อผิดพลาด!',
-                    text: 'เกิดข้อผิดพลาดในการรีเซ็ตการตั้งค่า',
-                    icon: 'error',
-                    confirmButtonText: 'ตกลง'
-                });
-            });
-        }
-    });
-}
 
 // Cleanup function to prevent memory leaks
 function cleanup() {
@@ -1392,6 +1372,10 @@ document.addEventListener('visibilitychange', function() {
 
 // Initialize cleanup management
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize currentSettings with initial data from the page
+    const initialSettings = @json($settings_generals->items());
+    currentSettings = initialSettings;
+    
     // Add managed event listeners for better cleanup
     const searchInput = document.getElementById('search');
     const statusFilter = document.getElementById('status-filter');
@@ -1505,13 +1489,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Remove file buttons
-    const removeNewFileBtn = document.getElementById('remove_new_file');
+    const removeSelectedFileBtn = document.getElementById('remove_selected_file');
     const removeCurrentFileBtn = document.getElementById('remove_current_file');
     
-    if (removeNewFileBtn) {
-        addManagedEventListener(removeNewFileBtn, 'click', function() {
-            document.getElementById('edit_file').value = '';
-            document.getElementById('new_file_preview').classList.add('hidden');
+    if (removeSelectedFileBtn) {
+        addManagedEventListener(removeSelectedFileBtn, 'click', function() {
+            removeSelectedFile();
         });
     }
     
@@ -1535,8 +1518,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Check if this is a file type setting
             const isFileType = document.getElementById('file_upload_section').classList.contains('hidden') === false;
             
-            // Debug logging removed for production
-            
             // For file type settings, temporarily remove required attribute
             let wasRequired = false;
             if (isFileType) {
@@ -1549,14 +1530,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const url = this.action;
             
             if (isFileType) {
-                // For file type settings, check if file is uploaded
-                const fileInput = document.getElementById('edit_file');
-                if (fileInput.files[0]) {
-                    formData.append('file', fileInput.files[0]);
-                    // Remove value field completely for file uploads
-                    formData.delete('value');
+                // For file type settings, check if media file is selected
+                if (selectedMediaFile) {
+                    // Use selected media file path
+                    formData.set('value', selectedMediaFile.path);
                 } else {
-                    // If no new file, check remove flag; if set, clear value
+                    // Check remove flag; if set, clear value
                     const removeFlag = document.getElementById('remove_file_flag')?.value === '1';
                     if (removeFlag) {
                         formData.set('value', '');
