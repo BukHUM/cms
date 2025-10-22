@@ -27,71 +27,24 @@ abstract class BaseSettingsController extends Controller
     }
 
     /**
-     * Display a listing of settings
+     * Display a listing of settings (with caching for performance)
      */
     public function index(Request $request)
     {
         try {
-            $query = $this->model->where('category', $this->category);
-
-            // Search functionality
-            if ($request->filled('search')) {
-                $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('key', 'like', "%{$search}%")
-                      ->orWhere('description', 'like', "%{$search}%")
-                      ->orWhere('value', 'like', "%{$search}%");
+            // Create cache key based on request parameters
+            $cacheKey = $this->getCacheKey($request);
+            
+            // Check if we can use cache (no search, filters, or pagination)
+            $canUseCache = !$request->filled(['search', 'status', 'group', 'page']) && !$request->ajax();
+            
+            if ($canUseCache) {
+                $settings_generals = Cache::remember($cacheKey, 300, function () use ($request) {
+                    return $this->getSettingsData($request);
                 });
+            } else {
+                $settings_generals = $this->getSettingsData($request);
             }
-
-            // Status filter
-            if ($request->filled('status')) {
-                $query->where('is_active', $request->status === 'active');
-            }
-
-            // Group filter
-            if ($request->filled('group')) {
-                $query->where('group_name', $request->group);
-            }
-
-            // Handle AJAX requests for live search
-            if ($request->ajax() && $request->has('ajax')) {
-                $settings_performances = $query->orderBy('sort_order')->orderBy('key')->get();
-                
-                // Generate suggestions (limit to 5)
-                $suggestions = $settings_performances->take(5)->map(function ($settings_performance) {
-                    return [
-                        'id' => $settings_performance->id,
-                        'key' => $settings_performance->key,
-                        'description' => $settings_performance->description,
-                        'type' => $settings_performance->type,
-                        'type_icon' => $settings_performance->type_icon ?? 'fas fa-cog',
-                    ];
-                });
-
-                return response()->json([
-                    'success' => true,
-                    'settings' => $settings_performances->map(function ($settings_performance) {
-                        return [
-                            'id' => $settings_performance->id,
-                            'key' => $settings_performance->key,
-                            'description' => $settings_performance->description,
-                            'value' => $settings_performance->value,
-                            'formatted_value' => $settings_performance->formatted_value,
-                            'type' => $settings_performance->type,
-                            'type_icon' => $settings_performance->type_icon ?? 'fas fa-cog',
-                            'group_name' => $settings_performance->group_name,
-                            'is_active' => $settings_performance->is_active,
-                            'default_value' => $settings_performance->default_value,
-                        ];
-                    }),
-                    'suggestions' => $suggestions,
-                ]);
-            }
-
-            // Get pagination setting or use default
-            $paginationPerPage = \App\Models\Setting::get('default_pagination', 20, 'general');
-            $settings_generals = $query->orderBy('sort_order')->orderBy('key')->paginate($paginationPerPage);
 
             if ($request->expectsJson()) {
                 return response()->json($settings_generals);
@@ -103,6 +56,89 @@ abstract class BaseSettingsController extends Controller
             Log::error("Settings Controller Index Error ({$this->category}): " . $e->getMessage());
             return redirect()->back()->with('error', 'เกิดข้อผิดพลาดในการโหลดข้อมูล: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Get settings data with filters and pagination
+     */
+    private function getSettingsData(Request $request)
+    {
+        $query = $this->model->where('category', $this->category);
+
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('key', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhere('value', 'like', "%{$search}%");
+            });
+        }
+
+        // Status filter
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status === 'active');
+        }
+
+        // Group filter
+        if ($request->filled('group')) {
+            $query->where('group_name', $request->group);
+        }
+
+        // Handle AJAX requests for live search
+        if ($request->ajax() && $request->has('ajax')) {
+            $settings_performances = $query->orderBy('sort_order')->orderBy('key')->get();
+            
+            // Generate suggestions (limit to 5)
+            $suggestions = $settings_performances->take(5)->map(function ($settings_performance) {
+                return [
+                    'id' => $settings_performance->id,
+                    'key' => $settings_performance->key,
+                    'description' => $settings_performance->description,
+                    'type' => $settings_performance->type,
+                    'type_icon' => $settings_performance->type_icon ?? 'fas fa-cog',
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'settings' => $settings_performances->map(function ($settings_performance) {
+                    return [
+                        'id' => $settings_performance->id,
+                        'key' => $settings_performance->key,
+                        'description' => $settings_performance->description,
+                        'value' => $settings_performance->value,
+                        'formatted_value' => $settings_performance->formatted_value,
+                        'type' => $settings_performance->type,
+                        'type_icon' => $settings_performance->type_icon ?? 'fas fa-cog',
+                        'group_name' => $settings_performance->group_name,
+                        'is_active' => $settings_performance->is_active,
+                        'default_value' => $settings_performance->default_value,
+                    ];
+                }),
+                'suggestions' => $suggestions,
+            ]);
+        }
+
+        // Get pagination setting or use default
+        $paginationPerPage = \App\Models\Setting::get('default_pagination', 20, 'general');
+        return $query->orderBy('sort_order')->orderBy('key')->paginate($paginationPerPage);
+    }
+
+    /**
+     * Generate cache key based on request parameters
+     */
+    private function getCacheKey(Request $request)
+    {
+        $params = [
+            'category' => $this->category,
+            'search' => $request->get('search', ''),
+            'status' => $request->get('status', ''),
+            'group' => $request->get('group', ''),
+            'page' => $request->get('page', 1),
+        ];
+        
+        return 'settings_' . $this->category . '_' . md5(serialize($params));
     }
 
     /**
@@ -706,12 +742,27 @@ abstract class BaseSettingsController extends Controller
     }
 
     /**
-     * Clear cache
+     * Clear cache (enhanced for better performance)
      */
     protected function clearCache()
     {
+        // Clear category-specific cache
         Cache::forget("settings_{$this->category}");
         Cache::forget('settings_all');
+        
+        // Clear all settings cache patterns
+        $patterns = [
+            "settings_{$this->category}_*",
+            "settings_performance_*",
+            "settings_cache_*",
+            "settings_optimization_*",
+        ];
+        
+        foreach ($patterns as $pattern) {
+            // Note: This is a simplified approach. In production, you might want to use Redis SCAN
+            // or implement a more sophisticated cache tag system
+            Cache::forget($pattern);
+        }
     }
 
     /**

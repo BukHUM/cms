@@ -9,15 +9,30 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Facades\Auth;
 
 class SettingsSystemInfoController extends Controller
 {
+    /**
+     * Create a new controller instance.
+     */
+    public function __construct()
+    {
+        $this->middleware('auth');
+        // Use existing settings permission instead of non-existent view_system_info
+        $this->middleware('permission:settings.view');
+    }
+
     /**
      * Display system information
      */
     public function index()
     {
-        $systemInfo = $this->getSystemInfo();
+        // Cache system info for 5 minutes to improve performance
+        $cacheKey = 'system_info_' . Auth::id();
+        $systemInfo = Cache::remember($cacheKey, 300, function () {
+            return $this->getSystemInfo();
+        });
         
         return view('backend.settings-systeminfo.index', compact('systemInfo'));
     }
@@ -41,18 +56,16 @@ class SettingsSystemInfoController extends Controller
     }
 
     /**
-     * Get server information
+     * Get server information (sanitized for security)
      */
     private function getServerInfo()
     {
         return [
             'os' => PHP_OS,
-            'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? 'Unknown',
-            'server_name' => $_SERVER['SERVER_NAME'] ?? 'Unknown',
+            'server_software' => $this->sanitizeServerInfo($_SERVER['SERVER_SOFTWARE'] ?? 'Unknown'),
+            'server_name' => $this->sanitizeServerInfo($_SERVER['SERVER_NAME'] ?? 'Unknown'),
             'server_port' => $_SERVER['SERVER_PORT'] ?? 'Unknown',
-            'document_root' => $_SERVER['DOCUMENT_ROOT'] ?? 'Unknown',
-            'script_filename' => $_SERVER['SCRIPT_FILENAME'] ?? 'Unknown',
-            'request_time' => $_SERVER['REQUEST_TIME'] ?? 'Unknown',
+            'document_root' => $this->sanitizePath($_SERVER['DOCUMENT_ROOT'] ?? 'Unknown'),
             'memory_limit' => ini_get('memory_limit'),
             'max_execution_time' => ini_get('max_execution_time'),
             'max_input_time' => ini_get('max_input_time'),
@@ -103,7 +116,7 @@ class SettingsSystemInfoController extends Controller
     }
 
     /**
-     * Get database information
+     * Get database information (sanitized for security)
      */
     private function getDatabaseInfo()
     {
@@ -114,8 +127,8 @@ class SettingsSystemInfoController extends Controller
             return [
                 'driver' => $connection->getDriverName(),
                 'version' => $pdo->getAttribute(\PDO::ATTR_SERVER_VERSION),
-                'database' => $connection->getDatabaseName(),
-                'host' => $connection->getConfig('host'),
+                'database' => $this->sanitizeDatabaseName($connection->getDatabaseName()),
+                'host' => $this->sanitizeHost($connection->getConfig('host')),
                 'port' => $connection->getConfig('port'),
                 'charset' => $connection->getConfig('charset'),
                 'collation' => $connection->getConfig('collation'),
@@ -127,7 +140,8 @@ class SettingsSystemInfoController extends Controller
             ];
         } catch (\Exception $e) {
             return [
-                'error' => 'Database connection failed: ' . $e->getMessage(),
+                'error' => 'Database connection failed',
+                'driver' => config('database.default', 'unknown'),
             ];
         }
     }
@@ -261,17 +275,14 @@ class SettingsSystemInfoController extends Controller
     }
 
     /**
-     * Get performance information
+     * Get performance information (optimized)
      */
     private function getPerformanceInfo()
     {
         $startTime = microtime(true);
         $startMemory = memory_get_usage(true);
         
-        // Simulate some operations
-        DB::select('SELECT 1');
-        Cache::get('test');
-        
+        // Lightweight performance test - avoid unnecessary DB queries
         $endTime = microtime(true);
         $endMemory = memory_get_usage(true);
         
@@ -280,7 +291,7 @@ class SettingsSystemInfoController extends Controller
             'memory_used' => $this->formatBytes($endMemory - $startMemory),
             'current_memory' => $this->formatBytes($endMemory),
             'peak_memory' => $this->formatBytes(memory_get_peak_usage(true)),
-            'load_time' => round((microtime(true) - $_SERVER['REQUEST_TIME']) * 1000, 2) . ' ms',
+            'load_time' => round((microtime(true) - ($_SERVER['REQUEST_TIME'] ?? microtime(true))) * 1000, 2) . ' ms',
         ];
     }
 
@@ -320,18 +331,112 @@ class SettingsSystemInfoController extends Controller
     }
 
     /**
-     * Export system information
+     * Sanitize server information to prevent information disclosure
+     */
+    private function sanitizeServerInfo($info)
+    {
+        if (empty($info) || $info === 'Unknown') {
+            return 'Unknown';
+        }
+        
+        // Remove version numbers and sensitive details
+        $info = preg_replace('/\d+\.\d+\.\d+/', 'x.x.x', $info);
+        $info = preg_replace('/\d+\.\d+/', 'x.x', $info);
+        
+        return $info;
+    }
+
+    /**
+     * Sanitize file paths to prevent information disclosure
+     */
+    private function sanitizePath($path)
+    {
+        if (empty($path) || $path === 'Unknown') {
+            return 'Unknown';
+        }
+        
+        // Replace sensitive path parts
+        $path = str_replace([base_path(), storage_path(), public_path()], ['[BASE]', '[STORAGE]', '[PUBLIC]'], $path);
+        
+        return $path;
+    }
+
+    /**
+     * Sanitize database name
+     */
+    private function sanitizeDatabaseName($dbName)
+    {
+        if (empty($dbName)) {
+            return 'Unknown';
+        }
+        
+        // Mask database name for security
+        return substr($dbName, 0, 3) . '***';
+    }
+
+    /**
+     * Sanitize host information
+     */
+    private function sanitizeHost($host)
+    {
+        if (empty($host)) {
+            return 'Unknown';
+        }
+        
+        // Mask IP addresses and sensitive hostnames
+        if (filter_var($host, FILTER_VALIDATE_IP)) {
+            $parts = explode('.', $host);
+            return $parts[0] . '.' . $parts[1] . '.***.***';
+        }
+        
+        return $host;
+    }
+
+    /**
+     * Export system information (sanitized)
      */
     public function export()
     {
+        // Check permission for export using existing permission
+        if (!Auth::user()->can('settings.view')) {
+            abort(403, 'Unauthorized action.');
+        }
+        
         $systemInfo = $this->getSystemInfo();
+        
+        // Remove sensitive information from export
+        $sanitizedInfo = $this->sanitizeExportData($systemInfo);
         
         $filename = 'system_info_' . date('Y-m-d_H-i-s') . '.json';
         
-        return response()->json($systemInfo, 200, [
+        return response()->json($sanitizedInfo, 200, [
             'Content-Type' => 'application/json',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ]);
+    }
+
+    /**
+     * Sanitize data for export to remove sensitive information
+     */
+    private function sanitizeExportData($data)
+    {
+        // Remove sensitive fields
+        $sensitiveFields = [
+            'database.host',
+            'database.database',
+            'server.document_root',
+            'server.script_filename',
+            'environment.app_url',
+        ];
+        
+        foreach ($sensitiveFields as $field) {
+            $keys = explode('.', $field);
+            if (count($keys) === 2) {
+                unset($data[$keys[0]][$keys[1]]);
+            }
+        }
+        
+        return $data;
     }
 
 }
