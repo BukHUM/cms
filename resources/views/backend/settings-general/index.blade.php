@@ -297,16 +297,15 @@
                                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white @error('value') border-red-500 @enderror"
                                    placeholder="ค่าของการตั้งค่า">
                             
-                            <!-- Media Browser Section (for file types) -->
+                            <!-- File Upload Section (for file types) -->
                             <div id="file_upload_section" class="hidden">
                                 <div class="mt-2">
-                                    <button type="button" 
-                                            onclick="openMediaBrowserForFile()"
-                                            class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-center">
-                                        <i class="fas fa-images mr-2"></i>
-                                        เลือกไฟล์จาก Media Browser
-                                    </button>
-                                    <p class="text-xs text-gray-500 mt-1">คลิกเพื่อเลือกไฟล์จาก Media Browser หรืออัปโหลดไฟล์ใหม่</p>
+                                    <input type="file" 
+                                           id="edit_file" 
+                                           name="file" 
+                                           accept="image/jpeg,image/png,image/gif,image/x-icon,image/vnd.microsoft.icon"
+                                           class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900 dark:file:text-blue-200">
+                                    <p class="text-xs text-gray-500 mt-1">รองรับไฟล์: JPG, PNG, GIF, ICO (ขนาดไม่เกิน 2MB)</p>
                                 </div>
                                 
                                 <!-- Current File Preview -->
@@ -327,19 +326,19 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Selected File Preview -->
-                                <div id="selected_file_preview" class="mt-3 hidden">
+                                <!-- New File Preview -->
+                                <div id="new_file_preview" class="mt-3 hidden">
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                         <i class="fas fa-check-circle mr-1"></i>
-                                        ไฟล์ที่เลือก
+                                        ไฟล์ใหม่
                                     </label>
                                     <div class="flex items-center space-x-3 p-3 bg-green-50 dark:bg-green-900 rounded-md">
-                                        <img id="selected_file_image" src="" alt="Selected file" class="w-12 h-12 object-cover rounded">
+                                        <img id="new_file_image" src="" alt="New file" class="w-12 h-12 object-cover rounded">
                                         <div class="flex-1">
-                                            <p id="selected_file_name" class="text-sm font-medium text-green-900 dark:text-green-100"></p>
-                                            <p id="selected_file_path" class="text-xs text-green-600 dark:text-green-300"></p>
+                                            <p id="new_file_name" class="text-sm font-medium text-green-900 dark:text-green-100"></p>
+                                            <p id="new_file_size" class="text-xs text-green-600 dark:text-green-300"></p>
                                         </div>
-                                        <button type="button" id="remove_selected_file" class="text-red-500 hover:text-red-700">
+                                        <button type="button" id="remove_new_file" class="text-red-500 hover:text-red-700">
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </div>
@@ -1207,69 +1206,26 @@ function openEditModal(id) {
     });
 }
 
-// Media Browser Functions
-let selectedMediaFile = null;
-
-function openMediaBrowserForFile() {
-    // Open media browser with callback
-    if (typeof openMediaBrowser === 'function') {
-        openMediaBrowser(handleMediaSelection);
-    } else {
-        // Fallback: open media browser page
-        window.open('{{ route("backend.media-browser.index") }}', '_blank', 'width=1200,height=800');
-    }
-}
-
-function handleMediaSelection(file) {
-    selectedMediaFile = file;
-    showSelectedFilePreview(file);
-}
-
-function showSelectedFilePreview(file) {
-    const preview = document.getElementById('selected_file_preview');
-    const image = document.getElementById('selected_file_image');
-    const name = document.getElementById('selected_file_name');
-    const path = document.getElementById('selected_file_path');
-    
-    // Set image source
-    if (file.type === 'images') {
-        image.src = file.url;
-        image.style.display = 'block';
-    } else {
-        image.style.display = 'none';
-    }
-    
-    // Set file info
-    name.textContent = file.name;
-    path.textContent = file.path;
-    
-    // Show preview
-    preview.classList.remove('hidden');
-    
-    // Update form value
-    document.getElementById('edit_value').value = file.path;
-}
-
-function removeSelectedFile() {
-    selectedMediaFile = null;
-    document.getElementById('selected_file_preview').classList.add('hidden');
-    document.getElementById('edit_value').value = '';
-}
-
 // File Upload Functions
+let selectedFile = null;
+
 function resetFileUploadSections() {
     // Hide all file upload sections
     document.getElementById('file_upload_section').classList.add('hidden');
     document.getElementById('current_file_preview').classList.add('hidden');
-    document.getElementById('selected_file_preview').classList.add('hidden');
+    document.getElementById('new_file_preview').classList.add('hidden');
     
     // Reset text input
     document.getElementById('edit_value').classList.remove('hidden');
     document.getElementById('edit_value').setAttribute('required', 'required');
     document.getElementById('edit_value').value = '';
     
+    // Reset file input
+    const fileInput = document.getElementById('edit_file');
+    if (fileInput) fileInput.value = '';
+    
     // Reset selected file
-    selectedMediaFile = null;
+    selectedFile = null;
     
     // Reset remove flag
     const removeFlag = document.getElementById('remove_file_flag');
@@ -1286,22 +1242,20 @@ function showCurrentFilePreview(filePath) {
     const preview = document.getElementById('current_file_preview');
     const image = document.getElementById('current_file_image');
     const name = document.getElementById('current_file_name');
-    const size = document.getElementById('current_file_size');
+    const path = document.getElementById('current_file_path');
     
     // Set image source with normalized path
     if (filePath.startsWith('http')) {
         image.src = filePath;
     } else {
         const normalized = normalizeStoragePath(filePath);
-        image.src = `/storage/${normalized}`;
+        image.src = `/storage/settings/${normalized}`;
     }
     
     // Extract filename from path
     const fileName = filePath.split('/').pop();
     name.textContent = fileName;
-    
-    // Set placeholder size (we don't have actual file size)
-    size.textContent = 'ขนาดไม่ทราบ';
+    path.textContent = filePath;
     
     // Show preview
     preview.classList.remove('hidden');
@@ -1321,8 +1275,17 @@ function showNewFilePreview(file) {
     name.textContent = file.name;
     size.textContent = formatFileSize(file.size);
     
+    // Store selected file
+    selectedFile = file;
+    
     // Show preview
     preview.classList.remove('hidden');
+}
+
+function removeNewFile() {
+    selectedFile = null;
+    document.getElementById('new_file_preview').classList.add('hidden');
+    document.getElementById('edit_file').value = '';
 }
 
 function formatFileSize(bytes) {
@@ -1489,12 +1452,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Remove file buttons
-    const removeSelectedFileBtn = document.getElementById('remove_selected_file');
+    const removeNewFileBtn = document.getElementById('remove_new_file');
     const removeCurrentFileBtn = document.getElementById('remove_current_file');
     
-    if (removeSelectedFileBtn) {
-        addManagedEventListener(removeSelectedFileBtn, 'click', function() {
-            removeSelectedFile();
+    if (removeNewFileBtn) {
+        addManagedEventListener(removeNewFileBtn, 'click', function() {
+            removeNewFile();
         });
     }
     
@@ -1530,10 +1493,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const url = this.action;
             
             if (isFileType) {
-                // For file type settings, check if media file is selected
-                if (selectedMediaFile) {
-                    // Use selected media file path
-                    formData.set('value', selectedMediaFile.path);
+                // For file type settings, check if new file is selected
+                if (selectedFile) {
+                    // File will be uploaded via FormData
+                    // No need to set value here, backend will handle it
                 } else {
                     // Check remove flag; if set, clear value
                     const removeFlag = document.getElementById('remove_file_flag')?.value === '1';

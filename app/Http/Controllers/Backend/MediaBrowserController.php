@@ -25,11 +25,8 @@ class MediaBrowserController extends Controller
             // Get query parameters for filtering
             $search = $request->get('search');
             $type = $request->get('type');
-            $sizeMin = $request->get('size_min');
-            $sizeMax = $request->get('size_max');
             $dateFrom = $request->get('date_from');
             $dateTo = $request->get('date_to');
-            $collection = $request->get('collection');
             
             // Build query
             $query = Media::query();
@@ -80,14 +77,6 @@ class MediaBrowserController extends Controller
                 }
             }
             
-            // Filter by file size
-            if ($sizeMin) {
-                $query->where('size', '>=', $sizeMin * 1024); // Convert KB to bytes
-            }
-            if ($sizeMax) {
-                $query->where('size', '<=', $sizeMax * 1024); // Convert KB to bytes
-            }
-            
             // Filter by date
             if ($dateFrom) {
                 $query->whereDate('created_at', '>=', $dateFrom);
@@ -96,16 +85,8 @@ class MediaBrowserController extends Controller
                 $query->whereDate('created_at', '<=', $dateTo);
             }
             
-            // Filter by collection
-            if ($collection) {
-                $query->where('collection_name', $collection);
-            }
-            
             // Get filtered media files
             $mediaFiles = $query->orderBy('created_at', 'desc')->get();
-            
-            // Get available collections for filter
-            $collections = Media::distinct()->pluck('collection_name')->filter()->values();
             
             // Get file type statistics
             $fileTypes = [
@@ -133,15 +114,11 @@ class MediaBrowserController extends Controller
             
             return view('backend.media-browser.index', compact(
                 'mediaFiles', 
-                'collections', 
                 'fileTypes',
                 'search',
                 'type',
-                'sizeMin',
-                'sizeMax',
                 'dateFrom',
-                'dateTo',
-                'collection'
+                'dateTo'
             ));
             
         } catch (\Exception $e) {
@@ -150,10 +127,9 @@ class MediaBrowserController extends Controller
             
             // Return empty data
             $mediaFiles = collect([]);
-            $collections = collect([]);
             $fileTypes = [];
             
-            return view('backend.media-browser.index', compact('mediaFiles', 'collections', 'fileTypes'))
+            return view('backend.media-browser.index', compact('mediaFiles', 'fileTypes'))
                 ->with('error', 'เกิดข้อผิดพลาดในการโหลด Media Browser: ' . $e->getMessage());
         }
     }

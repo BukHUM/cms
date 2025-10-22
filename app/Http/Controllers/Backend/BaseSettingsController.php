@@ -176,16 +176,6 @@ abstract class BaseSettingsController extends Controller
                     $settings_performance->description = $request->input('description', $settings_performance->description);
                     $settings_performance->is_active = $request->has('is_active') ? true : false;
 
-                } elseif ($request->has('value') && $request->input('value')) {
-                    // Media browser file path (already in public/media/)
-                    $mediaPath = $request->input('value');
-                    
-                    // Validate that the file exists in media directory
-                    if (Storage::disk('public')->exists("media/{$mediaPath}")) {
-                        $settings_performance->value = "media/{$mediaPath}";
-                    } else {
-                        throw new \Exception('ไฟล์ที่เลือกไม่พบในระบบ');
-                    }
                 } elseif ($request->hasFile('file')) {
                     // Traditional file upload (fallback)
                     $file = $request->file('file');
@@ -200,11 +190,11 @@ abstract class BaseSettingsController extends Controller
                     // Generate unique filename
                     $filename = $settings_performance->key . '_' . time() . '.' . $file->getClientOriginalExtension();
                     
-                    // Store file in media directory
-                    $path = $file->storeAs('media', $filename, 'public');
+                    // Store file in settings directory
+                    $path = $file->storeAs('settings', $filename, 'public');
                     
                     // Update setting value with file path
-                    $settings_performance->value = 'media/' . $filename;
+                    $settings_performance->value = 'settings/' . $filename;
                 } else {
                     // No new file uploaded, update other fields only
                     $request->validate([

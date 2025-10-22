@@ -67,7 +67,7 @@
                             <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                                 <i class="fas fa-search mr-2"></i>ค้นหา
                             </button>
-                            @if($search || $type || $sizeMin || $sizeMax || $dateFrom || $dateTo || $collection)
+                            @if($search || $type || $dateFrom || $dateTo)
                             <a href="{{ route('backend.media-browser.index') }}" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
                                 <i class="fas fa-times mr-2"></i>ล้าง
                             </a>
@@ -75,9 +75,9 @@
                         </div>
                         
                         <!-- Filter Options -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="flex flex-col lg:flex-row gap-4 filter-container" style="display: flex; flex-direction: column; gap: 1rem;">
                             <!-- File Type Filter -->
-                            <div>
+                            <div class="flex-1 filter-item" style="flex: 1;">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">ประเภทไฟล์</label>
                                 <select name="type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                                     <option value="">ทั้งหมด</option>
@@ -89,28 +89,8 @@
                                 </select>
                             </div>
                             
-                            <!-- Collection Filter -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">คอลเลกชัน</label>
-                                <select name="collection" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="">ทั้งหมด</option>
-                                    @foreach($collections as $col)
-                                    <option value="{{ $col }}" {{ $collection == $col ? 'selected' : '' }}>{{ $col }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            
-                            <!-- Size Filter -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">ขนาดไฟล์ (KB)</label>
-                                <div class="flex gap-2">
-                                    <input type="number" name="size_min" value="{{ $sizeMin ?? '' }}" placeholder="ขั้นต่ำ" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                                    <input type="number" name="size_max" value="{{ $sizeMax ?? '' }}" placeholder="สูงสุด" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                                </div>
-                            </div>
-                            
                             <!-- Date Filter -->
-                            <div>
+                            <div class="flex-1 filter-item" style="flex: 1;">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">วันที่อัปโหลด</label>
                                 <div class="flex gap-2">
                                     <input type="date" name="date_from" value="{{ $dateFrom ?? '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
@@ -118,6 +98,56 @@
                                 </div>
                             </div>
                         </div>
+                        
+                        <style>
+                        /* Force filter container to be horizontal on desktop */
+                        @media (min-width: 1024px) {
+                            .filter-container {
+                                display: flex !important;
+                                flex-direction: row !important;
+                                gap: 1rem !important;
+                                align-items: flex-end !important;
+                            }
+                            .filter-item {
+                                flex: 1 !important;
+                                min-width: 0 !important;
+                            }
+                        }
+                        
+                        /* Override any conflicting styles */
+                        .filter-container.flex.flex-col.lg\\:flex-row.gap-4 {
+                            display: flex !important;
+                        }
+                        
+                        @media (min-width: 1024px) {
+                            .filter-container.flex.flex-col.lg\\:flex-row.gap-4 {
+                                flex-direction: row !important;
+                            }
+                        }
+                        </style>
+                        
+                        <script>
+                        // Force horizontal layout on desktop
+                        function forceHorizontalLayout() {
+                            const filterContainer = document.querySelector('.filter-container');
+                            if (filterContainer && window.innerWidth >= 1024) {
+                                filterContainer.style.display = 'flex';
+                                filterContainer.style.flexDirection = 'row';
+                                filterContainer.style.gap = '1rem';
+                                filterContainer.style.alignItems = 'flex-end';
+                                
+                                const filterItems = filterContainer.querySelectorAll('.filter-item');
+                                filterItems.forEach(item => {
+                                    item.style.flex = '1';
+                                    item.style.minWidth = '0';
+                                });
+                            }
+                        }
+                        
+                        // Run on load and resize
+                        document.addEventListener('DOMContentLoaded', forceHorizontalLayout);
+                        window.addEventListener('resize', forceHorizontalLayout);
+                        </script>
                     </form>
                 </div>
                 
@@ -462,6 +492,8 @@ let selectedMediaIds = [];
 function toggleSelectAll() {
     const selectAllCheckbox = document.getElementById('selectAll');
     
+    if (!selectAllCheckbox) return; // Exit if selectAll checkbox doesn't exist
+    
     // Get only visible checkboxes (from the current view)
     const gridView = document.getElementById('gridView');
     const listView = document.getElementById('listView');
@@ -513,23 +545,27 @@ function updateBulkActions() {
     
     selectedMediaIds = Array.from(mediaCheckboxes).map(cb => cb.value);
     
-    if (selectedMediaIds.length > 0) {
-        bulkActions.style.display = 'flex';
-    } else {
-        bulkActions.style.display = 'none';
+    if (bulkActions) {
+        if (selectedMediaIds.length > 0) {
+            bulkActions.style.display = 'flex';
+        } else {
+            bulkActions.style.display = 'none';
+        }
     }
     
     // Update select all checkbox state
     const checkedCheckboxes = mediaCheckboxes.length;
     
-    if (checkedCheckboxes === 0) {
-        selectAllCheckbox.indeterminate = false;
-        selectAllCheckbox.checked = false;
-    } else if (checkedCheckboxes === totalCheckboxes.length) {
-        selectAllCheckbox.indeterminate = false;
-        selectAllCheckbox.checked = true;
-    } else {
-        selectAllCheckbox.indeterminate = true;
+    if (selectAllCheckbox) {
+        if (checkedCheckboxes === 0) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = false;
+        } else if (checkedCheckboxes === totalCheckboxes.length) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = true;
+        } else {
+            selectAllCheckbox.indeterminate = true;
+        }
     }
 }
 
