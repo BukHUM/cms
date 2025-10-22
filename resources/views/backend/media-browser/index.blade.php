@@ -106,10 +106,11 @@
                         <!-- Grid View -->
                         <div id="gridView" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             @foreach($mediaFiles as $media)
+                            <script>console.log('Media URL:', '{{ $media->getUrl() }}');</script>
                             <div class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 group relative">
                                 <div class="aspect-square bg-gray-50 flex items-center justify-center overflow-hidden">
                                     @if(str_starts_with($media->mime_type, 'image/'))
-                                        <img src="{{ $media->getUrl() }}" alt="{{ $media->name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                        <img src="{{ $media->getUrl() }}" alt="{{ $media->name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" onerror="console.error('Grid image load error:', this.src)">
                                     @else
                                         <div class="text-center">
                                             <i class="fas fa-file text-gray-400 text-4xl mb-2"></i>
@@ -159,7 +160,7 @@
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div class="flex items-center">
                                                     @if(str_starts_with($media->mime_type, 'image/'))
-                                                        <img src="{{ $media->getUrl() }}" alt="{{ $media->name }}" class="h-10 w-10 rounded-lg object-cover mr-3">
+                                                        <img src="{{ $media->getUrl() }}" alt="{{ $media->name }}" class="h-10 w-10 rounded-lg object-cover mr-3" loading="lazy" onerror="console.error('List image load error:', this.src)">
                                                     @else
                                                         <div class="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
                                                             <i class="fas fa-file text-gray-400"></i>
@@ -473,9 +474,10 @@ function viewMedia(mediaId) {
     fetch(`/backend/media-browser/media/${mediaId}`)
         .then(response => response.json())
         .then(data => {
+            console.log('Media data:', data); // Debug log
             const content = document.getElementById('mediaPreviewContent');
             if (data.mime_type.startsWith('image/')) {
-                content.innerHTML = `<img src="${data.url}" class="max-w-full max-h-96 mx-auto rounded-lg shadow-lg" alt="${data.name}">`;
+                content.innerHTML = `<img src="${data.url}" class="max-w-full max-h-96 mx-auto rounded-lg shadow-lg" alt="${data.name}" onerror="console.error('Image load error:', this.src)">`;
             } else {
                 content.innerHTML = `<div class="text-center"><i class="fas fa-file text-gray-400 text-8xl mb-4"></i><p class="text-lg text-gray-600">${data.name}</p></div>`;
             }

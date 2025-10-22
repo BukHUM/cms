@@ -151,6 +151,7 @@ class MediaBrowserController extends Controller
                     $media->responsive_images = [];
                     $media->save();
                     
+                    
                     $uploadedFiles[] = [
                         'id' => $media->id,
                         'name' => $media->name,
@@ -233,4 +234,5 @@ class MediaBrowserController extends Controller
             ], 500);
         }
     }
+
 }
