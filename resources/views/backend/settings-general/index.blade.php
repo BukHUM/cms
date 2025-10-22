@@ -1234,8 +1234,11 @@ function resetFileUploadSections() {
 
 function normalizeStoragePath(path) {
     if (!path) return '';
+    // Convert Windows backslashes to forward slashes for cross-platform compatibility
+    let normalizedPath = String(path).replace(/\\/g, '/');
     // Remove any leading "/" and leading "storage/" to avoid double prefixing
-    return String(path).replace(/^\/+/, '').replace(/^storage\//, '');
+    normalizedPath = normalizedPath.replace(/^\/+/, '').replace(/^storage\//, '');
+    return normalizedPath;
 }
 
 function showCurrentFilePreview(filePath) {
@@ -1252,8 +1255,8 @@ function showCurrentFilePreview(filePath) {
         image.src = `/storage/settings/${normalized}`;
     }
     
-    // Extract filename from path
-    const fileName = filePath.split('/').pop();
+    // Extract filename from path (cross-platform compatible)
+    const fileName = filePath.split(/[/\\]/).pop();
     name.textContent = fileName;
     path.textContent = filePath;
     
