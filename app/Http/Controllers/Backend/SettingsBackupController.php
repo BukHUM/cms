@@ -496,7 +496,7 @@ class SettingsBackupController extends BaseSettingsController
         // Find mysqldump executable
         $mysqldump = $this->findMySQLDump();
         
-        // Build mysqldump command for Windows (simplified)
+        // Build mysqldump command (cross-platform)
         $command = sprintf(
             '"%s" --host=%s --port=%s --user=%s --password=%s --single-transaction --no-tablespaces --skip-routines --skip-triggers %s',
             $mysqldump,
@@ -512,9 +512,11 @@ class SettingsBackupController extends BaseSettingsController
         $returnCode = 0;
         exec($command . ' 2>&1', $output, $returnCode);
         
-        // Filter out warnings and check for actual errors
+        // Filter out warnings and check for actual errors (cross-platform)
         $filteredOutput = array_filter($output, function($line) {
-            return !preg_match('/^WARNING:/', $line) && !preg_match('/^mysqldump\.exe :/', $line);
+            return !preg_match('/^WARNING:/', $line) && 
+                   !preg_match('/^mysqldump\.exe :/', $line) &&
+                   !preg_match('/^mysqldump: \[Warning\]/', $line);
         });
         
         // Check if we have actual SQL content
@@ -553,19 +555,37 @@ class SettingsBackupController extends BaseSettingsController
      */
     private function findMySQLDump()
     {
-        $possiblePaths = [
-            'C:\\xampp\\mysql\\bin\\mysqldump.exe',
-            'C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqldump.exe',
-            'C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysqldump.exe',
-            'mysqldump', // Try PATH
-        ];
+        // Cross-platform paths
+        $possiblePaths = [];
+        
+        // Windows paths
+        if (PHP_OS_FAMILY === 'Windows') {
+            $possiblePaths = [
+                'C:\\xampp\\mysql\\bin\\mysqldump.exe',
+                'C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqldump.exe',
+                'C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysqldump.exe',
+                'mysqldump', // Try PATH
+            ];
+        } else {
+            // Linux/Unix paths
+            $possiblePaths = [
+                '/usr/bin/mysqldump',
+                '/usr/local/bin/mysqldump',
+                '/opt/mysql/bin/mysqldump',
+                'mysqldump', // Try PATH
+            ];
+        }
         
         foreach ($possiblePaths as $path) {
             if ($path === 'mysqldump') {
                 // Check if it's in PATH
                 $output = [];
                 $returnCode = 0;
-                exec('where mysqldump 2>nul', $output, $returnCode);
+                if (PHP_OS_FAMILY === 'Windows') {
+                    exec('where mysqldump 2>nul', $output, $returnCode);
+                } else {
+                    exec('which mysqldump 2>/dev/null', $output, $returnCode);
+                }
                 if ($returnCode === 0 && !empty($output)) {
                     return $output[0];
                 }
@@ -653,19 +673,37 @@ class SettingsBackupController extends BaseSettingsController
      */
     private function findPostgreSQLDump()
     {
-        $possiblePaths = [
-            'C:\\Program Files\\PostgreSQL\\15\\bin\\pg_dump.exe',
-            'C:\\Program Files\\PostgreSQL\\14\\bin\\pg_dump.exe',
-            'C:\\Program Files\\PostgreSQL\\13\\bin\\pg_dump.exe',
-            'pg_dump', // Try PATH
-        ];
+        // Cross-platform paths
+        $possiblePaths = [];
+        
+        // Windows paths
+        if (PHP_OS_FAMILY === 'Windows') {
+            $possiblePaths = [
+                'C:\\Program Files\\PostgreSQL\\15\\bin\\pg_dump.exe',
+                'C:\\Program Files\\PostgreSQL\\14\\bin\\pg_dump.exe',
+                'C:\\Program Files\\PostgreSQL\\13\\bin\\pg_dump.exe',
+                'pg_dump', // Try PATH
+            ];
+        } else {
+            // Linux/Unix paths
+            $possiblePaths = [
+                '/usr/bin/pg_dump',
+                '/usr/local/bin/pg_dump',
+                '/opt/postgresql/bin/pg_dump',
+                'pg_dump', // Try PATH
+            ];
+        }
         
         foreach ($possiblePaths as $path) {
             if ($path === 'pg_dump') {
                 // Check if it's in PATH
                 $output = [];
                 $returnCode = 0;
-                exec('where pg_dump 2>nul', $output, $returnCode);
+                if (PHP_OS_FAMILY === 'Windows') {
+                    exec('where pg_dump 2>nul', $output, $returnCode);
+                } else {
+                    exec('which pg_dump 2>/dev/null', $output, $returnCode);
+                }
                 if ($returnCode === 0 && !empty($output)) {
                     return $output[0];
                 }
