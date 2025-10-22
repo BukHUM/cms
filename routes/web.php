@@ -122,6 +122,8 @@ Route::prefix('backend')->name('backend.')->middleware(['auth'])->group(function
         Route::get('/media/{media}', [MediaBrowserController::class, 'show'])->name('show');
         Route::get('/download/{media}', [MediaBrowserController::class, 'download'])->name('download');
         Route::delete('/delete/{media}', [MediaBrowserController::class, 'delete'])->name('delete');
+        Route::put('/update/{media}', [MediaBrowserController::class, 'update'])->name('update');
+        Route::post('/bulk-operation', [MediaBrowserController::class, 'bulkOperation'])->name('bulk-operation');
     });
     
     // Performance Settings Routes

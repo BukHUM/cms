@@ -47,10 +47,7 @@ class MediaModel extends Model implements HasMedia
 
     public function registerMediaConversions(SpatieMedia $media = null): void
     {
-        $this->addMediaConversion('thumb')
-            ->width(300)
-            ->height(300)
-            ->sharpen(10);
+        // No conversions needed - we handle resizing manually during upload
     }
 
     /**

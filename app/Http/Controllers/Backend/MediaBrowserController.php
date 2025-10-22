@@ -22,14 +22,127 @@ class MediaBrowserController extends Controller
     public function index(Request $request)
     {
         try {
-            // Get all media files directly - same as SimpleMediaController
-            $mediaFiles = Media::orderBy('created_at', 'desc')->get();
+            // Get query parameters for filtering
+            $search = $request->get('search');
+            $type = $request->get('type');
+            $sizeMin = $request->get('size_min');
+            $sizeMax = $request->get('size_max');
+            $dateFrom = $request->get('date_from');
+            $dateTo = $request->get('date_to');
+            $collection = $request->get('collection');
             
-            // Get storage directories - same as SimpleMediaController
-            $storagePath = storage_path('app/public');
-            $directories = $this->getDirectories($storagePath);
+            // Build query
+            $query = Media::query();
             
-            return view('backend.media-browser.index', compact('mediaFiles', 'directories'));
+            // Search by name
+            if ($search) {
+                $query->where('name', 'like', '%' . $search . '%');
+            }
+            
+            // Filter by file type
+            if ($type) {
+                switch ($type) {
+                    case 'images':
+                        $query->where('mime_type', 'like', 'image/%');
+                        break;
+                    case 'documents':
+                        $query->whereIn('mime_type', [
+                            'application/pdf',
+                            'application/msword',
+                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                            'text/plain',
+                            'text/csv',
+                            'text/html',
+                            'application/vnd.ms-excel',
+                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                        ]);
+                        break;
+                    case 'pdf':
+                        $query->where('mime_type', 'application/pdf');
+                        break;
+                    case 'word':
+                        $query->whereIn('mime_type', [
+                            'application/msword',
+                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                        ]);
+                        break;
+                    case 'excel':
+                        $query->whereIn('mime_type', [
+                            'application/vnd.ms-excel',
+                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                        ]);
+                        break;
+                    default:
+                        if (strpos($type, '/') !== false) {
+                            $query->where('mime_type', $type);
+                        }
+                        break;
+                }
+            }
+            
+            // Filter by file size
+            if ($sizeMin) {
+                $query->where('size', '>=', $sizeMin * 1024); // Convert KB to bytes
+            }
+            if ($sizeMax) {
+                $query->where('size', '<=', $sizeMax * 1024); // Convert KB to bytes
+            }
+            
+            // Filter by date
+            if ($dateFrom) {
+                $query->whereDate('created_at', '>=', $dateFrom);
+            }
+            if ($dateTo) {
+                $query->whereDate('created_at', '<=', $dateTo);
+            }
+            
+            // Filter by collection
+            if ($collection) {
+                $query->where('collection_name', $collection);
+            }
+            
+            // Get filtered media files
+            $mediaFiles = $query->orderBy('created_at', 'desc')->get();
+            
+            // Get available collections for filter
+            $collections = Media::distinct()->pluck('collection_name')->filter()->values();
+            
+            // Get file type statistics
+            $fileTypes = [
+                'images' => Media::where('mime_type', 'like', 'image/%')->count(),
+                'documents' => Media::whereIn('mime_type', [
+                    'application/pdf',
+                    'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'text/plain',
+                    'text/csv',
+                    'text/html',
+                    'application/vnd.ms-excel',
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                ])->count(),
+                'pdf' => Media::where('mime_type', 'application/pdf')->count(),
+                'word' => Media::whereIn('mime_type', [
+                    'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                ])->count(),
+                'excel' => Media::whereIn('mime_type', [
+                    'application/vnd.ms-excel',
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                ])->count(),
+            ];
+            
+            return view('backend.media-browser.index', compact(
+                'mediaFiles', 
+                'collections', 
+                'fileTypes',
+                'search',
+                'type',
+                'sizeMin',
+                'sizeMax',
+                'dateFrom',
+                'dateTo',
+                'collection'
+            ));
             
         } catch (\Exception $e) {
             // Log the error for debugging
@@ -37,63 +150,12 @@ class MediaBrowserController extends Controller
             
             // Return empty data
             $mediaFiles = collect([]);
-            $directories = [];
+            $collections = collect([]);
+            $fileTypes = [];
             
-            return view('backend.media-browser.index', compact('mediaFiles', 'directories'))
+            return view('backend.media-browser.index', compact('mediaFiles', 'collections', 'fileTypes'))
                 ->with('error', 'เกิดข้อผิดพลาดในการโหลด Media Browser: ' . $e->getMessage());
         }
-    }
-
-    /**
-     * Get directories from storage - organized by date
-     */
-    private function getDirectories($path)
-    {
-        $directories = [];
-        
-        if (is_dir($path)) {
-            $items = scandir($path);
-            foreach ($items as $item) {
-                if ($item != '.' && $item != '..' && is_dir($path . '/' . $item)) {
-                    // Only show date-based folders (YYYY-MM-DD format)
-                    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $item)) {
-                        $directories[] = [
-                            'name' => $item,
-                            'path' => $path . '/' . $item,
-                            'size' => $this->getDirectorySize($path . '/' . $item),
-                            'date' => $item
-                        ];
-                    }
-                }
-            }
-        }
-        
-        // Sort by date (newest first)
-        usort($directories, function($a, $b) {
-            return strcmp($b['date'], $a['date']);
-        });
-        
-        return $directories;
-    }
-    
-    /**
-     * Get directory size - same as SimpleMediaController
-     */
-    private function getDirectorySize($path)
-    {
-        $size = 0;
-        if (is_dir($path)) {
-            $files = scandir($path);
-            foreach ($files as $file) {
-                if ($file != '.' && $file != '..') {
-                    $filePath = $path . '/' . $file;
-                    if (is_file($filePath)) {
-                        $size += filesize($filePath);
-                    }
-                }
-            }
-        }
-        return $size;
     }
 
     /**
@@ -133,6 +195,17 @@ class MediaBrowserController extends Controller
                     // Store file in date-based folder
                     $file->storeAs($dateFolder, $fileName, 'public');
                     
+                    // Get the actual stored file path
+                    $storedFilePath = storage_path('app/public/' . $filePath);
+                    
+                    // Auto-resize images if they're too large
+                    if (str_starts_with($file->getMimeType(), 'image/')) {
+                        $this->processImageOptimization($storedFilePath, $file->getMimeType());
+                    }
+                    
+                    // Get final file size after processing
+                    $finalFileSize = filesize($storedFilePath);
+                    
                     // Create media record manually
                     $media = new Media();
                     $media->model_type = get_class($mediaModel);
@@ -144,13 +217,12 @@ class MediaBrowserController extends Controller
                     $media->mime_type = $file->getMimeType();
                     $media->disk = 'public';
                     $media->conversions_disk = 'public';
-                    $media->size = $file->getSize();
+                    $media->size = $finalFileSize;
                     $media->manipulations = [];
                     $media->custom_properties = [];
                     $media->generated_conversions = [];
                     $media->responsive_images = [];
                     $media->save();
-                    
                     
                     $uploadedFiles[] = [
                         'id' => $media->id,
@@ -184,6 +256,7 @@ class MediaBrowserController extends Controller
     {
         try {
             $media = Media::findOrFail($mediaId);
+            $customProperties = $media->custom_properties ?? [];
             
             return response()->json([
                 'id' => $media->id,
@@ -191,6 +264,10 @@ class MediaBrowserController extends Controller
                 'url' => $media->getUrl(),
                 'size' => $media->size,
                 'mime_type' => $media->mime_type,
+                'collection_name' => $media->collection_name,
+                'alt_text' => $customProperties['alt_text'] ?? '',
+                'description' => $customProperties['description'] ?? '',
+                'tags' => $customProperties['tags'] ?? '',
                 'created_at' => $media->created_at
             ]);
         } catch (\Exception $e) {
@@ -215,13 +292,327 @@ class MediaBrowserController extends Controller
     }
 
     /**
+     * Update media file information
+     */
+    public function update(Request $request, $mediaId)
+    {
+        try {
+            $media = Media::findOrFail($mediaId);
+            
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'alt_text' => 'nullable|string|max:255',
+                'description' => 'nullable|string|max:1000',
+                'tags' => 'nullable|string|max:500',
+                'collection_name' => 'nullable|string|max:100'
+            ]);
+            
+            // Update media information
+            $media->name = $request->input('name');
+            $media->collection_name = $request->input('collection_name', $media->collection_name);
+            
+            // Store additional information in custom_properties
+            $customProperties = $media->custom_properties ?? [];
+            $customProperties['alt_text'] = $request->input('alt_text');
+            $customProperties['description'] = $request->input('description');
+            $customProperties['tags'] = $request->input('tags');
+            $media->custom_properties = $customProperties;
+            
+            $media->save();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'อัปเดตข้อมูลไฟล์สำเร็จ',
+                'media' => [
+                    'id' => $media->id,
+                    'name' => $media->name,
+                    'alt_text' => $customProperties['alt_text'] ?? '',
+                    'description' => $customProperties['description'] ?? '',
+                    'tags' => $customProperties['tags'] ?? '',
+                    'collection_name' => $media->collection_name
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในการอัปเดตไฟล์: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Bulk operations for multiple media files
+     */
+    public function bulkOperation(Request $request)
+    {
+        try {
+            $request->validate([
+                'action' => 'required|in:delete,download,change_collection,move',
+                'media_ids' => 'required|array|min:1',
+                'media_ids.*' => 'integer|exists:core_media,id',
+                'collection_name' => 'nullable|string|max:100',
+                'folder_path' => 'nullable|string|max:500'
+            ]);
+            
+            $action = $request->input('action');
+            $mediaIds = $request->input('media_ids');
+            $mediaFiles = Media::whereIn('id', $mediaIds)->get();
+            
+            switch ($action) {
+                case 'delete':
+                    return $this->bulkDelete($mediaFiles);
+                case 'download':
+                    return $this->bulkDownload($mediaFiles);
+                case 'change_collection':
+                    return $this->bulkChangeCollection($mediaFiles, $request->input('collection_name'));
+                case 'move':
+                    return $this->bulkMove($mediaFiles, $request->input('folder_path'));
+                default:
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'การดำเนินการไม่ถูกต้อง'
+                    ], 400);
+            }
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในการดำเนินการ: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Bulk delete media files
+     */
+    private function bulkDelete($mediaFiles)
+    {
+        $deletedCount = 0;
+        
+        foreach ($mediaFiles as $media) {
+            try {
+                $filePath = $media->getPath();
+                $media->delete();
+                
+                if (file_exists($filePath)) {
+                    unlink($filePath);
+                }
+                $deletedCount++;
+            } catch (\Exception $e) {
+                \Log::error('Bulk delete error for media ' . $media->id . ': ' . $e->getMessage());
+            }
+        }
+        
+        return response()->json([
+            'success' => true,
+            'message' => "ลบไฟล์สำเร็จ {$deletedCount} ไฟล์"
+        ]);
+    }
+    
+    /**
+     * Bulk download media files as ZIP
+     */
+    private function bulkDownload($mediaFiles)
+    {
+        try {
+            $zip = new \ZipArchive();
+            $zipFileName = 'media_files_' . now()->format('Y-m-d_H-i-s') . '.zip';
+            $zipPath = storage_path('app/temp/' . $zipFileName);
+            
+            // Create temp directory if not exists
+            if (!file_exists(storage_path('app/temp'))) {
+                mkdir(storage_path('app/temp'), 0755, true);
+            }
+            
+            if ($zip->open($zipPath, \ZipArchive::CREATE) !== TRUE) {
+                throw new \Exception('ไม่สามารถสร้างไฟล์ ZIP ได้');
+            }
+            
+            foreach ($mediaFiles as $media) {
+                $filePath = $media->getPath();
+                if (file_exists($filePath)) {
+                    $zip->addFile($filePath, $media->name);
+                }
+            }
+            
+            $zip->close();
+            
+            return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในการสร้างไฟล์ ZIP: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Bulk change collection
+     */
+    private function bulkChangeCollection($mediaFiles, $collectionName)
+    {
+        $updatedCount = 0;
+        
+        foreach ($mediaFiles as $media) {
+            try {
+                $media->collection_name = $collectionName;
+                $media->save();
+                $updatedCount++;
+            } catch (\Exception $e) {
+                \Log::error('Bulk change collection error for media ' . $media->id . ': ' . $e->getMessage());
+            }
+        }
+        
+        return response()->json([
+            'success' => true,
+            'message' => "เปลี่ยนคอลเลกชันสำเร็จ {$updatedCount} ไฟล์"
+        ]);
+    }
+    
+    /**
+     * Bulk move files (placeholder - would need file system operations)
+     */
+    private function bulkMove($mediaFiles, $folderPath)
+    {
+        // This would require complex file system operations
+        // For now, return a message that this feature is not implemented
+        return response()->json([
+            'success' => false,
+            'message' => 'ฟีเจอร์ย้ายไฟล์จะเพิ่มในอนาคต'
+        ]);
+    }
+    
+    /**
+     * Process image optimization
+     */
+    private function processImageOptimization($tempPath, $mimeType)
+    {
+        try {
+            // Get image dimensions
+            $imageInfo = getimagesize($tempPath);
+            
+            if (!$imageInfo) {
+                return;
+            }
+            
+            $width = $imageInfo[0];
+            $height = $imageInfo[1];
+            
+            // If image is larger than 1200px, resize it
+            if ($width > 1200 || $height > 1200) {
+                $this->resizeImage($tempPath, $tempPath, 1200, 1200, $mimeType);
+            }
+            
+        } catch (\Exception $e) {
+            \Log::error('Image optimization error: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Resize image maintaining aspect ratio
+     */
+    private function resizeImage($sourcePath, $destinationPath, $maxWidth, $maxHeight, $mimeType = null)
+    {
+        $imageInfo = getimagesize($sourcePath);
+        $width = $imageInfo[0];
+        $height = $imageInfo[1];
+        
+        // Use provided mimeType or get from image info
+        if (!$mimeType) {
+            $mimeType = $imageInfo['mime'];
+        }
+        
+        // Calculate new dimensions maintaining aspect ratio
+        $ratio = min($maxWidth / $width, $maxHeight / $height);
+        $newWidth = intval($width * $ratio);
+        $newHeight = intval($height * $ratio);
+        
+        // Create source image resource
+        switch ($mimeType) {
+            case 'image/jpeg':
+                $sourceImage = imagecreatefromjpeg($sourcePath);
+                break;
+            case 'image/png':
+                $sourceImage = imagecreatefrompng($sourcePath);
+                break;
+            case 'image/gif':
+                $sourceImage = imagecreatefromgif($sourcePath);
+                break;
+            case 'image/webp':
+                $sourceImage = imagecreatefromwebp($sourcePath);
+                break;
+            default:
+                return false;
+        }
+        
+        if (!$sourceImage) {
+            return false;
+        }
+        
+        // Create destination image
+        $destinationImage = imagecreatetruecolor($newWidth, $newHeight);
+        
+        // Preserve transparency for PNG and GIF
+        if ($mimeType == 'image/png' || $mimeType == 'image/gif') {
+            imagealphablending($destinationImage, false);
+            imagesavealpha($destinationImage, true);
+            $transparent = imagecolorallocatealpha($destinationImage, 255, 255, 255, 127);
+            imagefilledrectangle($destinationImage, 0, 0, $newWidth, $newHeight, $transparent);
+        }
+        
+        // Resize image
+        imagecopyresampled($destinationImage, $sourceImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+        
+        // Save resized image
+        $result = false;
+        switch ($mimeType) {
+            case 'image/jpeg':
+                $result = imagejpeg($destinationImage, $destinationPath, 85); // 85% quality
+                break;
+            case 'image/png':
+                $result = imagepng($destinationImage, $destinationPath, 8); // Compression level 8
+                break;
+            case 'image/gif':
+                $result = imagegif($destinationImage, $destinationPath);
+                break;
+            case 'image/webp':
+                $result = imagewebp($destinationImage, $destinationPath, 85); // 85% quality
+                break;
+        }
+        
+        // Clean up memory
+        imagedestroy($sourceImage);
+        imagedestroy($destinationImage);
+        
+        return $result;
+    }
+
+    /**
      * Delete media file
      */
     public function delete($mediaId)
     {
         try {
             $media = Media::findOrFail($mediaId);
+            
+            // Get file path before deleting from database
+            $filePath = $media->getPath();
+            
+            // Delete from database first
             $media->delete();
+            
+            // Delete actual file from storage
+            if (file_exists($filePath)) {
+                unlink($filePath);
+                
+                // Check if folder is empty and delete it
+                $folderPath = dirname($filePath);
+                if (is_dir($folderPath) && count(scandir($folderPath)) == 2) { // Only . and .. entries
+                    rmdir($folderPath);
+                }
+            }
             
             return response()->json([
                 'success' => true,
