@@ -47,7 +47,14 @@ abstract class BaseSettingsController extends Controller
             }
 
             if ($request->expectsJson()) {
-                return response()->json($settings_generals);
+                return response()->json([
+                    'success' => true,
+                    'settings' => $settings_generals->items(),
+                    'total' => $settings_generals->total(),
+                    'current_page' => $settings_generals->currentPage(),
+                    'per_page' => $settings_generals->perPage(),
+                    'last_page' => $settings_generals->lastPage()
+                ]);
             }
 
             return view("{$this->viewPath}.index", compact('settings_generals'));

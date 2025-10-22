@@ -554,11 +554,15 @@ function performStatusFilter(status) {
             updateTableWithResults(data.settings);
         } else {
             console.error('Status filter failed:', data);
+            // Fallback: reload the page if AJAX fails
+            location.reload();
         }
     })
     .catch(error => {
         console.error('Status filter error:', error);
         hideSearchLoading();
+        // Fallback: reload the page if AJAX fails
+        location.reload();
     });
 }
 
@@ -599,11 +603,15 @@ function performLiveSearch(searchTerm, showSuggestions = true) {
             }
         } else {
             console.error('Search failed:', data);
+            // Fallback: reload the page if AJAX fails
+            location.reload();
         }
     })
     .catch(error => {
         console.error('Search error:', error);
         hideSearchLoading();
+        // Fallback: reload the page if AJAX fails
+        location.reload();
     });
 }
 
@@ -989,11 +997,15 @@ function resetTableToAll() {
             updateTableWithResults(data.settings);
         } else {
             console.error('Reset failed:', data);
+            // Fallback: reload the page if AJAX fails
+            location.reload();
         }
     })
     .catch(error => {
         console.error('Reset error:', error);
         hideSearchLoading();
+        // Fallback: reload the page if AJAX fails
+        location.reload();
     });
 }
 
@@ -1113,7 +1125,7 @@ function toggleStatus(id) {
                         confirmButtonText: 'ตกลง'
                     }).then(() => {
                         // Refresh the table instead of reloading the page
-                        resetTableToAll();
+                        location.reload();
                     });
                 } else if (data.success === false) {
                     Swal.fire({
