@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 
 class SettingsPerformanceController extends BaseSettingsController
 {
@@ -18,8 +20,10 @@ class SettingsPerformanceController extends BaseSettingsController
     public function __construct()
     {
         parent::__construct();
-        // Temporarily disable permission check for testing
-        // $this->middleware('permission:performance.view', ['only' => ['index']]);
+        // Enable permission check for security
+        $this->middleware('permission:performance.view', ['only' => ['index']]);
+        $this->middleware('permission:performance.edit', ['only' => ['update']]);
+        $this->middleware('permission:performance.cache-clear', ['only' => ['clearAllCache', 'clearPerformanceCache']]);
     }
 
     /**
@@ -39,11 +43,36 @@ class SettingsPerformanceController extends BaseSettingsController
     }
 
     /**
-     * Clear all cache
+     * Clear all cache (with security and rate limiting)
      */
     public function clearAllCache(Request $request)
     {
+        // Rate limiting to prevent abuse
+        $key = 'clear_all_cache_' . Auth::id();
+        if (RateLimiter::tooManyAttempts($key, 3)) {
+            $seconds = RateLimiter::availableIn($key);
+            
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "คุณพยายามล้าง Cache บ่อยเกินไป กรุณารอ {$seconds} วินาที"
+                ], 429);
+            }
+            
+            return redirect()->back()->with('error', "คุณพยายามล้าง Cache บ่อยเกินไป กรุณารอ {$seconds} วินาที");
+        }
+        
+        RateLimiter::hit($key, 300); // 5 minutes cooldown
+
         try {
+            // Log before clearing cache
+            Log::info('Starting cache clear operation', [
+                'user_id' => Auth::id(),
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'operation' => 'clear_all_cache'
+            ]);
+
             // Clear application cache
             Artisan::call('cache:clear');
             
@@ -62,9 +91,9 @@ class SettingsPerformanceController extends BaseSettingsController
             // Clear all Laravel cache
             Cache::flush();
             
-            // Log activity
-            Log::info('All cache cleared', [
-                'user_id' => auth()->id(),
+            // Log successful operation
+            Log::info('All cache cleared successfully', [
+                'user_id' => Auth::id(),
                 'ip' => $request->ip(),
                 'user_agent' => $request->userAgent(),
             ]);
@@ -81,27 +110,53 @@ class SettingsPerformanceController extends BaseSettingsController
         } catch (\Exception $e) {
             Log::error('Error clearing all cache', [
                 'error' => $e->getMessage(),
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
+                'ip' => $request->ip(),
                 'trace' => $e->getTraceAsString(),
             ]);
 
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'เกิดข้อผิดพลาดในการล้าง Cache: ' . $e->getMessage()
+                    'message' => 'เกิดข้อผิดพลาดในการล้าง Cache'
                 ], 500);
             }
 
-            return redirect()->back()->with('error', 'เกิดข้อผิดพลาดในการล้าง Cache: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'เกิดข้อผิดพลาดในการล้าง Cache');
         }
     }
 
     /**
-     * Clear performance-related cache only
+     * Clear performance-related cache only (with security and rate limiting)
      */
     public function clearPerformanceCache(Request $request)
     {
+        // Rate limiting to prevent abuse
+        $key = 'clear_performance_cache_' . Auth::id();
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            $seconds = RateLimiter::availableIn($key);
+            
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "คุณพยายามล้าง Performance Cache บ่อยเกินไป กรุณารอ {$seconds} วินาที"
+                ], 429);
+            }
+            
+            return redirect()->back()->with('error', "คุณพยายามล้าง Performance Cache บ่อยเกินไป กรุณารอ {$seconds} วินาที");
+        }
+        
+        RateLimiter::hit($key, 180); // 3 minutes cooldown
+
         try {
+            // Log before clearing cache
+            Log::info('Starting performance cache clear operation', [
+                'user_id' => Auth::id(),
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'operation' => 'clear_performance_cache'
+            ]);
+
             // Clear application cache (most important for performance)
             Artisan::call('cache:clear');
             
@@ -126,9 +181,9 @@ class SettingsPerformanceController extends BaseSettingsController
                 Cache::forget($key);
             }
             
-            // Log activity
-            Log::info('Performance cache cleared', [
-                'user_id' => auth()->id(),
+            // Log successful operation
+            Log::info('Performance cache cleared successfully', [
+                'user_id' => Auth::id(),
                 'ip' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'cleared_keys' => $performanceKeys,
@@ -146,18 +201,19 @@ class SettingsPerformanceController extends BaseSettingsController
         } catch (\Exception $e) {
             Log::error('Error clearing performance cache', [
                 'error' => $e->getMessage(),
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
+                'ip' => $request->ip(),
                 'trace' => $e->getTraceAsString(),
             ]);
 
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'เกิดข้อผิดพลาดในการล้าง Performance Cache: ' . $e->getMessage()
+                    'message' => 'เกิดข้อผิดพลาดในการล้าง Performance Cache'
                 ], 500);
             }
 
-            return redirect()->back()->with('error', 'เกิดข้อผิดพลาดในการล้าง Performance Cache: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'เกิดข้อผิดพลาดในการล้าง Performance Cache');
         }
     }
 }

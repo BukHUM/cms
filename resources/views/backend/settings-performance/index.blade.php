@@ -528,8 +528,20 @@ function addManagedEventListener(element, event, handler) {
     cleanupManager.addEventListener(element, event, handler);
 }
 
-// Clear All Cache Function
+// Clear All Cache Function (with rate limiting and security)
 function clearAllCache() {
+    // Check if button is disabled (rate limiting)
+    const button = document.querySelector('[onclick="clearAllCache()"]');
+    if (button && button.disabled) {
+        Swal.fire({
+            title: 'กรุณารอสักครู่',
+            text: 'คุณพยายามล้าง Cache บ่อยเกินไป กรุณารอสักครู่ก่อนลองใหม่',
+            icon: 'warning',
+            confirmButtonText: 'ตกลง'
+        });
+        return;
+    }
+
     Swal.fire({
         title: 'ล้าง Cache ทั้งหมด?',
         text: 'คุณต้องการล้าง cache ทั้งหมดของระบบหรือไม่? การดำเนินการนี้อาจใช้เวลาสักครู่',
@@ -541,6 +553,12 @@ function clearAllCache() {
         cancelButtonText: 'ยกเลิก'
     }).then((result) => {
         if (result.isConfirmed) {
+            // Disable button to prevent multiple clicks
+            if (button) {
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>กำลังล้าง Cache...';
+            }
+
             // Show loading
             Swal.fire({
                 title: 'กำลังล้าง Cache...',
@@ -560,12 +578,17 @@ function clearAllCache() {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     Swal.fire({
                         title: 'สำเร็จ!',
-                        text: 'ล้าง Cache ทั้งหมดเรียบร้อยแล้ว',
+                        text: data.message || 'ล้าง Cache ทั้งหมดเรียบร้อยแล้ว',
                         icon: 'success',
                         confirmButtonText: 'ตกลง'
                     }).then(() => {
@@ -588,13 +611,34 @@ function clearAllCache() {
                     icon: 'error',
                     confirmButtonText: 'ตกลง'
                 });
+            })
+            .finally(() => {
+                // Re-enable button after 5 minutes
+                if (button) {
+                    setTimeout(() => {
+                        button.disabled = false;
+                        button.innerHTML = '<i class="fas fa-trash-alt mr-2"></i>ล้าง Cache ทั้งหมด';
+                    }, 300000); // 5 minutes
+                }
             });
         }
     });
 }
 
-// Clear Performance Cache Function
+// Clear Performance Cache Function (with rate limiting and security)
 function clearPerformanceCache() {
+    // Check if button is disabled (rate limiting)
+    const button = document.querySelector('[onclick="clearPerformanceCache()"]');
+    if (button && button.disabled) {
+        Swal.fire({
+            title: 'กรุณารอสักครู่',
+            text: 'คุณพยายามล้าง Performance Cache บ่อยเกินไป กรุณารอสักครู่ก่อนลองใหม่',
+            icon: 'warning',
+            confirmButtonText: 'ตกลง'
+        });
+        return;
+    }
+
     Swal.fire({
         title: 'ล้าง Performance Cache?',
         text: 'คุณต้องการล้าง cache ที่เกี่ยวข้องกับ performance เท่านั้นหรือไม่?',
@@ -606,6 +650,12 @@ function clearPerformanceCache() {
         cancelButtonText: 'ยกเลิก'
     }).then((result) => {
         if (result.isConfirmed) {
+            // Disable button to prevent multiple clicks
+            if (button) {
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>กำลังล้าง Cache...';
+            }
+
             // Show loading
             Swal.fire({
                 title: 'กำลังล้าง Performance Cache...',
@@ -625,12 +675,17 @@ function clearPerformanceCache() {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     Swal.fire({
                         title: 'สำเร็จ!',
-                        text: 'ล้าง Performance Cache เรียบร้อยแล้ว',
+                        text: data.message || 'ล้าง Performance Cache เรียบร้อยแล้ว',
                         icon: 'success',
                         confirmButtonText: 'ตกลง'
                     }).then(() => {
@@ -653,6 +708,15 @@ function clearPerformanceCache() {
                     icon: 'error',
                     confirmButtonText: 'ตกลง'
                 });
+            })
+            .finally(() => {
+                // Re-enable button after 3 minutes
+                if (button) {
+                    setTimeout(() => {
+                        button.disabled = false;
+                        button.innerHTML = '<i class="fas fa-memory mr-2"></i>ล้าง Performance Cache';
+                    }, 180000); // 3 minutes
+                }
             });
         }
     });
@@ -1008,7 +1072,7 @@ function highlightText(text, searchTerm) {
     const textStr = String(text);
     
     const regex = new RegExp(`(${escapeRegExp(searchTerm)})`, 'gi');
-    return textStr.replace(regex, '<mark class="bg-yellow-200 px-1 rounded">$1</mark>');
+    return textStr.replace(regex, '<span class="bg-yellow-200 px-1 rounded">$1</span>');
 }
 
 // Escape special regex characters
@@ -1173,7 +1237,7 @@ function toggleStatus(id) {
         cancelButtonText: 'ยกเลิก'
     }).then((result) => {
         if (result.isConfirmed) {
-            const url = `{{ route('backend.settings-performance.toggle-status', ':id') }}`.replace(':id', id);
+            const url = '{{ route('backend.settings-performance.toggle-status', 1) }}'.replace('1', id);
             console.log('Toggle URL:', url);
             
             fetch(url, {
@@ -1321,7 +1385,7 @@ function setupValueInput(data) {
 // Edit Modal functionality
 function openEditModal(id) {
     // Fetch setting data
-    fetch(`{{ route('backend.settings-performance.show', ':id') }}`.replace(':id', id), {
+    fetch('{{ route('backend.settings-performance.show', 1) }}'.replace('1', id), {
         headers: {
             'Accept': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
@@ -1358,7 +1422,7 @@ function openEditModal(id) {
         }
 
         // Update form action - use update route for AJAX update
-        document.getElementById('editForm').action = `{{ route('backend.settings-performance.update', ':id') }}`.replace(':id', id);
+        document.getElementById('editForm').action = '{{ route('backend.settings-performance.update', 1) }}'.replace('1', id);
 
         // Show modal
         document.getElementById('editModal').classList.remove('hidden');
@@ -1592,7 +1656,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const formData = new FormData(this);
             const settingId = document.getElementById('edit_id').value;
-            const url = `{{ route('backend.settings-performance.update', ':id') }}`.replace(':id', settingId);
+            const url = '{{ route('backend.settings-performance.update', 1) }}'.replace('1', settingId);
 
             fetch(url, {
                 method: 'POST',

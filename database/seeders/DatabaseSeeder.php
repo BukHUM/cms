@@ -19,7 +19,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CmsSeeder::class,           // Users and Roles
             PermissionSeeder::class,    // Permissions and assign to roles
-            GeneralSettingsSeeder::class, // Basic settings
+            AllSettingsSeeder::class,   // Basic settings
         ]);
 
         $this->command->info('Database seeded successfully!');

@@ -100,6 +100,20 @@
                                 @endif
                             @elseif($setting->type === 'json')
                                 <pre class="bg-gray-50 dark:bg-gray-700 p-3 rounded border dark:border-gray-600 text-xs overflow-x-auto text-gray-900 dark:text-white">{{ json_encode(json_decode($setting->value), JSON_PRETTY_PRINT) }}</pre>
+                            @elseif($setting->type === 'file' && in_array($setting->key, ['site_logo', 'site_favicon']) && $setting->value)
+                                <div class="space-y-3">
+                                    <span class="font-mono bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded border dark:border-gray-600 block text-gray-900 dark:text-white">{{ $setting->value }}</span>
+                                    <div class="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
+                                        <img src="{{ asset('storage/' . str_replace('\\', '/', $setting->value)) }}" 
+                                             alt="{{ $setting->key }}" 
+                                             class="w-16 h-16 object-cover rounded border dark:border-gray-600"
+                                             onerror="this.style.display='none'">
+                                        <div class="flex-1">
+                                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ basename(str_replace('\\', '/', $setting->value)) }}</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $setting->value }}</p>
+                                        </div>
+                                    </div>
+                                </div>
                             @else
                                 <span class="font-mono bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded border dark:border-gray-600 block text-gray-900 dark:text-white">{{ $setting->value }}</span>
                             @endif
@@ -216,9 +230,10 @@
 
             <!-- Modal Body -->
             <div class="mt-4">
-                <form id="editForm" method="POST">
+                <form id="editForm" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
+                    <input type="hidden" id="remove_file_flag" name="remove_file" value="0">
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Left Column -->
@@ -241,12 +256,62 @@
                                     <i class="fas fa-edit mr-1"></i>
                                     ค่า <span class="text-red-500">*</span>
                                 </label>
-                                <input type="text" 
-                                       id="edit_value" 
-                                       name="value" 
+                                
+                                <!-- Text Input (default) -->
+                                <input type="text"
+                                       id="edit_value"
+                                       name="value"
                                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white @error('value') border-red-500 @enderror"
-                                       placeholder="ค่าของการตั้งค่า"
-                                       required>
+                                       placeholder="ค่าของการตั้งค่า">
+                                
+                                <!-- File Upload Section (for file types) -->
+                                <div id="file_upload_section" class="hidden">
+                                    <div class="mt-2">
+                                        <input type="file" 
+                                               id="edit_file" 
+                                               name="file" 
+                                               accept="image/jpeg,image/png,image/gif,image/x-icon,image/vnd.microsoft.icon"
+                                               class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900 dark:file:text-blue-200">
+                                        <p class="text-xs text-gray-500 mt-1">รองรับไฟล์: JPG, PNG, GIF, ICO (ขนาดไม่เกิน 2MB)</p>
+                                    </div>
+                                    
+                                    <!-- Current File Preview -->
+                                    <div id="current_file_preview" class="mt-3 hidden">
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            <i class="fas fa-image mr-1"></i>
+                                            ไฟล์ปัจจุบัน
+                                        </label>
+                                        <div class="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
+                                            <img id="current_file_image" src="" alt="Current file" class="w-12 h-12 object-cover rounded">
+                                            <div class="flex-1">
+                                                <p id="current_file_name" class="text-sm font-medium text-gray-900 dark:text-white"></p>
+                                                <p id="current_file_path" class="text-xs text-gray-500 dark:text-gray-400"></p>
+                                            </div>
+                                            <button type="button" id="remove_current_file" class="text-red-500 hover:text-red-700">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- New File Preview -->
+                                    <div id="new_file_preview" class="mt-3 hidden">
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            <i class="fas fa-check-circle mr-1"></i>
+                                            ไฟล์ใหม่
+                                        </label>
+                                        <div class="flex items-center space-x-3 p-3 bg-green-50 dark:bg-green-900 rounded-md">
+                                            <img id="new_file_image" src="" alt="New file" class="w-12 h-12 object-cover rounded">
+                                            <div class="flex-1">
+                                                <p id="new_file_name" class="text-sm font-medium text-green-900 dark:text-green-100"></p>
+                                                <p id="new_file_size" class="text-xs text-green-600 dark:text-green-300"></p>
+                                            </div>
+                                            <button type="button" id="remove_new_file" class="text-red-500 hover:text-red-700">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
                                 <div id="value_error" class="text-red-600 text-sm mt-1 hidden"></div>
                             </div>
 
@@ -392,8 +457,33 @@
         })
             .then(response => response.json())
             .then(data => {
-                // Populate form fields
-                document.getElementById('edit_value').value = data.value;
+                // Reset form and file upload sections
+                resetFileUploadSections();
+                
+                // Check if this is a file type setting
+                const isFileType = ['site_logo', 'site_favicon'].includes(data.key);
+                
+                if (isFileType) {
+                    // Show file upload section
+                    document.getElementById('file_upload_section').classList.remove('hidden');
+                    document.getElementById('edit_value').classList.add('hidden');
+                    document.getElementById('edit_value').removeAttribute('required');
+                    document.getElementById('edit_value').value = ''; // Clear value
+                    document.getElementById('remove_file_flag').value = '0'; // reset remove flag
+                    
+                    // Show current file if exists
+                    if (data.value && data.value !== '') {
+                        showCurrentFilePreview(data.value);
+                    }
+                } else {
+                    // Show text input section
+                    document.getElementById('file_upload_section').classList.add('hidden');
+                    document.getElementById('edit_value').classList.remove('hidden');
+                    document.getElementById('edit_value').setAttribute('required', 'required');
+                    document.getElementById('edit_value').value = data.value;
+                }
+                
+                // Populate other form fields
                 document.getElementById('edit_description').value = data.description || '';
                 document.getElementById('edit_is_active').checked = data.is_active;
 
@@ -431,6 +521,9 @@
         
         // Clear form
         document.getElementById('editForm').reset();
+        
+        // Reset file upload sections
+        resetFileUploadSections();
         
         // Clear errors
         const errorElements = document.querySelectorAll('[id$="_error"]');
@@ -504,5 +597,259 @@
             closeEditModal();
         }
     });
+});
+
+// File Upload Functions (Cross-platform compatible)
+let selectedFile = null;
+
+function normalizeStoragePath(path) {
+    if (!path) return '';
+    // Convert Windows backslashes to forward slashes for cross-platform compatibility
+    let normalizedPath = String(path).replace(/\\/g, '/');
+    // Remove any leading "/" and leading "storage/" to avoid double prefixing
+    normalizedPath = normalizedPath.replace(/^\/+/, '').replace(/^storage\//, '');
+    return normalizedPath;
+}
+
+function showCurrentFilePreview(filePath) {
+    const preview = document.getElementById('current_file_preview');
+    const image = document.getElementById('current_file_image');
+    const name = document.getElementById('current_file_name');
+    const path = document.getElementById('current_file_path');
+    
+    // Set image source with normalized path
+    if (filePath.startsWith('http')) {
+        image.src = filePath;
+    } else {
+        const normalized = normalizeStoragePath(filePath);
+        image.src = `/storage/settings/${normalized}`;
+    }
+    
+    // Extract filename from path (cross-platform compatible)
+    const fileName = filePath.split(/[/\\]/).pop();
+    name.textContent = fileName;
+    path.textContent = filePath;
+    
+    // Show preview
+    preview.classList.remove('hidden');
+}
+
+function showNewFilePreview(file) {
+    const preview = document.getElementById('new_file_preview');
+    const image = document.getElementById('new_file_image');
+    const name = document.getElementById('new_file_name');
+    const size = document.getElementById('new_file_size');
+    
+    // Create file URL for preview
+    const fileURL = URL.createObjectURL(file);
+    image.src = fileURL;
+    
+    // Set file info
+    name.textContent = file.name;
+    size.textContent = formatFileSize(file.size);
+    
+    // Store selected file
+    selectedFile = file;
+    
+    // Show preview
+    preview.classList.remove('hidden');
+}
+
+function removeNewFile() {
+    selectedFile = null;
+    document.getElementById('new_file_preview').classList.add('hidden');
+    document.getElementById('edit_file').value = '';
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function resetFileUploadSections() {
+    // Hide all file upload sections
+    document.getElementById('file_upload_section').classList.add('hidden');
+    document.getElementById('current_file_preview').classList.add('hidden');
+    document.getElementById('new_file_preview').classList.add('hidden');
+    
+    // Reset text input
+    document.getElementById('edit_value').classList.remove('hidden');
+    document.getElementById('edit_value').setAttribute('required', 'required');
+    document.getElementById('edit_value').value = '';
+    
+    // Reset file input
+    const fileInput = document.getElementById('edit_file');
+    if (fileInput) fileInput.value = '';
+    
+    // Reset selected file
+    selectedFile = null;
+    
+    // Reset remove flag
+    const removeFlag = document.getElementById('remove_file_flag');
+    if (removeFlag) removeFlag.value = '0';
+}
+
+// File Upload Event Listeners
+document.addEventListener('DOMContentLoaded', function() {
+    const editFileInput = document.getElementById('edit_file');
+    const removeNewFileBtn = document.getElementById('remove_new_file');
+    const removeCurrentFileBtn = document.getElementById('remove_current_file');
+    const editForm = document.getElementById('editForm');
+    
+    if (editFileInput) {
+        editFileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validate file type
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/x-icon', 'image/vnd.microsoft.icon'];
+                if (!allowedTypes.includes(file.type)) {
+                    Swal.fire({
+                        title: 'ไฟล์ไม่ถูกต้อง!',
+                        text: 'กรุณาเลือกไฟล์รูปภาพ (JPG, PNG, GIF, ICO) เท่านั้น',
+                        icon: 'error',
+                        confirmButtonText: 'ตกลง'
+                    });
+                    this.value = '';
+                    return;
+                }
+                
+                // Validate file size (2MB)
+                if (file.size > 2 * 1024 * 1024) {
+                    Swal.fire({
+                        title: 'ไฟล์ใหญ่เกินไป!',
+                        text: 'กรุณาเลือกไฟล์ที่มีขนาดไม่เกิน 2MB',
+                        icon: 'error',
+                        confirmButtonText: 'ตกลง'
+                    });
+                    this.value = '';
+                    return;
+                }
+                
+                showNewFilePreview(file);
+            }
+        });
+    }
+    
+    if (removeNewFileBtn) {
+        removeNewFileBtn.addEventListener('click', function() {
+            removeNewFile();
+        });
+    }
+    
+    if (removeCurrentFileBtn) {
+        removeCurrentFileBtn.addEventListener('click', function() {
+            document.getElementById('current_file_preview').classList.add('hidden');
+            // Set a flag to indicate current file should be removed
+            const removeFlag = document.getElementById('remove_file_flag');
+            if (removeFlag) removeFlag.value = '1';
+            document.getElementById('edit_value').value = '';
+            // Clear current value display as visual feedback
+            const currentValueEl = document.getElementById('current_value');
+            if (currentValueEl) currentValueEl.textContent = '';
+        });
+    }
+    
+    if (editForm) {
+        editForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Check if this is a file type setting
+            const isFileType = document.getElementById('file_upload_section').classList.contains('hidden') === false;
+            
+            // For file type settings, temporarily remove required attribute
+            let wasRequired = false;
+            if (isFileType) {
+                const valueInput = document.getElementById('edit_value');
+                wasRequired = valueInput.hasAttribute('required');
+                valueInput.removeAttribute('required');
+            }
+
+            const formData = new FormData(this);
+            const url = this.action;
+            
+            if (isFileType) {
+                // For file type settings, check if new file is selected
+                if (selectedFile) {
+                    // File will be uploaded via FormData
+                    // No need to set value here, backend will handle it
+                } else {
+                    // Check remove flag; if set, clear value
+                    const removeFlag = document.getElementById('remove_file_flag')?.value === '1';
+                    if (removeFlag) {
+                        formData.set('value', '');
+                    } else {
+                        const currentValue = document.getElementById('current_value').textContent || '';
+                        formData.set('value', currentValue);
+                    }
+                }
+                
+                // Restore required attribute if it was there
+                const valueInput = document.getElementById('edit_value');
+                if (wasRequired) {
+                    valueInput.setAttribute('required', 'required');
+                }
+            } else {
+                // For text type settings, validate required field
+                const valueInput = document.getElementById('edit_value');
+                if (!valueInput.value.trim()) {
+                    Swal.fire({
+                        title: 'ข้อมูลไม่ครบถ้วน!',
+                        text: 'กรุณากรอกค่าการตั้งค่า',
+                        icon: 'error',
+                        confirmButtonText: 'ตกลง'
+                    });
+                    return;
+                }
+            }
+
+            fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(`HTTP ${response.status}: ${text}`);
+                    });
+                }
+                
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    closeEditModal();
+                    location.reload();
+                } else {
+                    // Display validation errors
+                    if (data.errors) {
+                        Object.keys(data.errors).forEach(field => {
+                            const errorElement = document.getElementById(field + '_error');
+                            if (errorElement) {
+                                errorElement.textContent = data.errors[field][0];
+                                errorElement.classList.remove('hidden');
+                            }
+                        });
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    title: 'เกิดข้อผิดพลาด!',
+                    text: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล',
+                    icon: 'error',
+                    confirmButtonText: 'ตกลง'
+                });
+            });
+        });
+    }
+});
 </script>
 @endpush

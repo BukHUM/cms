@@ -7,11 +7,17 @@
 @section('content')
 <div class="main-content-area">
     <!-- Action Buttons -->
-    <div class="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2 mb-6">
-        <a href="{{ route('backend.settings-systeminfo.export') }}" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 w-full sm:w-auto">
-            <i class="fas fa-download mr-2"></i>
-            Export ข้อมูล
-        </a>
+    <div class="flex flex-col sm:flex-row sm:justify-between space-y-2 sm:space-y-0 sm:space-x-2 mb-6">
+        <button data-refresh class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full sm:w-auto">
+            <i class="fas fa-sync-alt mr-2"></i>
+            รีเฟรชข้อมูล
+        </button>
+        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+            <a href="{{ route('backend.settings-systeminfo.export') }}" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 w-full sm:w-auto">
+                <i class="fas fa-download mr-2"></i>
+                Export ข้อมูล
+            </a>
+        </div>
     </div>
 
     <!-- System Overview Cards -->
@@ -450,10 +456,23 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Auto-refresh every 30 seconds
+    // Auto-refresh every 5 minutes (reduced frequency for better performance)
     setTimeout(function() {
         location.reload();
-    }, 30000);
+    }, 300000);
+    
+    // Add loading state for better UX
+    const refreshButton = document.querySelector('[data-refresh]');
+    if (refreshButton) {
+        refreshButton.addEventListener('click', function() {
+            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>กำลังโหลด...';
+            this.disabled = true;
+            // Reload the page
+            setTimeout(() => {
+                location.reload();
+            }, 500);
+        });
+    }
 });
 </script>
 @endpush

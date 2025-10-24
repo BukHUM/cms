@@ -81,47 +81,68 @@ All database tables use the `core_` prefix for consistency and proper organizati
 
 ## Production Deployment
 
-### Quick Deployment Script
+### Automated Deployment (Recommended)
+
+**Step 1: Install PHP Extensions**
 ```bash
 # Make the script executable
+chmod +x install-php-extensions.sh
+
+# Run the PHP extensions installation script
+sudo ./install-php-extensions.sh
+```
+
+**Step 2: Deploy Application**
+```bash
+# Make the deployment script executable
 chmod +x deploy-production.sh
 
 # Run the deployment script
 ./deploy-production.sh
-
-# Ensure storage symlink exists (script already does this, but you can run manually)
-php artisan storage:link
 ```
 
 ### Manual Production Setup
 ```bash
-# 1. Clean npm configuration
+# 1. Install PHP Extensions (Ubuntu/Debian)
+sudo apt-get update
+sudo apt-get install php8.2-exif php8.2-mbstring php8.2-xml php8.2-bcmath php8.2-fileinfo php8.2-ctype php8.2-json php8.2-tokenizer php8.2-openssl php8.2-pdo php8.2-curl php8.2-gd php8.2-zip php8.2-intl php8.2-imagick
+
+# 2. Install Composer dependencies
+composer install --no-dev --optimize-autoloader --ignore-platform-reqs
+
+# 3. Clean npm configuration
 rm -f /root/.npmrc
 rm -f .npmrc
 
-# 2. Clean node_modules
+# 4. Clean node_modules
 rm -rf node_modules package-lock.json
 
-# 3. Install dependencies
+# 5. Install dependencies
 npm install
 
-# 4. Build assets
+# 6. Build assets
 npm run build
 
-# 5. Run migrations
+# 7. Run migrations
 php artisan migrate --force
 
-# 6. Ensure storage directories and symlink exist
+# 8. Ensure storage directories and symlink exist
 mkdir -p storage/app/public/settings
 mkdir -p storage/app/public/backups
 mkdir -p storage/app/public/uploads
 php artisan storage:link
 
-# 7. Seed production data (simplified)
+# 9. Seed production data
 php artisan db:seed --force
 
-# 8. Optimize application
-php artisan optimize
+# 10. Optimize application
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+# 11. Set proper permissions
+chmod -R 775 storage bootstrap/cache
+chown -R www-data:www-data storage bootstrap/cache
 ```
 
 ## System Requirements
@@ -132,6 +153,97 @@ php artisan optimize
 - **npm**: 8.0.0 or higher
 - **Database**: MySQL 5.7+ or SQLite 3.8+
 - **Web Server**: Apache/Nginx (for production)
+
+### Required PHP Extensions
+- exif (for image processing)
+- mbstring (for string handling)
+- xml (for XML processing)
+- bcmath (for mathematical operations)
+- fileinfo (for file type detection)
+- ctype (for character type checking)
+- json (for JSON processing)
+- tokenizer (for PHP tokenization)
+- openssl (for encryption)
+- pdo (for database access)
+- curl (for HTTP requests)
+- gd (for image manipulation)
+- zip (for archive handling)
+- intl (for internationalization)
+- imagick (for advanced image processing)
+
+## Troubleshooting
+
+### File Upload Issues
+
+**Problem**: Uploaded files (site_logo, site_favicon) return 404 error
+```
+GET https://backend.tonkla.co/storage/settings/site_logo_1761142641.png 404 (Not Found)
+```
+
+**Solutions**:
+
+1. **Check Storage Link**
+```bash
+# Verify storage link exists
+ls -la public/storage
+
+# If missing, create it
+php artisan storage:link
+```
+
+2. **Check File Permissions**
+```bash
+# Set proper permissions
+sudo chown -R www-data:www-data storage/app/public
+sudo chmod -R 775 storage/app/public
+sudo chown -R www-data:www-data public/storage
+sudo chmod -R 775 public/storage
+```
+
+3. **Verify File Upload**
+```bash
+# Check if file exists in storage
+ls -la storage/app/public/settings/
+
+# Check if file exists in public storage
+ls -la public/storage/settings/
+```
+
+4. **Check Web Server Configuration**
+```bash
+# For Apache - ensure .htaccess allows file access
+# For Nginx - ensure location block includes storage files
+```
+
+5. **Clear Laravel Cache**
+```bash
+php artisan cache:clear
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+```
+
+### PHP Extension Issues
+
+**Problem**: Missing PHP extensions causing composer install failures
+
+**Solution**:
+```bash
+# Install missing extensions
+sudo apt-get install php8.2-exif php8.2-mbstring php8.2-xml php8.2-bcmath
+
+# Restart PHP-FPM
+sudo systemctl restart php8.2-fpm
+
+# Try composer install again
+composer install --ignore-platform-reqs
+```
+
+### Database Seeder Issues
+
+**Problem**: `GeneralSettingsSeeder` class not found
+
+**Solution**: The seeder has been renamed to `AllSettingsSeeder`. This is automatically handled in the updated code.
 
 ## Installation
 
@@ -510,7 +622,17 @@ For support and questions, please contact the development team or create an issu
 
 ## Changelog
 
-### Version 1.6.0 (Latest)
+### Version 1.7.0 (Latest)
+- ✅ **Production Deployment Scripts**: Added automated deployment scripts for Ubuntu/Debian servers
+- ✅ **PHP 8.2 Compatibility**: Updated deployment script to support PHP 8.2 instead of requiring PHP 8.3
+- ✅ **PHP Extensions Installer**: Created `install-php-extensions.sh` for easy PHP extension installation
+- ✅ **Error Handling**: Improved error handling and fallback options for composer install
+- ✅ **Platform Requirements**: Added `--ignore-platform-reqs` support for package compatibility
+- ✅ **Deployment Guide**: Added comprehensive troubleshooting guide for file upload and extension issues
+- ✅ **Database Seeder Fix**: Fixed `GeneralSettingsSeeder` class name mismatch in `DatabaseSeeder.php`
+- ✅ **Documentation Update**: Updated README with automated deployment instructions and troubleshooting
+
+### Version 1.6.0
 - ✅ **CSS Components System**: Implemented reusable CSS component system with `form-input`, `btn-primary`, `btn-secondary`, `btn-success`, `btn-warning` classes
 - ✅ **Code Optimization**: Reduced code duplication by replacing inline Tailwind classes with CSS components
 - ✅ **Custom CSS Removal**: Eliminated custom CSS in favor of Tailwind utilities (`animate-spin`, `disabled:opacity-60`, `disabled:cursor-not-allowed`)
