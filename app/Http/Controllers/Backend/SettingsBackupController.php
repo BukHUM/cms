@@ -757,19 +757,26 @@ class SettingsBackupController extends BaseSettingsController
     private function backupFiles($backupPath)
     {
         $filesToBackup = [
-            'storage/app/public',
-            'storage/logs',
-            'config',
-            'database/migrations',
+            'storage/logs' => 'storage/logs',
+            'config' => 'config',
+            'database/migrations' => 'database/migrations',
         ];
 
-        foreach ($filesToBackup as $file) {
-            $sourcePath = base_path($file);
-            $destPath = storage_path('app/' . $backupPath . '/' . basename($file));
+        foreach ($filesToBackup as $source => $dest) {
+            $sourcePath = base_path($source);
+            $destPath = storage_path('app/' . $backupPath . '/' . $dest);
             
             if (is_dir($sourcePath)) {
                 $this->copyDirectory($sourcePath, $destPath);
             }
+        }
+        
+        // Handle public directory separately (skip symbolic links)
+        $publicPath = base_path('public');
+        $publicDestPath = storage_path('app/' . $backupPath . '/public');
+        
+        if (is_dir($publicPath)) {
+            $this->copyDirectorySafe($publicPath, $publicDestPath);
         }
     }
 
@@ -788,10 +795,65 @@ class SettingsBackupController extends BaseSettingsController
         );
 
         foreach ($iterator as $item) {
+            $targetPath = $destination . DIRECTORY_SEPARATOR . $iterator->getSubPathName();
+            
             if ($item->isDir()) {
-                mkdir($destination . DIRECTORY_SEPARATOR . $iterator->getSubPathName(), 0755, true);
+                if (!is_dir($targetPath)) {
+                    mkdir($targetPath, 0755, true);
+                }
             } else {
-                copy($item, $destination . DIRECTORY_SEPARATOR . $iterator->getSubPathName());
+                // Ensure target directory exists
+                $targetDir = dirname($targetPath);
+                if (!is_dir($targetDir)) {
+                    mkdir($targetDir, 0755, true);
+                }
+                
+                // Use file_get_contents and file_put_contents for safer copying
+                $content = file_get_contents($item->getPathname());
+                if ($content !== false) {
+                    file_put_contents($targetPath, $content);
+                }
+            }
+        }
+    }
+
+    /**
+     * Copy directory safely (skip symbolic links)
+     */
+    private function copyDirectorySafe($source, $destination)
+    {
+        if (!is_dir($destination)) {
+            mkdir($destination, 0755, true);
+        }
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($source, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        foreach ($iterator as $item) {
+            $targetPath = $destination . DIRECTORY_SEPARATOR . $iterator->getSubPathName();
+            
+            // Skip symbolic links
+            if ($item->isLink()) {
+                continue;
+            }
+            
+            if ($item->isDir()) {
+                if (!is_dir($targetPath)) {
+                    mkdir($targetPath, 0755, true);
+                }
+            } else {
+                // Ensure target directory exists
+                $targetDir = dirname($targetPath);
+                if (!is_dir($targetDir)) {
+                    mkdir($targetDir, 0755, true);
+                }
+                
+                // Use copy function for regular files
+                if (is_file($item->getPathname())) {
+                    copy($item->getPathname(), $targetPath);
+                }
             }
         }
     }
@@ -867,6 +929,9 @@ class SettingsBackupController extends BaseSettingsController
         foreach ($files as $file) {
             $filePath = $file->getRealPath();
             $relativePath = $zipPath . substr($filePath, strlen($dir) + 1);
+            
+            // Normalize path separators for cross-platform compatibility
+            $relativePath = str_replace('\\', '/', $relativePath);
             
             if ($file->isDir()) {
                 $zip->addEmptyDir($relativePath);
