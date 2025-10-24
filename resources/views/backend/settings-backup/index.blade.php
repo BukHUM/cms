@@ -509,13 +509,16 @@
     // Format date
     function formatDate(dateString) {
         const date = new Date(dateString);
+        // Get timezone from settings or fallback to UTC
+        const timezone = '{{ \App\Services\SettingsService::get("timezone", config("app.timezone", "UTC")) }}';
+        
         return date.toLocaleDateString('th-TH', {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
-            timeZone: 'Asia/Bangkok'
+            timeZone: timezone
         });
     }
 
