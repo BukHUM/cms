@@ -6,13 +6,6 @@
 
 @section('content')
 <div class="main-content-area">
-    <!-- Action Buttons -->
-    <div class="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2 mb-6">
-        <button id="create-backup-btn" class="btn-primary w-full sm:w-auto">
-            <i class="fas fa-database mr-2"></i>
-            สำรองข้อมูล
-        </button>
-    </div>
 
     <!-- Settings Section -->
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-6">
@@ -205,9 +198,9 @@
                         การตั้งค่าจะมีผลทันทีหลังจากบันทึก
                     </div>
                     <div class="flex space-x-3">
-                        <button type="button" onclick="resetSettings()" class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-6 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200">
-                            <i class="fas fa-undo mr-2"></i>
-                            รีเซ็ตเป็นค่าเริ่มต้น
+                        <button id="create-backup-btn" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200">
+                            <i class="fas fa-database mr-2"></i>
+                            สำรองข้อมูล
                         </button>
                         <button type="button" onclick="saveSettings()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200">
                             <i class="fas fa-save mr-2"></i>
@@ -622,36 +615,6 @@
                 text: 'เกิดข้อผิดพลาดในการบันทึกการตั้งค่า',
                 confirmButtonText: 'ตกลง'
             });
-        });
-    }
-
-    // Reset settings functionality
-    function resetSettings() {
-        Swal.fire({
-            title: 'คุณแน่ใจหรือไม่?',
-            text: 'คุณต้องการรีเซ็ตการตั้งค่าเป็นค่าเริ่มต้นหรือไม่?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#f59e0b',
-            cancelButtonColor: '#6b7280',
-            confirmButtonText: 'ใช่, รีเซ็ตเลย!',
-            cancelButtonText: 'ยกเลิก'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Reset to default values
-                document.getElementById('backup_database_enabled').checked = true;
-                document.getElementById('backup_include_files').checked = false;
-                document.getElementById('backup_auto_enabled').checked = false;
-                document.getElementById('backup_schedule_frequency').value = 'disabled';
-                document.getElementById('backup_max_files').value = '10';
-                document.getElementById('backup_max_size_mb').value = '100';
-                
-                // Re-enable all checkboxes
-                document.getElementById('backup_database_enabled').disabled = false;
-                document.getElementById('backup_include_files').disabled = false;
-                
-                showSuccess('รีเซ็ตการตั้งค่าเป็นค่าเริ่มต้นเรียบร้อยแล้ว');
-            }
         });
     }
 
