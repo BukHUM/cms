@@ -206,7 +206,10 @@ class SettingsBackupController extends BaseSettingsController
             
             // Create temporary directory for backup files
             $tempPath = 'backups/temp_' . $backupName;
-            Storage::makeDirectory($tempPath);
+            $tempDirPath = storage_path('app/' . $tempPath);
+            if (!is_dir($tempDirPath)) {
+                mkdir($tempDirPath, 0755, true);
+            }
             
             \Log::info("Created temporary directory", ['temp_path' => $tempPath]);
 
