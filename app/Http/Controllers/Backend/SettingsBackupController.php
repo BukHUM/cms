@@ -329,7 +329,7 @@ class SettingsBackupController extends BaseSettingsController
                         $backups[] = [
                             'name' => $file,
                             'path' => $file,
-                            'created_at' => date('Y-m-d H:i:s', filemtime($filePath)),
+                            'created_at' => Carbon::createFromTimestamp(filemtime($filePath))->setTimezone('Asia/Bangkok')->toISOString(),
                             'size' => filesize($filePath),
                             'include_files' => $includeFiles,
                             'include_database' => $includeDatabase,
@@ -351,7 +351,7 @@ class SettingsBackupController extends BaseSettingsController
                         $backups[] = [
                             'name' => $file,
                             'path' => $file,
-                            'created_at' => $info['created_at'] ?? date('Y-m-d H:i:s', filemtime($filePath)),
+                            'created_at' => $info['created_at'] ?? Carbon::createFromTimestamp(filemtime($filePath))->setTimezone('Asia/Bangkok')->toISOString(),
                             'size' => $this->getDirectorySize($filePath),
                             'include_files' => $info['include_files'] ?? false,
                             'include_database' => $info['include_database'] ?? false,
@@ -979,7 +979,7 @@ class SettingsBackupController extends BaseSettingsController
     {
         $info = [
             'name' => $backupName,
-            'created_at' => Carbon::now()->toISOString(),
+            'created_at' => Carbon::now()->setTimezone('Asia/Bangkok')->toISOString(),
             'include_files' => $includeFiles,
             'include_database' => $includeDatabase,
             'database_type' => config('database.default'),
