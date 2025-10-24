@@ -235,9 +235,13 @@ class SettingsBackupController extends BaseSettingsController
             \Log::info("Creating ZIP archive", ['zip_path' => $backupZipPath]);
             $this->createZipArchive($tempPath, $backupZipPath);
             
-            // Clean up temporary directory (commented for debugging)
-            \Log::info("Skipping cleanup for debugging");
-            // Storage::deleteDirectory($tempPath);
+            // Clean up temporary directory
+            \Log::info("Cleaning up temporary directory", ['temp_path' => $tempPath]);
+            $tempDirPath = storage_path('app/' . $tempPath);
+            if (is_dir($tempDirPath)) {
+                $this->deleteDirectory($tempDirPath);
+                \Log::info("Temporary directory deleted successfully");
+            }
 
             \Log::info("Backup process completed successfully", ['backup_name' => $backupName . '.zip']);
 
@@ -445,7 +449,7 @@ class SettingsBackupController extends BaseSettingsController
             'backup_path' => $backupPath
         ]);
         
-        $backupFile = Storage::path($backupPath . '/database.sql');
+        $backupFile = storage_path('app/' . $backupPath . '/database.sql');
         
         \Log::info("Backup file path", ['backup_file' => $backupFile]);
         
@@ -735,7 +739,7 @@ class SettingsBackupController extends BaseSettingsController
         ]);
         
         $zip = new \ZipArchive();
-        $zipFile = Storage::path($zipPath);
+        $zipFile = storage_path('app/' . $zipPath);
         
         \Log::info("ZIP file path", ['zip_file' => $zipFile]);
         
@@ -756,7 +760,7 @@ class SettingsBackupController extends BaseSettingsController
             throw new \Exception("Cannot create ZIP file: {$zipFile} (Result: {$result})");
         }
         
-        $sourceDir = Storage::path($sourcePath);
+        $sourceDir = storage_path('app/' . $sourcePath);
         \Log::info("Source directory", ['source_dir' => $sourceDir, 'exists' => is_dir($sourceDir)]);
         
         if (!is_dir($sourceDir)) {
