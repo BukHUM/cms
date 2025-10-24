@@ -756,13 +756,48 @@ class SettingsBackupController extends BaseSettingsController
      */
     private function backupFiles($backupPath)
     {
-        $filesToBackup = [
-            'storage/logs' => 'storage/logs',
-            'config' => 'config',
-            'database/migrations' => 'database/migrations',
+        // Core Laravel files (essential for deployment)
+        $coreFiles = [
+            'artisan',
+            'composer.json',
+            'composer.lock',
+            'package.json',
+            'package-lock.json',
+            'vite.config.js',
+            'tailwind.config.cjs',
+            'postcss.config.cjs',
+            'phpunit.xml',
+            '.env.example',
+            'README.md',
+            'deploy-production.sh',
+            '.editorconfig',
+            '.gitattributes',
+            '.gitignore',
+            '.npmrc'
         ];
 
-        foreach ($filesToBackup as $source => $dest) {
+        // Copy core files
+        foreach ($coreFiles as $file) {
+            $sourcePath = base_path($file);
+            $destPath = storage_path('app/' . $backupPath . '/' . basename($file));
+            
+            if (file_exists($sourcePath)) {
+                copy($sourcePath, $destPath);
+            }
+        }
+
+        // Core directories (essential for Laravel)
+        $coreDirectories = [
+            'bootstrap' => 'bootstrap',
+            'routes' => 'routes',
+            'resources' => 'resources',
+            'app' => 'app',
+            'config' => 'config',
+            'database' => 'database',
+            'storage/logs' => 'storage/logs',
+        ];
+
+        foreach ($coreDirectories as $source => $dest) {
             $sourcePath = base_path($source);
             $destPath = storage_path('app/' . $backupPath . '/' . $dest);
             
