@@ -85,20 +85,6 @@
                                     <p class="text-xs text-gray-500 dark:text-gray-400">รวมไฟล์ config, storage, migrations</p>
                                 </div>
 
-                                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                            <i class="fas fa-globe mr-2 text-purple-500"></i>
-                                            สำรองทั้งหมด
-                                        </label>
-                                        <label class="relative inline-flex items-center cursor-pointer">
-                                            <input type="checkbox" class="sr-only peer" id="backup_full_system" 
-                                                   onchange="toggleFullBackup(this)">
-                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
-                                        </label>
-                                    </div>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">รวมฐานข้อมูล + ไฟล์ระบบทั้งหมด</p>
-                                </div>
                             </div>
                         </div>
                         
@@ -278,12 +264,11 @@
         // Get settings from the settings section
         const databaseEnabled = document.getElementById('backup_database_enabled').checked;
         const includeFiles = document.getElementById('backup_include_files').checked;
-        const fullSystem = document.getElementById('backup_full_system').checked;
         
         const formData = new FormData();
         formData.append('backup_name', 'backup_' + new Date().toISOString().slice(0,19).replace(/:/g, '-'));
-        formData.append('include_files', includeFiles || fullSystem);
-        formData.append('include_database', databaseEnabled || fullSystem);
+        formData.append('include_files', includeFiles);
+        formData.append('include_database', databaseEnabled);
         formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
         
         // Show loading state
@@ -555,46 +540,6 @@
     // Refresh buttons
     document.getElementById('refresh-backups').addEventListener('click', loadBackupList);
 
-    // Toggle full backup functionality
-    function toggleFullBackup(fullBackupCheckbox) {
-        const databaseCheckbox = document.getElementById('backup_database_enabled');
-        const filesCheckbox = document.getElementById('backup_include_files');
-        
-        if (fullBackupCheckbox.checked) {
-            // Enable both database and files when full backup is selected
-            databaseCheckbox.checked = true;
-            filesCheckbox.checked = true;
-            
-            // Disable individual checkboxes
-            databaseCheckbox.disabled = true;
-            filesCheckbox.disabled = true;
-            
-            // Update toggle switches visually
-            updateToggleSwitch(databaseCheckbox);
-            updateToggleSwitch(filesCheckbox);
-        } else {
-            // Re-enable individual checkboxes
-            databaseCheckbox.disabled = false;
-            filesCheckbox.disabled = false;
-            
-            // Update toggle switches visually
-            updateToggleSwitch(databaseCheckbox);
-            updateToggleSwitch(filesCheckbox);
-        }
-    }
-
-    // Update toggle switch visual state
-    function updateToggleSwitch(checkbox) {
-        const toggleDiv = checkbox.parentElement.querySelector('div');
-        if (checkbox.checked) {
-            toggleDiv.classList.add('peer-checked:bg-blue-600');
-            toggleDiv.classList.remove('bg-gray-200');
-        } else {
-            toggleDiv.classList.remove('peer-checked:bg-blue-600');
-            toggleDiv.classList.add('bg-gray-200');
-        }
-    }
-
     // Save settings functionality
     function saveSettings() {
         const settings = [];
@@ -696,7 +641,6 @@
                 // Reset to default values
                 document.getElementById('backup_database_enabled').checked = true;
                 document.getElementById('backup_include_files').checked = false;
-                document.getElementById('backup_full_system').checked = false;
                 document.getElementById('backup_auto_enabled').checked = false;
                 document.getElementById('backup_schedule_frequency').value = 'disabled';
                 document.getElementById('backup_max_files').value = '10';
