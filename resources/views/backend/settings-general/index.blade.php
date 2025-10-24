@@ -617,12 +617,14 @@ function performLiveSearch(searchTerm, showSuggestions = true) {
 
 // Update table with search results
 function updateTableWithResults(settings) {
+    console.log('updateTableWithResults called with:', settings);
     const tbody = document.querySelector('tbody');
     const mobileCards = document.querySelector('.md\\:hidden .space-y-4');
     const tableHeader = document.querySelector('.text-lg.font-medium.text-gray-900');
     
     // Store current settings
     currentSettings = settings;
+    console.log('Updated currentSettings:', currentSettings);
     
     // Only require tbody, mobileCards is optional
     if (!tbody) {
@@ -788,10 +790,15 @@ function createActionsCell(setting) {
     toggleBtn.className = `inline-flex items-center justify-center w-8 h-8 ${setting.is_active ? 'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-800 hover:text-green-700 dark:hover:text-green-300' : 'bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-800 hover:text-red-700 dark:hover:text-red-300'} rounded-md transition-colors duration-200`;
     toggleBtn.title = setting.is_active ? 'ปิดการใช้งาน' : 'เปิดการใช้งาน';
     toggleBtn.innerHTML = `<i class="fas fa-toggle-${setting.is_active ? 'off' : 'on'} text-sm"></i>`;
-    toggleBtn.onclick = () => toggleStatus(setting.id);
+    toggleBtn.onclick = () => {
+        console.log('Toggle button clicked for setting:', setting);
+        console.log('Setting ID:', setting.id);
+        console.log('Setting key:', setting.key);
+        console.log('Setting is_active:', setting.is_active);
+        toggleStatus(setting.id);
+    };
     
     container.appendChild(toggleBtn);
-    
     
     cell.appendChild(container);
     return cell;
@@ -869,10 +876,15 @@ function createMobileCard(setting) {
     toggleBtn.className = `inline-flex items-center justify-center w-10 h-10 ${setting.is_active ? 'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-800 hover:text-green-700 dark:hover:text-green-300' : 'bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-800 hover:text-red-700 dark:hover:text-red-300'} rounded-md transition-colors duration-200`;
     toggleBtn.title = setting.is_active ? 'ปิดการใช้งาน' : 'เปิดการใช้งาน';
     toggleBtn.innerHTML = `<i class="fas fa-toggle-${setting.is_active ? 'off' : 'on'}"></i>`;
-    toggleBtn.onclick = () => toggleStatus(setting.id);
+    toggleBtn.onclick = () => {
+        console.log('Toggle button clicked for setting:', setting);
+        console.log('Setting ID:', setting.id);
+        console.log('Setting key:', setting.key);
+        console.log('Setting is_active:', setting.is_active);
+        toggleStatus(setting.id);
+    };
     
     actions.appendChild(toggleBtn);
-    
     
     card.appendChild(header);
     card.appendChild(actions);
@@ -1012,8 +1024,13 @@ function resetTableToAll() {
 // Filter functionality - moved to DOMContentLoaded
 
 function toggleStatus(id) {
+    console.log('toggleStatus called with id:', id);
+    console.log('currentSettings:', currentSettings);
+    
     // Get setting info from currentSettings array instead of DOM
     const setting = currentSettings.find(s => s.id === id);
+    console.log('Found setting:', setting);
+    
     if (!setting) {
         console.error('Setting not found:', id);
         Swal.fire({
@@ -1074,8 +1091,10 @@ function toggleStatus(id) {
         confirmButtonText: confirmButtonText,
         cancelButtonText: 'ยกเลิก'
     }).then((result) => {
+        console.log('SweetAlert result:', result);
         if (result.isConfirmed) {
             const url = `{{ route('backend.settings-general.toggle-status', ':id') }}`.replace(':id', id);
+            console.log('Making request to:', url);
             
             fetch(url, {
                 method: 'POST',
@@ -1086,8 +1105,16 @@ function toggleStatus(id) {
                     'X-HTTP-Method-Override': 'PATCH'
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                return response.json();
+            })
             .then(data => {
+                console.log('Response data:', data);
+                console.log('Setting from response:', data.setting);
+                console.log('Setting is_active:', data.setting?.is_active);
+                console.log('Setting value:', data.setting?.value);
                 if (data.message) {
                     let successText = 'เปลี่ยนสถานะเรียบร้อยแล้ว';
                     
@@ -1124,6 +1151,7 @@ function toggleStatus(id) {
                         icon: 'success',
                         confirmButtonText: 'ตกลง'
                     }).then(() => {
+                        console.log('Success alert confirmed, reloading page...');
                         // Refresh the table instead of reloading the page
                         location.reload();
                     });
@@ -1137,7 +1165,9 @@ function toggleStatus(id) {
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
+                console.error('Fetch error:', error);
+                console.error('Error details:', error.message);
+                console.error('Error stack:', error.stack);
                 Swal.fire({
                     title: 'เกิดข้อผิดพลาด!',
                     text: 'เกิดข้อผิดพลาดในการเปลี่ยนสถานะ',
@@ -1350,9 +1380,31 @@ document.addEventListener('visibilitychange', function() {
 
 // Initialize cleanup management
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded');
+    console.log('Swal available:', typeof Swal);
+    
     // Initialize currentSettings with initial data from the page
     const initialSettings = @json($settings_generals->items());
     currentSettings = initialSettings;
+    console.log('Initialized currentSettings:', currentSettings);
+    
+    // Debug: Check specific setting
+    const timezoneSetting = currentSettings.find(s => s.key === 'timezone');
+    if (timezoneSetting) {
+        console.log('Timezone setting:', timezoneSetting);
+        console.log('Timezone is_active:', timezoneSetting.is_active);
+    }
+    
+    // Debug: Check all settings
+    currentSettings.forEach(setting => {
+        console.log(`Setting ${setting.key}: is_active=${setting.is_active}, value=${setting.value}`);
+    });
+    
+    // Check if page was reloaded after toggle
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('toggle_success') === 'true') {
+        console.log('Page reloaded after successful toggle');
+    }
     
     // Add managed event listeners for better cleanup
     const searchInput = document.getElementById('search');

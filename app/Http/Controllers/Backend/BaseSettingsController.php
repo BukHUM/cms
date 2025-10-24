@@ -133,6 +133,26 @@ abstract class BaseSettingsController extends Controller
     }
 
     /**
+     * Clear all cache keys for this category
+     */
+    private function clearAllCacheKeys()
+    {
+        // Clear all possible cache keys for this category
+        $cacheKeys = [
+            "settings_{$this->category}",
+            "settings_{$this->category}_" . md5(serialize(['category' => $this->category, 'search' => '', 'status' => '', 'group' => '', 'page' => 1])),
+            "settings_{$this->category}_" . md5(serialize(['category' => $this->category, 'search' => '', 'status' => '', 'group' => '', 'page' => 2])),
+            "settings_{$this->category}_" . md5(serialize(['category' => $this->category, 'search' => '', 'status' => '', 'group' => '', 'page' => 3])),
+        ];
+        
+        foreach ($cacheKeys as $key) {
+            Cache::forget($key);
+        }
+        
+        \Log::info("Cleared cache keys: " . implode(', ', $cacheKeys));
+    }
+
+    /**
      * Generate cache key based on request parameters
      */
     private function getCacheKey(Request $request)
@@ -400,6 +420,9 @@ abstract class BaseSettingsController extends Controller
         try {
             DB::beginTransaction();
             
+            // Log before toggle
+            \Log::info("Before toggle - Setting ID: {$setting->id}, is_active: {$setting->is_active}, value: {$setting->value}");
+            
             // Toggle both status and value for boolean settings
             $setting->is_active = !$setting->is_active;
             
@@ -411,16 +434,25 @@ abstract class BaseSettingsController extends Controller
             $setting->updated_by = auth()->id() ?? 1;
             $setting->save();
             
+            // Log after toggle
+            \Log::info("After toggle - Setting ID: {$setting->id}, is_active: {$setting->is_active}, value: {$setting->value}");
+            
             // Clear cache
             Cache::forget("settings_{$this->category}");
             Cache::forget('settings_all');
             
+            // Clear all cache keys for this category
+            $this->clearAllCacheKeys();
+            
             DB::commit();
 
             if ($request->expectsJson()) {
+                $freshSetting = $setting->fresh();
+                \Log::info("Response data - Setting ID: {$freshSetting->id}, is_active: {$freshSetting->is_active}, value: {$freshSetting->value}");
+                
                 return response()->json([
                     'message' => 'Setting status updated successfully',
-                    'setting' => $setting->fresh()
+                    'setting' => $freshSetting
                 ]);
             }
 

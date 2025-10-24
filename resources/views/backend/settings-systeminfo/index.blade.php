@@ -360,36 +360,6 @@
         </div>
     </div>
 
-    <!-- Performance Information -->
-    <div class="bg-white rounded-lg shadow-md mb-8">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">
-                <i class="fas fa-tachometer-alt mr-2"></i>
-                ข้อมูล Performance
-            </h3>
-        </div>
-        <div class="p-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="text-center">
-                    <div class="text-2xl font-bold text-blue-600">{{ $systemInfo['performance']['execution_time'] }}</div>
-                    <div class="text-sm text-gray-500">Execution Time</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-2xl font-bold text-green-600">{{ $systemInfo['performance']['memory_used'] }}</div>
-                    <div class="text-sm text-gray-500">Memory Used</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-2xl font-bold text-purple-600">{{ $systemInfo['performance']['current_memory'] }}</div>
-                    <div class="text-sm text-gray-500">Current Memory</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-2xl font-bold text-red-600">{{ $systemInfo['performance']['peak_memory'] }}</div>
-                    <div class="text-sm text-gray-500">Peak Memory</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Environment Information -->
     <div class="bg-white rounded-lg shadow-md">
         <div class="px-6 py-4 border-b border-gray-200">
