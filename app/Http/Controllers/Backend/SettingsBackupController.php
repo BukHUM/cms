@@ -298,12 +298,38 @@ class SettingsBackupController extends BaseSettingsController
                     
                     // Handle ZIP files
                     if (is_file($filePath) && pathinfo($file, PATHINFO_EXTENSION) === 'zip') {
+                        // Try to read backup info from ZIP file
+                        $zip = new \ZipArchive();
+                        $includeFiles = false;
+                        $includeDatabase = false;
+                        
+                        if ($zip->open($filePath) === TRUE) {
+                            // Check if backup_info.json exists in ZIP
+                            $infoIndex = $zip->locateName('backup_info.json');
+                            if ($infoIndex !== false) {
+                                $infoContent = $zip->getFromIndex($infoIndex);
+                                if ($infoContent !== false) {
+                                    $info = json_decode($infoContent, true);
+                                    if ($info) {
+                                        $includeFiles = $info['include_files'] ?? false;
+                                        $includeDatabase = $info['include_database'] ?? false;
+                                    }
+                                }
+                            } else {
+                                // Fallback: check for database.sql and other files
+                                $includeDatabase = $zip->locateName('database.sql') !== false;
+                                $includeFiles = $zip->locateName('config') !== false || $zip->locateName('storage') !== false;
+                            }
+                            $zip->close();
+                        }
+                        
                         $backups[] = [
                             'name' => $file,
                             'path' => $file,
                             'created_at' => date('Y-m-d H:i:s', filemtime($filePath)),
                             'size' => filesize($filePath),
-                            'include_files' => true, // Assume ZIP contains both database and files
+                            'include_files' => $includeFiles,
+                            'include_database' => $includeDatabase,
                             'type' => 'zip'
                         ];
                     }
@@ -325,6 +351,7 @@ class SettingsBackupController extends BaseSettingsController
                             'created_at' => $info['created_at'] ?? date('Y-m-d H:i:s', filemtime($filePath)),
                             'size' => $this->getDirectorySize($filePath),
                             'include_files' => $info['include_files'] ?? false,
+                            'include_database' => $info['include_database'] ?? false,
                             'type' => 'directory'
                         ];
                     }
@@ -858,10 +885,8 @@ class SettingsBackupController extends BaseSettingsController
             'laravel_version' => app()->version(),
         ];
 
-        Storage::put(
-            $backupPath . '/backup_info.json',
-            json_encode($info, JSON_PRETTY_PRINT)
-        );
+        $infoFilePath = storage_path('app/' . $backupPath . '/backup_info.json');
+        file_put_contents($infoFilePath, json_encode($info, JSON_PRETTY_PRINT));
     }
 
     /**

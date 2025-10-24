@@ -398,7 +398,31 @@
             return;
         }
 
-        container.innerHTML = backups.map(backup => `
+        container.innerHTML = backups.map(backup => {
+            // Determine backup type
+            let backupType = '';
+            let typeIcon = '';
+            let typeColor = '';
+            
+            if (backup.include_database && backup.include_files) {
+                backupType = 'ไฟล์ + ฐานข้อมูล';
+                typeIcon = 'fas fa-database';
+                typeColor = 'text-purple-600';
+            } else if (backup.include_database) {
+                backupType = 'ฐานข้อมูล';
+                typeIcon = 'fas fa-database';
+                typeColor = 'text-blue-600';
+            } else if (backup.include_files) {
+                backupType = 'ไฟล์ระบบ';
+                typeIcon = 'fas fa-folder';
+                typeColor = 'text-green-600';
+            } else {
+                backupType = 'ไม่ระบุ';
+                typeIcon = 'fas fa-question';
+                typeColor = 'text-gray-600';
+            }
+            
+            return `
             <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600 hover:shadow-md transition-shadow duration-200">
                 <div class="flex justify-between items-start">
                     <div class="flex-1">
@@ -406,7 +430,7 @@
                         <div class="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
                             <span class="flex items-center"><i class="fas fa-calendar mr-1 text-blue-500"></i>${formatDate(backup.created_at)}</span>
                             <span class="flex items-center"><i class="fas fa-hdd mr-1 text-green-500"></i>${backup.size}</span>
-                            ${backup.include_files ? '<span class="flex items-center"><i class="fas fa-file mr-1 text-purple-500"></i>รวมไฟล์</span>' : ''}
+                            <span class="flex items-center"><i class="${typeIcon} mr-1 ${typeColor}"></i>${backupType}</span>
                         </div>
                     </div>
                     <div class="flex space-x-2">
@@ -419,7 +443,8 @@
                     </div>
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
     }
 
     // Download backup
