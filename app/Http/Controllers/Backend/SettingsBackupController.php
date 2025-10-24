@@ -194,6 +194,23 @@ class SettingsBackupController extends BaseSettingsController
         }
 
         try {
+            // Check maximum backup files limit
+            $maxFiles = \App\Models\Setting::where('key', 'backup_max_files')->where('is_active', true)->first();
+            $maxFiles = $maxFiles ? (int)$maxFiles->value : 5;
+            $existingBackups = $this->getExistingBackups();
+            
+            // If we already have the maximum number of backups, remove the oldest one
+            // to make room for the new backup we're about to create
+            if (count($existingBackups) >= $maxFiles) {
+                // Keep only (maxFiles - 1) files to make room for the new backup
+                $this->cleanupOldBackups($maxFiles - 1, $existingBackups);
+            }
+            
+            // Check maximum backup file size limit
+            $maxSizeSetting = \App\Models\Setting::where('key', 'backup_max_size_mb')->where('is_active', true)->first();
+            $maxSizeMB = $maxSizeSetting ? (int)$maxSizeSetting->value : 100;
+            $maxSizeBytes = $maxSizeMB * 1024 * 1024; // Convert MB to bytes
+            
             $backupName = $request->backup_name ?: 'backup_' . Carbon::now()->format('Y-m-d_H-i-s');
             $backupPath = 'backups/' . $backupName;
             $backupZipPath = 'backups/' . $backupName . '.zip';
@@ -238,6 +255,31 @@ class SettingsBackupController extends BaseSettingsController
             \Log::info("Creating ZIP archive", ['zip_path' => $backupZipPath]);
             $this->createZipArchive($tempPath, $backupZipPath);
             
+            // Check if backup file size exceeds limit
+            $finalZipPath = storage_path('app/' . $backupZipPath);
+            if (file_exists($finalZipPath)) {
+                $fileSize = filesize($finalZipPath);
+                \Log::info("Backup file size check", [
+                    'file_size' => $fileSize,
+                    'max_size_bytes' => $maxSizeBytes,
+                    'max_size_mb' => $maxSizeMB
+                ]);
+                
+                if ($fileSize > $maxSizeBytes) {
+                    // Delete the oversized backup file
+                    unlink($finalZipPath);
+                    \Log::warning("Backup file exceeded size limit and was deleted", [
+                        'file_size_mb' => round($fileSize / 1024 / 1024, 2),
+                        'max_size_mb' => $maxSizeMB
+                    ]);
+                    
+                    return response()->json([
+                        'success' => false,
+                        'message' => "ไฟล์สำรองข้อมูลมีขนาดใหญ่เกินไป ({$maxSizeMB}MB) กรุณาลดขนาดข้อมูลหรือเพิ่มขีดจำกัด"
+                    ], 413);
+                }
+            }
+            
             // Clean up temporary directory
             \Log::info("Cleaning up temporary directory", ['temp_path' => $tempPath]);
             $tempDirPath = storage_path('app/' . $tempPath);
@@ -264,6 +306,55 @@ class SettingsBackupController extends BaseSettingsController
                 'success' => false,
                 'message' => 'เกิดข้อผิดพลาดในการสำรองข้อมูล: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Get existing backup files
+     */
+    private function getExistingBackups()
+    {
+        $backupDir = storage_path('app/backups');
+        $backups = [];
+        
+        if (is_dir($backupDir)) {
+            $files = scandir($backupDir);
+            foreach ($files as $file) {
+                if ($file !== '.' && $file !== '..' && pathinfo($file, PATHINFO_EXTENSION) === 'zip') {
+                    $filePath = $backupDir . '/' . $file;
+                    $backups[] = [
+                        'name' => $file,
+                        'path' => $filePath,
+                        'created_at' => filemtime($filePath)
+                    ];
+                }
+            }
+        }
+        
+        // Sort by creation time (newest first)
+        usort($backups, function($a, $b) {
+            return $b['created_at'] - $a['created_at'];
+        });
+        
+        return $backups;
+    }
+
+    /**
+     * Cleanup old backup files
+     */
+    private function cleanupOldBackups($keepCount, $existingBackups = null)
+    {
+        $backups = $existingBackups ?: $this->getExistingBackups();
+        
+        // Remove backups beyond the keep count
+        // Keep the newest $keepCount files, delete the rest
+        // $backups is already sorted by creation time (newest first)
+        for ($i = $keepCount; $i < count($backups); $i++) {
+            $backup = $backups[$i];
+            if (file_exists($backup['path'])) {
+                unlink($backup['path']);
+                \Log::info("Deleted old backup file", ['file' => $backup['name']]);
+            }
         }
     }
 

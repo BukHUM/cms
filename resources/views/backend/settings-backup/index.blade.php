@@ -18,12 +18,7 @@
                     </h3>
                     <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">กำหนดค่าการสำรองข้อมูลอัตโนมัติและการจัดเก็บ</p>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                        <i class="fas fa-check-circle mr-1"></i>
-                        เปิดใช้งาน
-                    </span>
-                </div>
+
             </div>
             
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
