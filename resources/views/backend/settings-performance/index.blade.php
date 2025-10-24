@@ -801,12 +801,14 @@ function performLiveSearch(searchTerm, showSuggestions = true) {
 
 // Update table with search results
 function updateTableWithResults(settings) {
+    console.log('updateTableWithResults called with:', settings);
     const tbody = document.querySelector('tbody');
     const mobileCards = document.querySelector('.md\\:hidden .space-y-4');
     const tableHeader = document.querySelector('.text-lg.font-medium.text-gray-900');
     
     // Store current settings
     currentSettings = settings;
+    console.log('Updated currentSettings:', currentSettings);
     
     // Only require tbody, mobileCards is optional
     if (!tbody) {
@@ -972,7 +974,11 @@ function createActionsCell(setting) {
     toggleBtn.className = `inline-flex items-center justify-center w-8 h-8 ${setting.is_active ? 'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-800 hover:text-green-700 dark:hover:text-green-300' : 'bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-800 hover:text-red-700 dark:hover:text-red-300'} rounded-md transition-colors duration-200`;
     toggleBtn.title = setting.is_active ? 'ปิดการใช้งาน' : 'เปิดการใช้งาน';
     toggleBtn.innerHTML = `<i class="fas fa-toggle-${setting.is_active ? 'off' : 'on'} text-sm"></i>`;
-    toggleBtn.onclick = () => toggleStatus(setting.id);
+    console.log('Creating toggle button for setting:', setting);
+    toggleBtn.onclick = () => {
+        console.log('Toggle button clicked for setting:', setting);
+        toggleStatus(setting.id);
+    };
     
     container.appendChild(toggleBtn);
     
@@ -1053,7 +1059,11 @@ function createMobileCard(setting) {
     toggleBtn.className = `inline-flex items-center justify-center w-10 h-10 ${setting.is_active ? 'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-800 hover:text-green-700 dark:hover:text-green-300' : 'bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-800 hover:text-red-700 dark:hover:text-red-300'} rounded-md transition-colors duration-200`;
     toggleBtn.title = setting.is_active ? 'ปิดการใช้งาน' : 'เปิดการใช้งาน';
     toggleBtn.innerHTML = `<i class="fas fa-toggle-${setting.is_active ? 'off' : 'on'}"></i>`;
-    toggleBtn.onclick = () => toggleStatus(setting.id);
+    console.log('Creating mobile toggle button for setting:', setting);
+    toggleBtn.onclick = () => {
+        console.log('Mobile toggle button clicked for setting:', setting);
+        toggleStatus(setting.id);
+    };
     
     actions.appendChild(toggleBtn);
     
@@ -1191,12 +1201,25 @@ function resetTableToAll() {
 
 function toggleStatus(id) {
     console.log('Toggle status for ID:', id);
+    console.log('currentSettings:', currentSettings);
     
-    // Get setting info from the table row
-    const row = document.querySelector(`button[onclick="toggleStatus(${id})"]`).closest('tr');
-    const settingKey = row.querySelector('.text-sm.font-medium').textContent;
-    const currentStatus = row.querySelector('.bg-green-100, .bg-red-100') ? 
-        (row.querySelector('.bg-green-100') ? 'เปิดใช้งาน' : 'ปิดใช้งาน') : 'ไม่ทราบสถานะ';
+    // Get setting info from currentSettings array instead of DOM
+    const setting = currentSettings.find(s => s.id === id);
+    console.log('Found setting:', setting);
+    
+    if (!setting) {
+        console.error('Setting not found:', id);
+        Swal.fire({
+            title: 'เกิดข้อผิดพลาด!',
+            text: 'ไม่พบการตั้งค่าที่ต้องการ',
+            icon: 'error',
+            confirmButtonText: 'ตกลง'
+        });
+        return;
+    }
+    
+    const settingKey = setting.key;
+    const currentStatus = setting.is_active ? 'เปิดใช้งาน' : 'ปิดใช้งาน';
     
     console.log('Setting key:', settingKey);
     console.log('Current status:', currentStatus);
@@ -1501,6 +1524,14 @@ document.addEventListener('visibilitychange', function() {
 
 // Initialize cleanup management
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded - Performance Settings');
+    console.log('Swal available:', typeof Swal);
+    
+    // Initialize currentSettings with initial data from the page
+    const initialSettings = @json($settings_generals->items());
+    currentSettings = initialSettings;
+    console.log('Initialized currentSettings:', currentSettings);
+    
     // Add managed event listeners for better cleanup
     const searchInput = document.getElementById('search');
     const statusFilter = document.getElementById('status-filter');
