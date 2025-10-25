@@ -12,9 +12,23 @@ class SettingsService
      */
     public static function get(string $key, $default = null)
     {
+        // Check if cache is enabled before using cache
+        if (!is_cache_enabled()) {
+            // If cache is disabled, get directly from database
+            $setting = Setting::where('key', $key)
+                ->where('is_active', true)
+                ->first();
+                
+            if (!$setting) {
+                return $default;
+            }
+            
+            return self::castValue($setting->value, $setting->type);
+        }
+        
         $cacheKey = "setting.{$key}";
         
-        return Cache::remember($cacheKey, 3600, function () use ($key, $default) {
+        return cache_remember($cacheKey, 3600, function () use ($key, $default) {
             $setting = Setting::where('key', $key)
                 ->where('is_active', true)
                 ->first();
@@ -32,9 +46,21 @@ class SettingsService
      */
     public static function getByCategory(string $category)
     {
+        // Check if cache is enabled before using cache
+        if (!is_cache_enabled()) {
+            // If cache is disabled, get directly from database
+            return Setting::where('category', $category)
+                ->where('is_active', true)
+                ->pluck('value', 'key')
+                ->map(function ($value, $key) {
+                    $setting = Setting::where('key', $key)->first();
+                    return self::castValue($value, $setting->type);
+                });
+        }
+        
         $cacheKey = "settings.category.{$category}";
         
-        return Cache::remember($cacheKey, 3600, function () use ($category) {
+        return cache_remember($cacheKey, 3600, function () use ($category) {
             return Setting::where('category', $category)
                 ->where('is_active', true)
                 ->pluck('value', 'key')
@@ -87,13 +113,13 @@ class SettingsService
     public static function clearCache(?string $key = null)
     {
         if ($key) {
-            Cache::forget("setting.{$key}");
+            cache_forget("setting.{$key}");
         } else {
-            Cache::forget('settings.category.general');
-            Cache::forget('settings.category.email');
-            Cache::forget('settings.category.security');
-            Cache::forget('settings.category.performance');
-            Cache::forget('settings.category.system');
+            cache_forget('settings.category.general');
+            cache_forget('settings.category.email');
+            cache_forget('settings.category.security');
+            cache_forget('settings.category.performance');
+            cache_forget('settings.category.system');
         }
     }
     
@@ -123,9 +149,22 @@ class SettingsService
      */
     public static function getConfig()
     {
+        // Check if cache is enabled before using cache
+        if (!is_cache_enabled()) {
+            // If cache is disabled, get directly from database
+            $settings = Setting::where('is_active', true)->get();
+            
+            $config = [];
+            foreach ($settings as $setting) {
+                $config[$setting->key] = self::castValue($setting->value, $setting->type);
+            }
+            
+            return $config;
+        }
+        
         $cacheKey = 'settings.config';
         
-        return Cache::remember($cacheKey, 3600, function () {
+        return cache_remember($cacheKey, 3600, function () {
             $settings = Setting::where('is_active', true)->get();
             
             $config = [];
@@ -136,4 +175,5 @@ class SettingsService
             return $config;
         });
     }
+    
 }

@@ -38,11 +38,21 @@ class SettingsServiceProvider extends ServiceProvider
                 return;
             }
             
-            // Get settings from database
-            $settings = SettingsService::getConfig();
+            // Get settings from database (force fresh data if cache is disabled)
+            if (!is_cache_enabled()) {
+                // If cache is disabled, get directly from database
+                $settings = \App\Models\Setting::where('is_active', true)->get();
+                $config = [];
+                foreach ($settings as $setting) {
+                    $config[$setting->key] = \App\Services\SettingsService::castValue($setting->value, $setting->type);
+                }
+            } else {
+                // Use normal cached method
+                $config = SettingsService::getConfig();
+            }
             
             // Override config values with database settings
-            foreach ($settings as $key => $value) {
+            foreach ($config as $key => $value) {
                 $this->overrideConfigValue($key, $value);
             }
             

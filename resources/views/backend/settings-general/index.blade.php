@@ -6,6 +6,33 @@
 
 @section('content')
 <div class="main-content-area">
+    <!-- Cache Status Info -->
+    @php
+        $cacheEnabledSetting = $settings_generals->where('key', 'cache_enabled')->first();
+        $cacheStatus = $cacheEnabledSetting ? ($cacheEnabledSetting->is_active ? 'เปิดใช้งาน' : 'ปิดใช้งาน') : 'ไม่ทราบสถานะ';
+        $cacheStatusColor = $cacheEnabledSetting ? ($cacheEnabledSetting->is_active ? 'text-green-600' : 'text-red-600') : 'text-gray-600';
+    @endphp
+    <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-6">
+        <div class="flex items-center">
+            <i class="fas fa-info-circle text-blue-600 dark:text-blue-400 mr-2"></i>
+            <div>
+                <h3 class="text-sm font-medium text-blue-900 dark:text-blue-100">สถานะ Cache ระบบ</h3>
+                <p class="text-sm text-blue-700 dark:text-blue-300">
+                    Cache ปัจจุบัน: <span class="font-semibold {{ $cacheStatusColor }}">{{ $cacheStatus }}</span>
+                    @if($cacheEnabledSetting)
+                        (ค่า: {{ $cacheEnabledSetting->value }})
+                    @endif
+                </p>
+                @if($cacheEnabledSetting && !$cacheEnabledSetting->is_active)
+                    <p class="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        เมื่อปิด Cache แล้ว ระบบจะอ่านข้อมูลจากฐานข้อมูลโดยตรง ไม่ต้องล้าง Cache
+                    </p>
+                @endif
+            </div>
+        </div>
+    </div>
+
     <!-- Filters -->
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-6">
         <div class="p-6">
@@ -1399,6 +1426,16 @@ document.addEventListener('DOMContentLoaded', function() {
     currentSettings.forEach(setting => {
         console.log(`Setting ${setting.key}: is_active=${setting.is_active}, value=${setting.value}`);
     });
+    
+    // Debug: Check cache_enabled setting
+    const cacheEnabledSetting = currentSettings.find(s => s.key === 'cache_enabled');
+    if (cacheEnabledSetting) {
+        console.log('Cache Enabled Setting:', cacheEnabledSetting);
+        console.log('Cache is currently:', cacheEnabledSetting.is_active ? 'ENABLED' : 'DISABLED');
+        console.log('Cache value:', cacheEnabledSetting.value);
+    } else {
+        console.warn('cache_enabled setting not found!');
+    }
     
     // Check if page was reloaded after toggle
     const urlParams = new URLSearchParams(window.location.search);

@@ -89,7 +89,7 @@ class SettingsPerformanceController extends BaseSettingsController
             Artisan::call('clear-compiled');
             
             // Clear all Laravel cache
-            Cache::flush();
+            cache_flush();
             
             // Log successful operation
             Log::info('All cache cleared successfully', [
@@ -178,7 +178,7 @@ class SettingsPerformanceController extends BaseSettingsController
             ];
             
             foreach ($performanceKeys as $key) {
-                Cache::forget($key);
+                cache_forget($key);
             }
             
             // Log successful operation

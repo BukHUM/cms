@@ -30,7 +30,7 @@ class SettingsSystemInfoController extends Controller
     {
         // Cache system info for 5 minutes to improve performance
         $cacheKey = 'system_info_' . Auth::id();
-        $systemInfo = Cache::remember($cacheKey, 300, function () {
+        $systemInfo = cache_remember($cacheKey, 300, function () {
             return $this->getSystemInfo();
         });
         
@@ -190,7 +190,7 @@ class SettingsSystemInfoController extends Controller
         try {
             Cache::put('system_info_test', 'test', 60);
             $test = Cache::get('system_info_test');
-            Cache::forget('system_info_test');
+            cache_forget('system_info_test');
             
             return [
                 'driver' => $driver,

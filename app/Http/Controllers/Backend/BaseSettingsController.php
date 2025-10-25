@@ -39,7 +39,7 @@ abstract class BaseSettingsController extends Controller
             $canUseCache = !$request->filled(['search', 'status', 'group', 'page']) && !$request->ajax();
             
             if ($canUseCache) {
-                $settings_generals = Cache::remember($cacheKey, 300, function () use ($request) {
+                $settings_generals = cache_remember($cacheKey, 300, function () use ($request) {
                     return $this->getSettingsData($request);
                 });
             } else {
@@ -146,10 +146,163 @@ abstract class BaseSettingsController extends Controller
         ];
         
         foreach ($cacheKeys as $key) {
-            Cache::forget($key);
+            cache_forget($key);
         }
         
         \Log::info("Cleared cache keys: " . implode(', ', $cacheKeys));
+    }
+
+    /**
+     * Clear view cache manually
+     */
+    private function clearViewCache(): void
+    {
+        try {
+            $viewPath = storage_path('framework/views');
+            if (is_dir($viewPath)) {
+                $files = glob($viewPath . '/*');
+                foreach ($files as $file) {
+                    if (is_file($file)) {
+                        unlink($file);
+                    }
+                }
+                \Log::info("View cache cleared manually");
+            }
+        } catch (\Exception $e) {
+            \Log::warning("Error clearing view cache: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Disable Laravel's built-in caching
+     */
+    private function disableLaravelCaching(): void
+    {
+        try {
+            // Disable view caching
+            \Illuminate\Support\Facades\View::getEngineResolver()->resolve('blade')->getCompiler()->setCachePath(null);
+            
+            // Disable config caching
+            \Illuminate\Support\Facades\Config::set('view.compiled', null);
+            
+            // Clear any existing cache
+            cache_flush();
+            
+        } catch (\Exception $e) {
+            \Log::warning("Error disabling Laravel caching: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Force disable ALL caching mechanisms
+     */
+    private function forceDisableAllCaching(): void
+    {
+        try {
+            // 1. Clear all view cache files
+            $this->clearViewCache();
+            
+            // 2. Disable Laravel's built-in caching
+            $this->disableLaravelCaching();
+            
+            // 3. Force disable Blade compiler caching
+            $this->disableBladeCompilerCaching();
+            
+            // 4. Clear all application cache
+            cache_flush();
+            
+            // 5. Force reload config
+            \Illuminate\Support\Facades\Config::set('cache.default', 'array');
+            \Illuminate\Support\Facades\Config::set('view.compiled', null);
+            
+        } catch (\Exception $e) {
+            \Log::warning("Error forcing disable all caching: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Disable Blade compiler caching completely
+     */
+    private function disableBladeCompilerCaching(): void
+    {
+        try {
+            // Get the Blade compiler and disable caching
+            $compiler = \Illuminate\Support\Facades\View::getEngineResolver()->resolve('blade')->getCompiler();
+            $compiler->setCachePath(null);
+            
+            // Also try to override the compiler instance
+            app()->singleton('blade.compiler', function ($app) {
+                $compiler = new \Illuminate\View\Compilers\BladeCompiler($app['files'], null);
+                $compiler->setCachePath(null);
+                return $compiler;
+            });
+            
+        } catch (\Exception $e) {
+            \Log::warning("Error disabling Blade compiler caching: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Clear all caches on every request when cache is disabled
+     */
+    private function clearAllCachesOnEveryRequest(): void
+    {
+        try {
+            // Clear all Laravel caches
+            \Artisan::call('cache:clear');
+            \Artisan::call('config:clear');
+            \Artisan::call('route:clear');
+            \Artisan::call('view:clear');
+            \Artisan::call('clear-compiled');
+            
+            // Clear all cache files manually
+            $this->clearViewCache();
+            $this->clearConfigCacheManually();
+            $this->clearRouteCacheManually();
+            
+            // Force flush all cache
+            cache_flush();
+            
+        } catch (\Exception $e) {
+            \Log::warning("Error clearing all caches on every request: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Clear config cache manually
+     */
+    private function clearConfigCacheManually(): void
+    {
+        try {
+            $configPath = bootstrap_path('cache/packages.php');
+            if (file_exists($configPath)) {
+                unlink($configPath);
+            }
+            
+            $servicesPath = bootstrap_path('cache/services.php');
+            if (file_exists($servicesPath)) {
+                unlink($servicesPath);
+            }
+            
+        } catch (\Exception $e) {
+            \Log::warning("Error clearing config cache manually: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Clear route cache manually
+     */
+    private function clearRouteCacheManually(): void
+    {
+        try {
+            $routePath = bootstrap_path('cache/routes-v7.php');
+            if (file_exists($routePath)) {
+                unlink($routePath);
+            }
+            
+        } catch (\Exception $e) {
+            \Log::warning("Error clearing route cache manually: " . $e->getMessage());
+        }
     }
 
     /**
@@ -308,6 +461,14 @@ abstract class BaseSettingsController extends Controller
             // Clear cache using SettingsService
             \App\Services\SettingsService::clearCache($settings_performance->key);
             \App\Services\SettingsService::clearCache(); // Clear all category cache
+            
+            // Clear view cache if cache is disabled
+            if (!is_cache_enabled()) {
+                $this->clearViewCache();
+                $this->disableLaravelCaching();
+                $this->forceDisableAllCaching();
+                $this->clearAllCachesOnEveryRequest();
+            }
 
             DB::commit();
 
@@ -438,11 +599,19 @@ abstract class BaseSettingsController extends Controller
             \Log::info("After toggle - Setting ID: {$setting->id}, is_active: {$setting->is_active}, value: {$setting->value}");
             
             // Clear cache
-            Cache::forget("settings_{$this->category}");
-            Cache::forget('settings_all');
+            cache_forget("settings_{$this->category}");
+            cache_forget('settings_all');
             
             // Clear all cache keys for this category
             $this->clearAllCacheKeys();
+            
+            // Clear view cache if cache is disabled
+            if (!is_cache_enabled()) {
+                $this->clearViewCache();
+                $this->disableLaravelCaching();
+                $this->forceDisableAllCaching();
+                $this->clearAllCachesOnEveryRequest();
+            }
             
             DB::commit();
 
@@ -786,8 +955,8 @@ abstract class BaseSettingsController extends Controller
     protected function clearCache()
     {
         // Clear category-specific cache
-        Cache::forget("settings_{$this->category}");
-        Cache::forget('settings_all');
+        cache_forget("settings_{$this->category}");
+        cache_forget('settings_all');
         
         // Clear all settings cache patterns
         $patterns = [
@@ -800,7 +969,7 @@ abstract class BaseSettingsController extends Controller
         foreach ($patterns as $pattern) {
             // Note: This is a simplified approach. In production, you might want to use Redis SCAN
             // or implement a more sophisticated cache tag system
-            Cache::forget($pattern);
+            cache_forget($pattern);
         }
     }
 

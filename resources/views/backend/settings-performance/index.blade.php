@@ -6,6 +6,33 @@
 
 @section('content')
 <div class="main-content-area">
+    <!-- Cache Status Info -->
+    @php
+        $cacheEnabledSetting = $settings_generals->where('key', 'cache_enabled')->first();
+        $cacheStatus = $cacheEnabledSetting ? ($cacheEnabledSetting->is_active ? 'เปิดใช้งาน' : 'ปิดใช้งาน') : 'ไม่ทราบสถานะ';
+        $cacheStatusColor = $cacheEnabledSetting ? ($cacheEnabledSetting->is_active ? 'text-green-600' : 'text-red-600') : 'text-gray-600';
+    @endphp
+    <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-6">
+        <div class="flex items-center">
+            <i class="fas fa-info-circle text-blue-600 dark:text-blue-400 mr-2"></i>
+            <div>
+                <h3 class="text-sm font-medium text-blue-900 dark:text-blue-100">สถานะ Cache ระบบ</h3>
+                <p class="text-sm text-blue-700 dark:text-blue-300">
+                    Cache ปัจจุบัน: <span class="font-semibold {{ $cacheStatusColor }}">{{ $cacheStatus }}</span>
+                    @if($cacheEnabledSetting)
+                        (ค่า: {{ $cacheEnabledSetting->value }})
+                    @endif
+                </p>
+                @if($cacheEnabledSetting && !$cacheEnabledSetting->is_active)
+                    <p class="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        เมื่อปิด Cache แล้ว ระบบจะอ่านข้อมูลจากฐานข้อมูลโดยตรง ไม่ต้องล้าง Cache
+                    </p>
+                @endif
+            </div>
+        </div>
+    </div>
+
     <!-- Action Buttons -->
     <div class="flex flex-col sm:flex-row sm:justify-between space-y-2 sm:space-y-0 sm:space-x-2 mb-6">
         <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
@@ -1531,6 +1558,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const initialSettings = @json($settings_generals->items());
     currentSettings = initialSettings;
     console.log('Initialized currentSettings:', currentSettings);
+    
+    // Debug: Check cache_enabled setting
+    const cacheEnabledSetting = currentSettings.find(s => s.key === 'cache_enabled');
+    if (cacheEnabledSetting) {
+        console.log('Cache Enabled Setting:', cacheEnabledSetting);
+        console.log('Cache is currently:', cacheEnabledSetting.is_active ? 'ENABLED' : 'DISABLED');
+        console.log('Cache value:', cacheEnabledSetting.value);
+    } else {
+        console.warn('cache_enabled setting not found!');
+    }
     
     // Add managed event listeners for better cleanup
     const searchInput = document.getElementById('search');
