@@ -254,6 +254,20 @@ class AllSettingsSeeder extends Seeder
                 'validation_rules' => json_encode(['required' => true]),
                 'options' => null,
             ],
+            [
+                'key' => 'cache_enabled',
+                'value' => 'true',
+                'type' => 'boolean',
+                'category' => 'general',
+                'group_name' => 'system',
+                'description' => 'เปิดหรือปิดการใช้งาน cache ทั้งระบบ',
+                'is_active' => true,
+                'is_public' => false,
+                'sort_order' => 23,
+                'default_value' => 'true',
+                'validation_rules' => json_encode(['required' => true]),
+                'options' => json_encode(['true' => 'เปิด', 'false' => 'ปิด']),
+            ],
         ];
         
         foreach ($generalSettings as $setting) {
@@ -270,21 +284,8 @@ class AllSettingsSeeder extends Seeder
     {
         $performanceSettings = [
             // ========================================
-            // CACHE SETTINGS (4 รายการ)
+            // CACHE SETTINGS (3 รายการ)
             // ========================================
-            [
-                'key' => 'cache_enabled',
-                'description' => 'เปิดหรือปิดการใช้งาน cache ทั้งระบบ',
-                'value' => 'true',
-                'type' => 'boolean',
-                'category' => 'performance',
-                'group_name' => 'cache',
-                'default_value' => 'true',
-                'is_active' => true,
-                'sort_order' => 1,
-                'validation_rules' => json_encode(['required' => true]),
-                'options' => json_encode(['true' => 'เปิด', 'false' => 'ปิด']),
-            ],
             [
                 'key' => 'cache_driver',
                 'description' => 'เลือก driver สำหรับ cache (file, redis, memcached)',
@@ -294,7 +295,7 @@ class AllSettingsSeeder extends Seeder
                 'group_name' => 'cache',
                 'default_value' => 'file',
                 'is_active' => true,
-                'sort_order' => 2,
+                'sort_order' => 1,
                 'validation_rules' => json_encode(['required' => true]),
                 'options' => json_encode(['file' => 'File', 'redis' => 'Redis', 'memcached' => 'Memcached']),
             ],
@@ -307,7 +308,7 @@ class AllSettingsSeeder extends Seeder
                 'group_name' => 'cache',
                 'default_value' => '3600',
                 'is_active' => true,
-                'sort_order' => 3,
+                'sort_order' => 2,
                 'validation_rules' => json_encode(['required' => true, 'min' => 60, 'max' => 86400]),
                 'options' => null,
             ],
@@ -320,7 +321,7 @@ class AllSettingsSeeder extends Seeder
                 'group_name' => 'cache',
                 'default_value' => 'core_cache',
                 'is_active' => true,
-                'sort_order' => 4,
+                'sort_order' => 3,
                 'validation_rules' => json_encode(['required' => true, 'max_length' => 50]),
                 'options' => null,
             ],
