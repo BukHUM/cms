@@ -18,7 +18,7 @@ class User extends Authenticatable
      *
      * @var string
      */
-    protected $table = 'laravel_users';
+    protected $table = 'core_users';
 
     /**
      * The attributes that are mass assignable.
@@ -29,13 +29,15 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'first_name',
+        'last_name',
         'phone',
-        'address',
-        'bio',
         'avatar',
-        'status',
+        'is_active',
         'last_login_at',
+        'last_login_ip',
         'email_verified_at',
+        'remember_token',
     ];
 
     /**
@@ -57,25 +59,121 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
             'last_login_at' => 'datetime',
+            'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
     }
 
-    /**
-     * Get the roles for the user.
-     */
     public function roles(): BelongsToMany
     {
-        return $this->belongsToMany(Role::class, 'laravel_user_roles', 'user_id', 'role_id');
+        return $this->belongsToMany(Role::class, 'core_user_roles');
+    }
+
+    public function hasRole($role): bool
+    {
+        if (is_string($role)) {
+            return $this->roles()->where('name', $role)->exists();
+        }
+
+        return $this->roles()->where('id', $role->id)->exists();
+    }
+
+    public function hasPermission($permission): bool
+    {
+        return $this->roles()
+            ->whereHas('permissions', function ($query) use ($permission) {
+                $query->where('name', $permission);
+            })
+            ->exists();
+    }
+
+    public function getFullNameAttribute(): string
+    {
+        return trim($this->first_name . ' ' . $this->last_name);
     }
 
     /**
-     * Check if user has role
+     * Get the user's avatar URL
      */
-    public function hasRole(string $role): bool
+    public function getAvatarUrlAttribute(): string
     {
-        return $this->roles()->where('slug', $role)->exists();
+        if ($this->avatar) {
+            return asset('storage/' . $this->avatar);
+        }
+        
+        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=7F9CF5&background=EBF4FF';
+    }
+
+    /**
+     * Check if user is admin
+     */
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('admin') || $this->hasRole('administrator');
+    }
+
+    /**
+     * Get user's display name
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->full_name ?: $this->name;
+    }
+
+    /**
+     * Scope for active users
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope for inactive users
+     */
+    public function scopeInactive($query)
+    {
+        return $query->where('is_active', false);
+    }
+
+    /**
+     * Scope for verified users
+     */
+    public function scopeVerified($query)
+    {
+        return $query->whereNotNull('email_verified_at');
+    }
+
+    /**
+     * Scope for unverified users
+     */
+    public function scopeUnverified($query)
+    {
+        return $query->whereNull('email_verified_at');
+    }
+
+    /**
+     * Get user's role names as array
+     */
+    public function getRoleNamesAttribute(): array
+    {
+        return $this->roles->pluck('name')->toArray();
+    }
+
+    /**
+     * Get user's permission names as array
+     */
+    public function getPermissionNamesAttribute(): array
+    {
+        return $this->roles()
+            ->with('permissions')
+            ->get()
+            ->pluck('permissions')
+            ->flatten()
+            ->pluck('name')
+            ->unique()
+            ->toArray();
     }
 
     /**
@@ -83,19 +181,16 @@ class User extends Authenticatable
      */
     public function hasAnyRole(array $roles): bool
     {
-        return $this->roles()->whereIn('slug', $roles)->exists();
+        return $this->roles()->whereIn('name', $roles)->exists();
     }
 
     /**
-     * Check if user has permission
+     * Check if user has all of the given roles
      */
-    public function hasPermission(string $permission): bool
+    public function hasAllRoles(array $roles): bool
     {
-        return $this->roles()
-            ->whereHas('permissions', function ($query) use ($permission) {
-                $query->where('slug', $permission);
-            })
-            ->exists();
+        $userRoles = $this->roles->pluck('name')->toArray();
+        return count(array_intersect($roles, $userRoles)) === count($roles);
     }
 
     /**
@@ -105,169 +200,28 @@ class User extends Authenticatable
     {
         return $this->roles()
             ->whereHas('permissions', function ($query) use ($permissions) {
-                $query->whereIn('slug', $permissions);
+                $query->whereIn('name', $permissions);
             })
             ->exists();
     }
 
     /**
-     * Assign role to user
+     * Check if user has all of the given permissions
      */
-    public function assignRole(Role $role): void
+    public function hasAllPermissions(array $permissions): bool
     {
-        $this->roles()->syncWithoutDetaching([$role->id]);
+        $userPermissions = $this->permission_names;
+        return count(array_intersect($permissions, $userPermissions)) === count($permissions);
     }
 
     /**
-     * Remove role from user
+     * Update last login information
      */
-    public function removeRole(Role $role): void
+    public function updateLastLogin(?string $ip = null): void
     {
-        $this->roles()->detach($role->id);
-    }
-
-    /**
-     * Sync roles for user
-     */
-    public function syncRoles(array $roles): void
-    {
-        $this->roles()->sync($roles);
-    }
-
-    /**
-     * Check if user is admin
-     */
-    public function isAdmin(): bool
-    {
-        return $this->hasAnyRole(['super-admin', 'admin']);
-    }
-
-    /**
-     * Check if user is super admin
-     */
-    public function isSuperAdmin(): bool
-    {
-        return $this->hasRole('super-admin');
-    }
-
-    /**
-     * Get user's display name
-     */
-    public function getDisplayName(): string
-    {
-        return $this->name ?: 'User';
-    }
-
-    /**
-     * Get user's primary role
-     */
-    public function getPrimaryRole(): ?Role
-    {
-        return $this->roles()->orderBy('sort_order')->first();
-    }
-
-    /**
-     * Get user's role display name
-     */
-    public function getRoleDisplayName(): string
-    {
-        $primaryRole = $this->getPrimaryRole();
-        return $primaryRole ? $primaryRole->name : 'User';
-    }
-
-    /**
-     * Get user's status badge class
-     */
-    public function getStatusBadgeClass(): string
-    {
-        return match($this->status) {
-            'active' => 'bg-success',
-            'inactive' => 'bg-secondary',
-            'pending' => 'bg-warning',
-            'suspended' => 'bg-danger',
-            default => 'bg-secondary'
-        };
-    }
-
-    /**
-     * Get user's status display name
-     */
-    public function getStatusDisplayName(): string
-    {
-        return match($this->status) {
-            'active' => 'ใช้งาน',
-            'inactive' => 'ไม่ใช้งาน',
-            'pending' => 'รอการยืนยัน',
-            'suspended' => 'ระงับการใช้งาน',
-            default => 'ไม่ทราบสถานะ'
-        };
-    }
-
-    /**
-     * Scope for active users
-     */
-    public function scopeActive($query)
-    {
-        return $query->where('status', 'active');
-    }
-
-    /**
-     * Scope for status
-     */
-    public function scopeStatus($query, string $status)
-    {
-        return $query->where('status', $status);
-    }
-
-    /**
-     * Get user's avatar URL
-     */
-    public function getAvatarUrl(): string
-    {
-        if ($this->avatar) {
-            return asset('storage/' . $this->avatar);
-        }
-        
-        // Return default avatar based on user's name
-        $initials = $this->getInitials();
-        return "https://ui-avatars.com/api/?name={$initials}&background=3b82f6&color=ffffff&size=200";
-    }
-
-    /**
-     * Get user's initials
-     */
-    public function getInitials(): string
-    {
-        $name = trim($this->name);
-        $words = explode(' ', $name);
-        
-        if (count($words) >= 2) {
-            return strtoupper(substr($words[0], 0, 1) . substr($words[1], 0, 1));
-        }
-        
-        return strtoupper(substr($name, 0, 2));
-    }
-
-    /**
-     * Get user's full profile data
-     */
-    public function getProfileData(): array
-    {
-        return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'email' => $this->email,
-            'phone' => $this->phone,
-            'address' => $this->address,
-            'bio' => $this->bio,
-            'avatar' => $this->avatar,
-            'avatar_url' => $this->getAvatarUrl(),
-            'status' => $this->status,
-            'status_display' => $this->getStatusDisplayName(),
-            'role' => $this->getRoleDisplayName(),
-            'last_login_at' => $this->last_login_at,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
-        ];
+        $this->update([
+            'last_login_at' => now(),
+            'last_login_ip' => $ip ?? request()->ip(),
+        ]);
     }
 }

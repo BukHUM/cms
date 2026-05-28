@@ -7,69 +7,53 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Permission extends Model
 {
-    protected $table = 'laravel_permissions';
-
+    protected $table = 'core_permissions';
+    
     protected $fillable = [
         'name',
-        'slug',
+        'display_name',
         'description',
         'group',
-        'action',
-        'resource',
         'is_active',
-        'sort_order',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
-        'sort_order' => 'integer',
     ];
 
-    /**
-     * Get the roles for the permission.
-     */
     public function roles(): BelongsToMany
     {
-        return $this->belongsToMany(Role::class, 'laravel_role_permissions', 'permission_id', 'role_id');
+        return $this->belongsToMany(Role::class, 'core_role_permissions');
     }
 
-    /**
-     * Scope for active permissions
-     */
+    // Helper methods
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
     }
 
-    /**
-     * Scope for ordering
-     */
-    public function scopeOrdered($query)
+    public function scopeInactive($query)
     {
-        return $query->orderBy('group')->orderBy('sort_order')->orderBy('name');
+        return $query->where('is_active', false);
     }
 
-    /**
-     * Scope for group
-     */
-    public function scopeGroup($query, string $group)
+    public function scopeByGroup($query, $group)
     {
         return $query->where('group', $group);
     }
 
-    /**
-     * Scope for action
-     */
-    public function scopeAction($query, string $action)
+    public function getRoleCountAttribute()
     {
-        return $query->where('action', $action);
+        return $this->roles()->count();
     }
 
-    /**
-     * Scope for resource
-     */
-    public function scopeResource($query, string $resource)
+    public function canBeDeleted()
     {
-        return $query->where('resource', $resource);
+        return $this->roles()->count() === 0;
+    }
+
+    public function isUsed()
+    {
+        return $this->roles()->count() > 0;
     }
 }

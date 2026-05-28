@@ -3,62 +3,53 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Helpers\SettingsHelper;
+use App\Services\SettingsService;
 
 class TestSettingsCommand extends Command
 {
+    /**
+     * The name and signature of the console command.
+     */
     protected $signature = 'settings:test';
-    protected $description = 'Test the Settings system';
 
+    /**
+     * The console command description.
+     */
+    protected $description = 'Test settings functionality';
+
+    /**
+     * Execute the console command.
+     */
     public function handle()
     {
         $this->info('Testing Settings System...');
         
-        // Test 1: Set and get a value
-        $this->info('Test 1: Setting and getting values');
-        $result = SettingsHelper::set('test_key', 'test_value');
-        $this->line('Set test_key: ' . ($result ? 'SUCCESS' : 'FAILED'));
+        // Test getting a setting
+        $siteName = setting('site_name', 'Default Site');
+        $this->line("Site Name: {$siteName}");
         
-        $value = SettingsHelper::get('test_key');
-        $this->line('Get test_key: ' . $value);
+        // Test getting settings by category
+        $generalSettings = settings('general');
+        $this->line("General Settings Count: " . $generalSettings->count());
         
-        // Test 2: Get non-existent key with default
-        $this->info('Test 2: Getting non-existent key with default');
-        $defaultValue = SettingsHelper::get('non_existent_key', 'default_value');
-        $this->line('Non-existent key with default: ' . $defaultValue);
+        // Test setting a value
+        set_setting('test_setting', 'test_value', 'string', 'general');
+        $this->line("Set test_setting to: test_value");
         
-        // Test 3: Test env-only settings
-        $this->info('Test 3: Testing env-only settings');
-        $appKey = SettingsHelper::get('APP_KEY', 'not_found');
-        $this->line('APP_KEY (should come from config): ' . substr($appKey, 0, 20) . '...');
+        // Test getting the value back
+        $testValue = setting('test_setting');
+        $this->line("Retrieved test_setting: {$testValue}");
         
-        // Test 4: Test multiple settings
-        $this->info('Test 4: Testing multiple settings');
-        $settings = SettingsHelper::getMultiple(['test_key', 'site_name', 'non_existent']);
-        $this->line('Multiple settings: ' . json_encode($settings));
+        // Test toggling
+        $this->line("Toggling test_setting status...");
+        toggle_setting('test_setting');
         
-        // Test 5: Test all settings
-        $this->info('Test 5: Testing all settings');
-        $allSettings = SettingsHelper::getAll();
-        $this->line('Total settings count: ' . count($allSettings));
+        // Clear cache
+        clear_settings_cache();
+        $this->line("Cleared settings cache");
         
-        // Test 6: Test modifiable settings
-        $this->info('Test 6: Testing modifiable settings');
-        $modifiableSettings = SettingsHelper::getModifiableSettings();
-        $this->line('Modifiable settings count: ' . count($modifiableSettings));
-        
-        // Test 7: Test env-only settings
-        $this->info('Test 7: Testing env-only settings');
-        $envOnlySettings = SettingsHelper::getEnvOnlySettings();
-        $this->line('Env-only settings count: ' . count($envOnlySettings));
-        
-        // Clean up
-        SettingsHelper::delete('test_key');
-        $this->info('Cleanup: Deleted test_key');
-        
-        $this->info('All tests completed!');
+        $this->info('Settings test completed successfully!');
         
         return 0;
     }
 }
-

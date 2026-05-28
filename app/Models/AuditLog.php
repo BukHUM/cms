@@ -2,192 +2,260 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Builder;
 use Carbon\Carbon;
 
 class AuditLog extends Model
 {
-    use HasFactory;
-
-    protected $table = 'laravel_audit_logs';
-
+    protected $table = 'core_audit_logs';
+    
     protected $fillable = [
+        'user_type',
         'user_id',
-        'user_email',
-        'action',
-        'resource_type',
-        'resource_id',
-        'description',
-        'ip_address',
-        'user_agent',
+        'event',
+        'auditable_type',
+        'auditable_id',
         'old_values',
         'new_values',
-        'status',
-        'error_message',
-        'session_id'
+        'url',
+        'ip_address',
+        'user_agent',
+        'tags',
     ];
 
     protected $casts = [
         'old_values' => 'array',
         'new_values' => 'array',
         'created_at' => 'datetime',
-        'updated_at' => 'datetime'
+        'updated_at' => 'datetime',
     ];
 
     /**
-     * Get the user that owns the audit log.
+     * Get the auditable model.
      */
-    public function user()
+    public function auditable(): MorphTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->morphTo();
     }
 
     /**
-     * Get audit logs with pagination
+     * Get the user who performed the action.
      */
-    public static function getRecentLogs($limit = 10)
+    public function user(): MorphTo
     {
-        return self::orderBy('created_at', 'desc')
-            ->limit($limit)
-            ->get();
+        return $this->morphTo('user');
     }
 
     /**
-     * Get audit logs by user
+     * Scope to filter by event type.
      */
-    public static function getLogsByUser($userId, $limit = 20)
+    public function scopeEvent(Builder $query, string $event): Builder
     {
-        return self::where('user_id', $userId)
-            ->orderBy('created_at', 'desc')
-            ->limit($limit)
-            ->get();
+        return $query->where('event', $event);
     }
 
     /**
-     * Get audit logs by action
+     * Scope to filter by auditable type.
      */
-    public static function getLogsByAction($action, $limit = 20)
+    public function scopeAuditableType(Builder $query, string $type): Builder
     {
-        return self::where('action', $action)
-            ->orderBy('created_at', 'desc')
-            ->limit($limit)
-            ->get();
+        return $query->where('auditable_type', $type);
     }
 
     /**
-     * Get audit logs by date range
+     * Scope to filter by user.
      */
-    public static function getLogsByDateRange($startDate, $endDate, $limit = 50)
+    public function scopeByUser(Builder $query, $user): Builder
     {
-        return self::whereBetween('created_at', [$startDate, $endDate])
-            ->orderBy('created_at', 'desc')
-            ->limit($limit)
-            ->get();
-    }
-
-    /**
-     * Get audit statistics
-     */
-    public static function getStatistics($days = 30)
-    {
-        $startDate = Carbon::now()->subDays($days);
-        
-        return [
-            'total_logs' => self::where('created_at', '>=', $startDate)->count(),
-            'success_logs' => self::where('created_at', '>=', $startDate)
-                ->where('status', 'success')->count(),
-            'failed_logs' => self::where('created_at', '>=', $startDate)
-                ->where('status', 'failed')->count(),
-            'error_logs' => self::where('created_at', '>=', $startDate)
-                ->where('status', 'error')->count(),
-            'unique_users' => self::where('created_at', '>=', $startDate)
-                ->distinct('user_id')->count('user_id'),
-            'actions_count' => self::where('created_at', '>=', $startDate)
-                ->selectRaw('action, COUNT(*) as count')
-                ->groupBy('action')
-                ->orderBy('count', 'desc')
-                ->get()
-        ];
-    }
-
-    /**
-     * Create audit log entry
-     */
-    public static function createLog($data)
-    {
-        // Check if audit logging is enabled
-        $auditEnabled = \App\Helpers\SettingsHelper::get('audit_enabled', true);
-        
-        if (!$auditEnabled) {
-            // If audit logging is disabled, don't create log entry
-            return null;
+        if (is_object($user)) {
+            return $query->where('user_type', get_class($user))
+                        ->where('user_id', $user->id);
         }
         
-        return self::create([
-            'user_id' => $data['user_id'] ?? null,
-            'user_email' => $data['user_email'] ?? null,
-            'action' => $data['action'],
-            'resource_type' => $data['resource_type'] ?? null,
-            'resource_id' => $data['resource_id'] ?? null,
-            'description' => $data['description'] ?? null,
-            'ip_address' => $data['ip_address'] ?? request()->ip(),
-            'user_agent' => $data['user_agent'] ?? request()->userAgent(),
-            'old_values' => $data['old_values'] ?? null,
-            'new_values' => $data['new_values'] ?? null,
-            'status' => $data['status'] ?? 'success',
-            'error_message' => $data['error_message'] ?? null,
-            'session_id' => $data['session_id'] ?? session()->getId()
-        ]);
+        return $query->where('user_id', $user);
     }
 
     /**
-     * Get formatted action name
+     * Scope to filter by date range.
      */
-    public function getFormattedActionAttribute()
+    public function scopeDateRange(Builder $query, Carbon $from, Carbon $to): Builder
     {
-        $actions = [
-            'login' => 'เข้าสู่ระบบ',
-            'logout' => 'ออกจากระบบ',
-            'create' => 'สร้างข้อมูล',
-            'update' => 'แก้ไขข้อมูล',
-            'delete' => 'ลบข้อมูล',
-            'view' => 'ดูข้อมูล',
-            'export' => 'ส่งออกข้อมูล',
-            'import' => 'นำเข้าข้อมูล',
-            'settings_update' => 'แก้ไขการตั้งค่า',
-            'password_change' => 'เปลี่ยนรหัสผ่าน',
-            'profile_update' => 'แก้ไขโปรไฟล์'
-        ];
-
-        return $actions[$this->action] ?? $this->action;
+        return $query->whereBetween('created_at', [$from, $to]);
     }
 
     /**
-     * Get formatted status badge
+     * Scope to search in user names, emails, or auditable types.
      */
-    public function getStatusBadgeAttribute()
+    public function scopeSearch(Builder $query, string $search): Builder
     {
-        $badges = [
-            'success' => 'bg-success',
-            'failed' => 'bg-danger',
-            'error' => 'bg-warning'
-        ];
-
-        return $badges[$this->status] ?? 'bg-secondary';
+        return $query->where(function ($q) use ($search) {
+            $q->whereHas('user', function ($userQuery) use ($search) {
+                $userQuery->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            })
+            ->orWhere('auditable_type', 'like', "%{$search}%")
+            ->orWhere('event', 'like', "%{$search}%")
+            ->orWhere('tags', 'like', "%{$search}%");
+        });
     }
 
     /**
-     * Get formatted status text
+     * Get formatted event name.
      */
-    public function getFormattedStatusAttribute()
+    public function getFormattedEventAttribute(): string
     {
-        $statuses = [
-            'success' => 'สำเร็จ',
-            'failed' => 'ล้มเหลว',
-            'error' => 'ข้อผิดพลาด'
+        return ucfirst($this->event);
+    }
+
+    /**
+     * Get formatted auditable type name.
+     */
+    public function getFormattedAuditableTypeAttribute(): string
+    {
+        return class_basename($this->auditable_type);
+    }
+
+    /**
+     * Get event color class.
+     */
+    public function getEventColorAttribute(): string
+    {
+        $colors = [
+            'created' => 'bg-green-100 text-green-800',
+            'updated' => 'bg-blue-100 text-blue-800',
+            'deleted' => 'bg-red-100 text-red-800',
+            'restored' => 'bg-yellow-100 text-yellow-800',
         ];
 
-        return $statuses[$this->status] ?? $this->status;
+        return $colors[$this->event] ?? 'bg-gray-100 text-gray-800';
+    }
+
+    /**
+     * Get user display name.
+     */
+    public function getUserDisplayNameAttribute(): string
+    {
+        if ($this->user) {
+            return $this->user->name ?? $this->user->email ?? 'Unknown User';
+        }
+
+        return 'System';
+    }
+
+    /**
+     * Get changes summary.
+     */
+    public function getChangesSummaryAttribute(): string
+    {
+        switch ($this->event) {
+            case 'created':
+                return 'สร้างใหม่';
+            case 'updated':
+                $count = $this->new_values ? count($this->new_values) : 0;
+                return "แก้ไข {$count} ฟิลด์";
+            case 'deleted':
+                return 'ลบข้อมูล';
+            case 'restored':
+                return 'กู้คืนข้อมูล';
+            default:
+                return ucfirst($this->event);
+        }
+    }
+
+    /**
+     * Get formatted old values.
+     */
+    public function getFormattedOldValuesAttribute(): ?string
+    {
+        if (!$this->old_values) {
+            return null;
+        }
+
+        return json_encode($this->old_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Get formatted new values.
+     */
+    public function getFormattedNewValuesAttribute(): ?string
+    {
+        if (!$this->new_values) {
+            return null;
+        }
+
+        return json_encode($this->new_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Get changed fields count.
+     */
+    public function getChangedFieldsCountAttribute(): int
+    {
+        if (!$this->old_values || !$this->new_values) {
+            return 0;
+        }
+
+        $changed = 0;
+        $allKeys = array_unique(array_merge(
+            array_keys($this->old_values),
+            array_keys($this->new_values)
+        ));
+
+        foreach ($allKeys as $key) {
+            $oldValue = $this->old_values[$key] ?? null;
+            $newValue = $this->new_values[$key] ?? null;
+            
+            if ($oldValue !== $newValue) {
+                $changed++;
+            }
+        }
+
+        return $changed;
+    }
+
+    /**
+     * Check if this log has changes.
+     */
+    public function hasAuditChanges(): bool
+    {
+        return $this->old_values !== null || $this->new_values !== null;
+    }
+
+    /**
+     * Get all available event types.
+     */
+    public static function getEventTypes(): array
+    {
+        return self::distinct()->pluck('event')->sort()->values()->toArray();
+    }
+
+    /**
+     * Get all available auditable types.
+     */
+    public static function getAuditableTypes(): array
+    {
+        return self::distinct()->pluck('auditable_type')->sort()->values()->toArray();
+    }
+
+    /**
+     * Get audit logs statistics.
+     */
+    public static function getStatistics(?Carbon $from = null, ?Carbon $to = null): array
+    {
+        $query = self::query();
+
+        if ($from && $to) {
+            $query->dateRange($from, $to);
+        }
+
+        return [
+            'total' => $query->count(),
+            'created' => $query->clone()->event('created')->count(),
+            'updated' => $query->clone()->event('updated')->count(),
+            'deleted' => $query->clone()->event('deleted')->count(),
+            'restored' => $query->clone()->event('restored')->count(),
+        ];
     }
 }

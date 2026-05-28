@@ -7,83 +7,91 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Role extends Model
 {
-    protected $table = 'laravel_roles';
-
+    protected $table = 'core_roles';
+    
     protected $fillable = [
         'name',
-        'slug',
+        'display_name',
         'description',
-        'color',
         'is_active',
-        'sort_order',
+        'is_system',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
-        'sort_order' => 'integer',
+        'is_system' => 'boolean',
     ];
 
-    /**
-     * Get the permissions for the role.
-     */
     public function permissions(): BelongsToMany
     {
-        return $this->belongsToMany(Permission::class, 'laravel_role_permissions', 'role_id', 'permission_id');
+        return $this->belongsToMany(Permission::class, 'core_role_permissions');
     }
 
-    /**
-     * Get the users for the role.
-     */
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'laravel_user_roles', 'role_id', 'user_id');
+        return $this->belongsToMany(User::class, 'core_user_roles');
     }
 
-    /**
-     * Check if role has permission
-     */
-    public function hasPermission(string $permission): bool
-    {
-        return $this->permissions()->where('slug', $permission)->exists();
-    }
-
-    /**
-     * Give permission to role
-     */
-    public function givePermissionTo(Permission $permission): void
-    {
-        $this->permissions()->syncWithoutDetaching([$permission->id]);
-    }
-
-    /**
-     * Revoke permission from role
-     */
-    public function revokePermissionTo(Permission $permission): void
-    {
-        $this->permissions()->detach($permission->id);
-    }
-
-    /**
-     * Sync permissions for role
-     */
-    public function syncPermissions(array $permissions): void
-    {
-        $this->permissions()->sync($permissions);
-    }
-
-    /**
-     * Scope for active roles
-     */
+    // Helper methods
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
     }
 
-    /**
-     * Scope for ordering
-     */
-    public function scopeOrdered($query)
+    public function scopeInactive($query)
     {
-        return $query->orderBy('sort_order')->orderBy('name');
+        return $query->where('is_active', false);
+    }
+
+    public function scopeSystem($query)
+    {
+        return $query->where('is_system', true);
+    }
+
+    public function scopeNonSystem($query)
+    {
+        return $query->where('is_system', false);
+    }
+
+    public function getPermissionNamesAttribute()
+    {
+        return $this->permissions->pluck('name')->toArray();
+    }
+
+    public function getUserCountAttribute()
+    {
+        return $this->users()->count();
+    }
+
+    public function hasPermission($permission)
+    {
+        if (is_string($permission)) {
+            return $this->permissions()->where('name', $permission)->exists();
+        }
+        
+        return $this->permissions()->where('permission_id', $permission->id)->exists();
+    }
+
+    public function hasAnyPermission($permissions)
+    {
+        if (is_string($permissions)) {
+            $permissions = [$permissions];
+        }
+        
+        return $this->permissions()->whereIn('name', $permissions)->exists();
+    }
+
+    public function hasAllPermissions($permissions)
+    {
+        if (is_string($permissions)) {
+            $permissions = [$permissions];
+        }
+        
+        return $this->permissions()->whereIn('name', $permissions)->count() === count($permissions);
+    }
+
+    public function canBeDeleted()
+    {
+        return !$this->is_system && $this->users()->count() === 0;
     }
 }

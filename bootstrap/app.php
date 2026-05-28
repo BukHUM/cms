@@ -10,18 +10,23 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withProviders([
-        \App\Providers\DebugModeServiceProvider::class,
-        \App\Providers\TimezoneLocaleServiceProvider::class,
-    ])
     ->withMiddleware(function (Middleware $middleware): void {
+        // Register all middleware aliases in one call
+        $middleware->alias([
+            'permission' => \App\Http\Middleware\CheckPermission::class,
+            'permission.any' => \App\Http\Middleware\CheckAnyPermission::class,
+            'permission.all' => \App\Http\Middleware\CheckAllPermissions::class,
+            'auth' => \Illuminate\Auth\Middleware\Authenticate::class,
+            'settings.update.access' => \App\Http\Middleware\SettingsUpdateAccess::class,
+            'settings.backup.access' => \App\Http\Middleware\SettingsBackupAccess::class,
+            'maintenance' => \App\Http\Middleware\CheckMaintenanceMode::class,
+        ]);
+        
+        // Add global middleware
         $middleware->web(append: [
-            \App\Http\Middleware\DebugModeMiddleware::class,
-            \App\Http\Middleware\MaintenanceModeMiddleware::class,
-            \App\Http\Middleware\TimezoneLocaleMiddleware::class,
-            \App\Http\Middleware\AuditLogMiddleware::class,
-            \App\Http\Middleware\SessionTimeoutMiddleware::class,
-            \App\Http\Middleware\SecurityHeadersMiddleware::class,
+            \App\Http\Middleware\CheckMaintenanceMode::class,
+            \App\Http\Middleware\CheckDebugMode::class,
+            \App\Http\Middleware\CacheControlMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

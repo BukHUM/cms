@@ -24,7 +24,7 @@ return [
     | used by your application. An example configuration is provided for
     | each backend supported by Laravel. You're also free to add more.
     |
-    | Drivers: "sync", "database", "beanstalkd", "sqs", "redis", "null"
+    | Drivers: "sync", "database", "beanstalkd", "sqs", "redis", "failover", "null"
     |
     */
 
@@ -37,7 +37,7 @@ return [
         'database' => [
             'driver' => 'database',
             'connection' => env('DB_QUEUE_CONNECTION'),
-            'table' => env('DB_QUEUE_TABLE', 'laravel_jobs'),
+            'table' => env('DB_QUEUE_TABLE', 'core_jobs'),
             'queue' => env('DB_QUEUE', 'default'),
             'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
             'after_commit' => false,
@@ -72,6 +72,14 @@ return [
             'after_commit' => false,
         ],
 
+        'failover' => [
+            'driver' => 'failover',
+            'connections' => [
+                'database',
+                'sync',
+            ],
+        ],
+
     ],
 
     /*
@@ -87,7 +95,7 @@ return [
 
     'batching' => [
         'database' => env('DB_CONNECTION', 'sqlite'),
-        'table' => 'job_batches',
+        'table' => 'core_job_batches',
     ],
 
     /*
@@ -105,8 +113,8 @@ return [
 
     'failed' => [
         'driver' => env('QUEUE_FAILED_DRIVER', 'database-uuids'),
-        'database' => env('DB_CONNECTION', 'mysql'),
-        'table' => 'laravel_failed_jobs',
+        'database' => env('DB_CONNECTION', 'sqlite'),
+        'table' => 'core_failed_jobs',
     ],
 
 ];

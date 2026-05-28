@@ -42,7 +42,9 @@
     
     <style>
         * {
-            font-family: 'Prompt', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
     </style>
 </head>
@@ -131,7 +133,46 @@
                 minute: '2-digit',
                 second: '2-digit'
             });
-            document.title = `ระบบกำลังบำรุงรักษา - ${timeString}`;
+            document.getElementById('current-time').textContent = timeString;
+        }
+        
+        // Check maintenance status
+        function checkMaintenanceStatus() {
+            const button = document.querySelector('.refresh-button');
+            const spinner = document.getElementById('loading-spinner');
+            const buttonText = document.getElementById('button-text');
+            
+            // Show loading
+            spinner.classList.remove('hidden');
+            buttonText.textContent = 'กำลังตรวจสอบ...';
+            button.disabled = true;
+            
+            // Check status
+            fetch('/api/maintenance-status')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.maintenance) {
+                        // Maintenance mode is off, reload page
+                        window.location.reload();
+                    } else {
+                        // Still in maintenance mode
+                        buttonText.textContent = 'ยังอยู่ในโหมดบำรุงรักษา';
+                        setTimeout(() => {
+                            buttonText.textContent = 'ตรวจสอบสถานะใหม่';
+                            spinner.classList.add('hidden');
+                            button.disabled = false;
+                        }, 2000);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking maintenance status:', error);
+                    buttonText.textContent = 'เกิดข้อผิดพลาด';
+                    setTimeout(() => {
+                        buttonText.textContent = 'ตรวจสอบสถานะใหม่';
+                        spinner.classList.add('hidden');
+                        button.disabled = false;
+                    }, 2000);
+                });
         }
         
         updateTime();

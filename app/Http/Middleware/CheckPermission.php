@@ -15,27 +15,33 @@ class CheckPermission
      */
     public function handle(Request $request, Closure $next, string $permission): Response
     {
-        // ตรวจสอบว่าผู้ใช้เข้าสู่ระบบหรือไม่
+        // Check if user is authenticated
         if (!auth()->check()) {
             if ($request->expectsJson()) {
                 return response()->json([
-                    'success' => false,
-                    'message' => 'กรุณาเข้าสู่ระบบก่อน'
+                    'message' => 'Unauthorized',
+                    'error' => 'User not authenticated'
                 ], 401);
             }
-            return redirect()->route('login');
+            
+            return redirect()->route('backend.dashboard')->with('error', 'กรุณาเข้าสู่ระบบก่อน');
         }
 
-        // ตรวจสอบสิทธิ์
-        if (!auth()->user()->hasPermission($permission)) {
+        $user = auth()->user();
+
+        // Check if user has the required permission
+        if (!$user->hasPermission($permission)) {
             if ($request->expectsJson()) {
                 return response()->json([
-                    'success' => false,
-                    'message' => 'คุณไม่มีสิทธิ์เข้าถึงฟังก์ชันนี้'
+                    'message' => 'Forbidden',
+                    'error' => 'Insufficient permissions',
+                    'required_permission' => $permission
                 ], 403);
             }
             
-            return redirect()->back()->with('error', 'คุณไม่มีสิทธิ์เข้าถึงฟังก์ชันนี้');
+            // For web requests, redirect to dashboard with error message
+            return redirect()->route('backend.dashboard')
+                ->with('error', 'คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
         }
 
         return $next($request);
