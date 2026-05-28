@@ -28,7 +28,106 @@ class ProfileController extends Controller
             return redirect()->route('login')->with('error', 'ไม่พบข้อมูลผู้ใช้');
         }
 
-        return view('admin.profile.index', compact('user'));
+        // Get user statistics
+        $stats = $this->getUserStats($userId);
+        
+        // Get recent activity logs
+        $recentActivities = $this->getRecentActivities($userId);
+
+        return view('admin.profile.index', compact('user', 'stats', 'recentActivities'));
+    }
+
+    /**
+     * Get user statistics
+     */
+    private function getUserStats($userId)
+    {
+        // Get total login attempts
+        $totalLogins = AuditLog::where('user_id', $userId)
+            ->where('action', 'login')
+            ->where('status', 'success')
+            ->count();
+
+        // Get last login date
+        $lastLogin = AuditLog::where('user_id', $userId)
+            ->where('action', 'login')
+            ->where('status', 'success')
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        // Get profile update count
+        $profileUpdates = AuditLog::where('user_id', $userId)
+            ->where('action', 'profile_update')
+            ->count();
+
+        // Get password change count
+        $passwordChanges = AuditLog::where('user_id', $userId)
+            ->where('action', 'password_change')
+            ->count();
+
+        return [
+            'total_logins' => $totalLogins,
+            'last_login' => $lastLogin ? $lastLogin->created_at : null,
+            'profile_updates' => $profileUpdates,
+            'password_changes' => $passwordChanges,
+            'account_created' => $userId ? User::find($userId)->created_at : null,
+        ];
+    }
+
+    /**
+     * Get recent activity logs
+     */
+    private function getRecentActivities($userId, $limit = 5)
+    {
+        return AuditLog::where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get()
+            ->map(function ($log) {
+                return [
+                    'id' => $log->id,
+                    'action' => $log->action,
+                    'description' => $log->description,
+                    'ip_address' => $log->ip_address,
+                    'created_at' => $log->created_at,
+                    'icon' => $this->getActivityIcon($log->action),
+                    'color' => $this->getActivityColor($log->action),
+                ];
+            });
+    }
+
+    /**
+     * Get activity icon based on action
+     */
+    private function getActivityIcon($action)
+    {
+        $icons = [
+            'login' => 'fas fa-sign-in-alt',
+            'logout' => 'fas fa-sign-out-alt',
+            'profile_update' => 'fas fa-user-edit',
+            'password_change' => 'fas fa-key',
+            'avatar_update' => 'fas fa-camera',
+            'default' => 'fas fa-info-circle',
+        ];
+
+        return $icons[$action] ?? $icons['default'];
+    }
+
+    /**
+     * Get activity color based on action
+     */
+    private function getActivityColor($action)
+    {
+        $colors = [
+            'login' => 'green',
+            'logout' => 'yellow',
+            'profile_update' => 'blue',
+            'password_change' => 'red',
+            'avatar_update' => 'purple',
+            'default' => 'gray',
+        ];
+
+        return $colors[$action] ?? $colors['default'];
     }
 
     /**
@@ -171,12 +270,12 @@ class ProfileController extends Controller
         // Validation rules
         $validator = Validator::make($request->all(), [
             'current_password' => 'required',
-            'new_password' => 'required|string|min:8|confirmed',
+            'password' => 'required|string|min:8|confirmed',
         ], [
             'current_password.required' => 'กรุณากรอกรหัสผ่านปัจจุบัน',
-            'new_password.required' => 'กรุณากรอกรหัสผ่านใหม่',
-            'new_password.min' => 'รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร',
-            'new_password.confirmed' => 'การยืนยันรหัสผ่านไม่ตรงกัน',
+            'password.required' => 'กรุณากรอกรหัสผ่านใหม่',
+            'password.min' => 'รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร',
+            'password.confirmed' => 'การยืนยันรหัสผ่านไม่ตรงกัน',
         ]);
 
         if ($validator->fails()) {
@@ -195,7 +294,7 @@ class ProfileController extends Controller
         try {
             // Update password
             $user->update([
-                'password' => Hash::make($request->new_password),
+                'password' => Hash::make($request->password),
                 'updated_at' => now(),
             ]);
 

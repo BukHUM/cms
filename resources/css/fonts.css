@@ -1,0 +1,55 @@
+/* ========================================
+   FONT IMPORTS - LOCAL
+   ======================================== */
+
+/* Prompt Font Family - Using relative paths for Vite */
+@font-face {
+  font-family: 'Prompt';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/fonts/prompt/Prompt-Light.ttf') format('truetype'),
+       url('../fonts/prompt/Prompt-Light.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Prompt';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/prompt/Prompt-Regular.ttf') format('truetype'),
+       url('../fonts/prompt/Prompt-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Prompt';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/prompt/Prompt-Medium.ttf') format('truetype'),
+       url('../fonts/prompt/Prompt-Medium.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Prompt';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/prompt/Prompt-SemiBold.ttf') format('truetype'),
+       url('../fonts/prompt/Prompt-SemiBold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Prompt';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/prompt/Prompt-Bold.ttf') format('truetype'),
+       url('../fonts/prompt/Prompt-Bold.ttf') format('truetype');
+}
+
+/* Fallback to system fonts if Prompt is not available */
+body {
+  font-family: 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+}
+

@@ -4,131 +4,130 @@
 @section('description', 'หน้าเข้าสู่ระบบสำหรับ Admin Panel')
 
 @section('content')
-<!-- Full Screen Login -->
+<!-- Full Screen Login with Tailwind -->
 <div class="login-container">
     <div class="login-background"></div>
     <div class="login-content">
-        <div class="container">
-            <div class="row justify-content-center align-items-center min-vh-100">
-                <div class="col-md-8 col-lg-6 col-xl-5">
-            <div class="card shadow-lg border-0">
-                <div class="card-body p-5">
-                    <!-- Header -->
-                    <div class="text-center mb-4">
-                        <div class="admin-icon mb-3">
-                            <i class="fas fa-shield-alt"></i>
-                        </div>
-                        <h2 class="h3 mb-2">เข้าสู่ระบบ Admin</h2>
-                        <p class="text-muted">กรุณาเข้าสู่ระบบเพื่อเข้าถึง Admin Panel</p>
-                    </div>
-
-                    <!-- Login Form -->
-                    <form method="POST" action="{{ route('admin.login') }}">
-                        @csrf
-                        
-                        <!-- Email Field -->
-                        <div class="mb-3">
-                            <label for="email" class="form-label">
-                                <i class="fas fa-envelope me-2"></i>อีเมล
-                            </label>
-                            <input type="email" 
-                                   class="form-control @error('email') is-invalid @enderror" 
-                                   id="email" 
-                                   name="email" 
-                                   value="{{ old('email') }}" 
-                                   placeholder="กรุณากรอกอีเมลของคุณ"
-                                   required 
-                                   autofocus>
-                            @error('email')
-                                <div class="invalid-feedback">
-                                    {{ $message }}
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-center items-center min-h-screen">
+                <div class="w-full max-w-md">
+                    <!-- Login Card -->
+                    <div class="backdrop-glass rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
+                        <div class="p-8 sm:p-10">
+                            <!-- Header -->
+                            <div class="text-center mb-8">
+                                <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-primary rounded-full shadow-lg mb-4">
+                                    <i class="fas fa-shield-alt text-white text-3xl"></i>
                                 </div>
-                            @enderror
-                        </div>
-
-                        <!-- Password Field -->
-                        <div class="mb-3">
-                            <label for="password" class="form-label">
-                                <i class="fas fa-lock me-2"></i>รหัสผ่าน
-                            </label>
-                            <div class="input-group">
-                                <input type="password" 
-                                       class="form-control @error('password') is-invalid @enderror" 
-                                       id="password" 
-                                       name="password" 
-                                       placeholder="กรุณากรอกรหัสผ่านของคุณ"
-                                       required>
-                                <button class="btn btn-outline-secondary" 
-                                        type="button" 
-                                        id="togglePassword">
-                                    <i class="fas fa-eye" id="toggleIcon"></i>
-                                </button>
+                                <h2 class="text-2xl font-semibold text-slate-800 mb-2">เข้าสู่ระบบ Admin</h2>
+                                <p class="text-slate-600">กรุณาเข้าสู่ระบบเพื่อเข้าถึง Admin Panel</p>
                             </div>
-                            @error('password')
-                                <div class="invalid-feedback">
-                                    {{ $message }}
+
+                            <!-- Login Form -->
+                            <form method="POST" action="{{ route('admin.login') }}" class="space-y-6">
+                                @csrf
+                                
+                                <!-- Email Field -->
+                                <div>
+                                    <label for="email" class="block text-sm font-medium text-slate-700 mb-2">
+                                        <i class="fas fa-envelope mr-2 text-primary"></i>อีเมล
+                                    </label>
+                                    <input type="email" 
+                                           class="login-input w-full px-4 py-3 rounded-lg bg-white @error('email') login-input--error @enderror" 
+                                           id="email" 
+                                           name="email" 
+                                           value="{{ old('email') }}" 
+                                           placeholder="กรุณากรอกอีเมลของคุณ"
+                                           required 
+                                           autofocus>
+                                    @error('email')
+                                        <p class="mt-2 text-sm text-red-600">
+                                            <i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}
+                                        </p>
+                                    @enderror
                                 </div>
-                            @enderror
+
+                                <!-- Password Field -->
+                                <div>
+                                    <label for="password" class="block text-sm font-medium text-slate-700 mb-2">
+                                        <i class="fas fa-lock mr-2 text-primary"></i>รหัสผ่าน
+                                    </label>
+                                    <div class="relative">
+                                        <input type="password" 
+                                               class="login-input w-full px-4 py-3 pr-12 rounded-lg bg-white @error('password') login-input--error @enderror" 
+                                               id="password" 
+                                               name="password" 
+                                               placeholder="กรุณากรอกรหัสผ่านของคุณ"
+                                               required>
+                                        <button class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors" 
+                                                type="button" 
+                                                id="togglePassword">
+                                            <i class="fas fa-eye" id="toggleIcon"></i>
+                                        </button>
+                                    </div>
+                                    @error('password')
+                                        <p class="mt-2 text-sm text-red-600">
+                                            <i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}
+                                        </p>
+                                    @enderror
+                                </div>
+
+                                <!-- Remember Me -->
+                                <div class="flex items-center">
+                                    <input type="checkbox" 
+                                           class="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary focus:ring-2" 
+                                           id="remember" 
+                                           name="remember" 
+                                           {{ old('remember') ? 'checked' : '' }}>
+                                    <label class="ml-2 text-sm text-slate-700" for="remember">
+                                        จดจำการเข้าสู่ระบบ
+                                    </label>
+                                </div>
+
+                                <!-- Submit Button -->
+                                <button type="submit" 
+                                        class="w-full bg-gradient-primary text-white font-medium py-3 px-4 rounded-lg hover:shadow-lg hover:-translate-y-0.5 transition-smooth" 
+                                        id="loginBtn">
+                                    <i class="fas fa-sign-in-alt mr-2"></i>
+                                    เข้าสู่ระบบ
+                                </button>
+
+                                <!-- Security Notice -->
+                                <div class="bg-blue-50 border-l-4 border-blue-400 rounded-lg p-4">
+                                    <div class="flex items-start">
+                                        <i class="fas fa-info-circle text-blue-400 mt-0.5 mr-3"></i>
+                                        <p class="text-sm text-blue-700">
+                                            ระบบจะล็อคบัญชีชั่วคราวหากเข้าสู่ระบบผิดเกิน 5 ครั้ง
+                                        </p>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <!-- Additional Links -->
+                            <div class="text-center mt-8">
+                                <div class="h-px bg-slate-200 mb-6"></div>
+                                <div class="space-y-2">
+                                    <a href="{{ route('home') }}" class="inline-flex items-center text-sm text-slate-600 hover:text-primary transition-colors">
+                                        <i class="fas fa-home mr-2"></i>กลับหน้าแรก
+                                    </a>
+                                    <span class="mx-2 text-slate-300">|</span>
+                                    <a href="{{ route('contact') }}" class="inline-flex items-center text-sm text-slate-600 hover:text-primary transition-colors">
+                                        <i class="fas fa-question-circle mr-2"></i>ต้องการความช่วยเหลือ?
+                                    </a>
+                                </div>
+                            </div>
                         </div>
-
-                        <!-- Remember Me -->
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" 
-                                   class="form-check-input" 
-                                   id="remember" 
-                                   name="remember" 
-                                   {{ old('remember') ? 'checked' : '' }}>
-                            <label class="form-check-label" for="remember">
-                                จดจำการเข้าสู่ระบบ
-                            </label>
-                        </div>
-
-                        <!-- Submit Button -->
-                        <div class="d-grid mb-3">
-                            <button type="submit" class="btn btn-primary btn-lg" id="loginBtn">
-                                <i class="fas fa-sign-in-alt me-2"></i>
-                                เข้าสู่ระบบ
-                            </button>
-                        </div>
-
-                        <!-- Security Notice -->
-                        <div class="alert alert-info alert-sm mb-3">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <small>
-                                ระบบจะล็อคบัญชีชั่วคราวหากเข้าสู่ระบบผิดเกิน 5 ครั้ง
-                            </small>
-                        </div>
-
-                    </form>
-
-                    <!-- Additional Links -->
-                    <div class="text-center">
-                        <hr class="my-4">
-                        <p class="mb-2">
-                            <a href="{{ route('home') }}" class="text-decoration-none">
-                                <i class="fas fa-home me-2"></i>กลับหน้าแรก
-                            </a>
-                        </p>
-                        <p class="mb-0">
-                            <a href="{{ route('contact') }}" class="text-decoration-none">
-                                <i class="fas fa-question-circle me-2"></i>ต้องการความช่วยเหลือ?
-                            </a>
-                        </p>
                     </div>
-                </div>
-            </div>
 
-            <!-- Security Notice -->
-            <div class="text-center mt-4">
-                <div class="card bg-light border-0">
-                    <div class="card-body py-3">
-                        <small class="text-muted">
-                            <i class="fas fa-shield-alt me-2"></i>
-                            ระบบนี้ได้รับการปกป้องด้วยเทคโนโลยีความปลอดภัยระดับสูง
-                        </small>
+                    <!-- Security Notice -->
+                    <div class="text-center mt-6">
+                        <div class="backdrop-glass rounded-lg border border-white/20 p-4">
+                            <p class="text-sm text-slate-600">
+                                <i class="fas fa-shield-alt mr-2 text-primary"></i>
+                                ระบบนี้ได้รับการปกป้องด้วยเทคโนโลยีความปลอดภัยระดับสูง
+                            </p>
+                        </div>
                     </div>
-                </div>
-            </div>
                 </div>
             </div>
         </div>
@@ -156,7 +155,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-
     // Form validation
     const form = document.querySelector('form');
     const loginBtn = document.getElementById('loginBtn');
@@ -167,13 +165,19 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!email || !password) {
             e.preventDefault();
-            SwalHelper.error('กรุณากรอกข้อมูลให้ครบถ้วน');
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด!',
+                text: 'กรุณากรอกข้อมูลให้ครบถ้วน',
+                confirmButtonColor: '#667eea'
+            });
             return false;
         }
         
         // Show loading state
-        loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>กำลังเข้าสู่ระบบ...';
+        loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>กำลังเข้าสู่ระบบ...';
         loginBtn.disabled = true;
+        loginBtn.classList.add('opacity-75', 'cursor-not-allowed');
         
         // Prevent double submission
         form.removeEventListener('submit', arguments.callee);
@@ -182,10 +186,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check for rate limiting errors
     @if(session('error'))
         @if(str_contains(session('error'), 'ล็อค') || str_contains(session('error'), 'บล็อก'))
-            SwalHelper.error('{{ session('error') }}');
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด!',
+                text: '{{ session('error') }}',
+                confirmButtonColor: '#667eea'
+            });
         @endif
     @endif
 });
 </script>
 @endpush
-

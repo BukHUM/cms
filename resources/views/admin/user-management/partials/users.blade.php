@@ -1,13 +1,4 @@
-<!-- Users Tab -->
-<div class="tab-pane fade show active" id="users" role="tabpanel" aria-labelledby="users-tab">
-
-    <!-- Action Buttons and Filters -->
-    <div class="settings-card mb-4">
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-12">
-                    <!-- Desktop Layout -->
-                    <div class="desktop-layout d-none d-md-block">
+<!-- Users Tab - This file is deprecated, use the new Tailwind version in index.blade.php -->
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <!-- Action Buttons -->
                             <div class="action-buttons d-flex gap-2">

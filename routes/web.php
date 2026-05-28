@@ -215,6 +215,17 @@ Route::post('/admin/login', function (Illuminate\Http\Request $request) {
         // Update last login time
         $user->update(['last_login_at' => now()]);
         
+        // Log successful login
+        \App\Models\AuditLog::create([
+            'user_id' => $user->id,
+            'action' => 'login',
+            'description' => 'เข้าสู่ระบบ',
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'status' => 'success',
+            'created_at' => now(),
+        ]);
+        
         // Regenerate session ID for security
         session()->regenerate();
         
@@ -252,9 +263,23 @@ Route::get('/register', function () {
 })->name('register');
 
 Route::post('/logout', function () {
+    $userId = session('admin_user_id');
+    
     // Log logout activity
+    if ($userId) {
+        \App\Models\AuditLog::create([
+            'user_id' => $userId,
+            'action' => 'logout',
+            'description' => 'ออกจากระบบ',
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+            'status' => 'success',
+            'created_at' => now(),
+        ]);
+    }
+    
     \Log::info('User logout', [
-        'user_id' => session('admin_user_id'),
+        'user_id' => $userId,
         'user_email' => session('admin_user_email'),
         'ip_address' => request()->ip(),
         'session_duration' => time() - (session('login_time') ?? time())

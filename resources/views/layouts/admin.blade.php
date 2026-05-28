@@ -8,475 +8,229 @@
     
     @stack('head')
     
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- Google Fonts - Prompt -->
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Custom CSS -->
-    @vite(['resources/css/app.css'])
-    
-    <!-- Enhanced CSS for Settings Menu -->
-    <style>
-        /* Sidebar Navigation Active State */
-        .admin-sidebar .nav-link.active {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
-            color: white !important;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
-        }
-        .admin-sidebar .nav-link.active::before {
-            content: '' !important;
-            position: absolute !important;
-            left: -16px !important;
-            top: 50% !important;
-            transform: translateY(-50%) !important;
-            width: 4px !important;
-            height: 60% !important;
-            background: #3b82f6 !important;
-            border-radius: 0 2px 2px 0 !important;
-        }
-        
-        /* Ensure settings menu stays active when on settings page */
-        body[data-page="settings"] .admin-sidebar .nav-link[href*="settings"] {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
-            color: white !important;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
-        }
-        body[data-page="settings"] .admin-sidebar .nav-link[href*="settings"]::before {
-            content: '' !important;
-            position: absolute !important;
-            left: -16px !important;
-            top: 50% !important;
-            transform: translateY(-50%) !important;
-            width: 4px !important;
-            height: 60% !important;
-            background: #3b82f6 !important;
-            border-radius: 0 2px 2px 0 !important;
-        }
-        
-        /* Ensure user management menu stays active when on user management page */
-        body[data-page="user-management"] .admin-sidebar .nav-link[href*="user-management"] {
-            background: linear-gradient(135deg, #667eea 0%, #5a6fd8 100%) !important;
-            color: white !important;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
-        }
-        body[data-page="user-management"] .admin-sidebar .nav-link[href*="user-management"]::before {
-            content: '' !important;
-            position: absolute !important;
-            left: -16px !important;
-            top: 50% !important;
-            transform: translateY(-50%) !important;
-            width: 4px !important;
-            height: 60% !important;
-            background: #667eea !important;
-            border-radius: 0 2px 2px 0 !important;
-        }
-        
-        /* Override Bootstrap btn-outline-secondary hover effects */
-        .btn-outline-secondary:hover,
-        .btn-outline-secondary:focus,
-        .btn-outline-secondary:active,
-        .btn-outline-secondary:focus-visible {
-            background-color: transparent !important;
-            border-color: #dee2e6 !important;
-            color: #6c757d !important;
-            transform: none !important;
-            box-shadow: none !important;
-            outline: none !important;
-        }
-        
-        /* Ultra-specific override for Bootstrap CDN styles */
-        button.btn.btn-outline-secondary:hover,
-        button.btn.btn-outline-secondary:focus,
-        button.btn.btn-outline-secondary:active,
-        a.btn.btn-outline-secondary:hover,
-        a.btn.btn-outline-secondary:focus,
-        a.btn.btn-outline-secondary:active {
-            background-color: transparent !important;
-            border-color: #dee2e6 !important;
-            color: #6c757d !important;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-        
-        /* Remove hover effects from all outline buttons to match table style */
-        .btn-outline-info:hover,
-        .btn-outline-info:focus,
-        .btn-outline-info:active,
-        .btn-outline-primary:hover,
-        .btn-outline-primary:focus,
-        .btn-outline-primary:active,
-        .btn-outline-warning:hover,
-        .btn-outline-warning:focus,
-        .btn-outline-warning:active,
-        .btn-outline-success:hover,
-        .btn-outline-success:focus,
-        .btn-outline-success:active,
-        .btn-outline-danger:hover,
-        .btn-outline-danger:focus,
-        .btn-outline-danger:active {
-            transform: none !important;
-            box-shadow: none !important;
-        }
-        
-        /* Remove hover effects from ALL buttons - ultra specific */
-        button.btn:hover,
-        button.btn:focus,
-        button.btn:active,
-        a.btn:hover,
-        a.btn:focus,
-        a.btn:active,
-        .btn:hover,
-        .btn:focus,
-        .btn:active {
-            transform: none !important;
-            box-shadow: none !important;
-        }
-        
-        /* Specific overrides for different button types */
-        .btn-info:hover,
-        .btn-info:focus,
-        .btn-info:active {
-            background-color: #0dcaf0 !important;
-            border-color: #0dcaf0 !important;
-            color: #000 !important;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-        
-        .btn-warning:hover,
-        .btn-warning:focus,
-        .btn-warning:active {
-            background-color: #ffca2c !important;
-            border-color: #ffca2c !important;
-            color: #000 !important;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-        
-        .btn-danger:hover,
-        .btn-danger:focus,
-        .btn-danger:active {
-            background-color: #b02a37 !important;
-            border-color: #b02a37 !important;
-            color: #fff !important;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-        
-        .btn-primary:hover,
-        .btn-primary:focus,
-        .btn-primary:active {
-            background-color: #0d6efd !important;
-            border-color: #0d6efd !important;
-            color: #fff !important;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-        
-        .btn-success:hover,
-        .btn-success:focus,
-        .btn-success:active {
-            background-color: #198754 !important;
-            border-color: #198754 !important;
-            color: #fff !important;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-        
-        /* Secondary button hover effects */
-        .btn-secondary:hover,
-        .btn-secondary:focus,
-        .btn-secondary:active {
-            background-color: #6c757d !important;
-            border-color: #6c757d !important;
-            color: #fff !important;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-        
-        /* Outline button hover effects */
-        .btn-outline-primary:hover,
-        .btn-outline-primary:focus,
-        .btn-outline-primary:active {
-            background-color: #0d6efd !important;
-            border-color: #0d6efd !important;
-            color: #fff !important;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-        
-        .btn-outline-warning:hover,
-        .btn-outline-warning:focus,
-        .btn-outline-warning:active {
-            background-color: #ffc107 !important;
-            border-color: #ffc107 !important;
-            color: #000 !important;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-        
-        .btn-outline-danger:hover,
-        .btn-outline-danger:focus,
-        .btn-outline-danger:active {
-            background-color: #dc3545 !important;
-            border-color: #dc3545 !important;
-            color: #fff !important;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-        
-        .btn-outline-success:hover,
-        .btn-outline-success:focus,
-        .btn-outline-success:active {
-            background-color: #198754 !important;
-            border-color: #198754 !important;
-            color: #fff !important;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-        
-        .btn-outline-info:hover,
-        .btn-outline-info:focus,
-        .btn-outline-info:active {
-            background-color: #0dcaf0 !important;
-            border-color: #0dcaf0 !important;
-            color: #000 !important;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-        
-        .btn-outline-secondary:hover,
-        .btn-outline-secondary:focus,
-        .btn-outline-secondary:active {
-            background-color: #6c757d !important;
-            border-color: #6c757d !important;
-            color: #fff !important;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-        
-        /* Ultra-specific overrides for user management buttons */
-        .user-management .btn:hover,
-        .user-management .btn:focus,
-        .user-management .btn:active,
-        #users .btn:hover,
-        #users .btn:focus,
-        #users .btn:active,
-        .tab-pane#users .btn:hover,
-        .tab-pane#users .btn:focus,
-        .tab-pane#users .btn:active {
-            transform: none !important;
-            box-shadow: none !important;
-        }
-        
-        /* Force remove all hover effects with maximum specificity */
-        .btn.btn-sm:hover,
-        .btn.btn-sm:focus,
-        .btn.btn-sm:active,
-        .btn.dropdown-toggle:hover,
-        .btn.dropdown-toggle:focus,
-        .btn.dropdown-toggle:active {
-            transform: none !important;
-            box-shadow: none !important;
-        }
-        
-        /* User Menu Dropdown - Simple Fix */
-        .user-menu {
-            position: relative;
-            cursor: pointer;
-        }
-        
-        .user-menu .dropdown-menu {
-            position: absolute;
-            top: calc(100% + 8px);
-            right: 0;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-            padding: 8px 0;
-            min-width: 200px;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.3s ease;
-            z-index: 9999;
-            pointer-events: none;
-        }
-        
-        .user-menu.active .dropdown-menu {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-            pointer-events: auto;
-        }
-        
-        .user-menu .dropdown-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            color: #334155;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        
-        .user-menu .dropdown-item:hover {
-            background: #f8fafc;
-            color: #1e293b;
-        }
-        
-        .user-menu .dropdown-divider {
-            border: none;
-            border-top: 1px solid #e2e8f0;
-            margin: 8px 0;
-        }
-        
-        /* Remove conflicting CSS */
-        
-        /* Footer styling */
-        .sidebar-footer {
-            padding: 8px 16px !important;
-        }
-        
-        .sidebar-info {
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-        }
-        
-        .sidebar-info i {
-            font-size: 12px !important;
-        }
-        
-        .sidebar-info span {
-            font-size: 11px !important;
-            font-weight: 400 !important;
-        }
-        
-    </style>
+    <!-- Tailwind CSS, Fonts, Font Awesome -->
+    @vite(['resources/css/fonts.css', 'resources/css/app.css', 'resources/js/app.js'])
     
     @stack('styles')
+    
+    <!-- Modal Styles -->
+    <style>
+    #editModal, #passwordModal {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        z-index: 9999 !important;
+        background-color: rgba(0, 0, 0, 0.5) !important;
+        display: none;
+    }
+
+    #editModal.show, #passwordModal.show {
+        display: flex !important;
+    }
+    </style>
 </head>
-<body class="admin-body">
+<body class="admin-body" data-page="@yield('page', 'dashboard')">
     <!-- Mobile Overlay -->
     <div class="mobile-overlay" id="mobileOverlay"></div>
     
-    <!-- Sidebar -->
+    <!-- Admin Sidebar -->
     <aside class="admin-sidebar" id="adminSidebar">
         <!-- Sidebar Header -->
-        <div class="sidebar-header">
-            <div class="sidebar-brand">
-                <div class="brand-icon">
+        <div class="sidebar-brand">
+            <div class="sidebar-brand__inner">
+                <div class="sidebar-brand__logo">
                     <i class="fas fa-shield-alt"></i>
                 </div>
-                <div class="brand-text">
-                    <span class="brand-title">Admin Panel</span>
-                    <small class="brand-subtitle">Management System</small>
+                <div class="sidebar-brand__text">
+                    <h1 class="sidebar-brand__title">Admin Panel</h1>
+                    <p class="sidebar-brand__subtitle">Control Center</p>
                 </div>
             </div>
-            <button class="sidebar-close" id="sidebarClose">
-                <i class="fas fa-times"></i>
+            <button class="sidebar-close lg:hidden" id="sidebarClose" aria-label="ปิดเมนู">
+                <i class="fas fa-times text-sm"></i>
             </button>
         </div>
         
         <!-- Sidebar Navigation -->
-        <nav class="sidebar-nav">
-            <ul class="nav-list">
-                <li class="nav-item">
-                    <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                        <div class="nav-icon">
-                            <i class="fas fa-home"></i>
+        <nav class="sidebar-nav flex-1 overflow-y-auto">
+            <p class="nav-section-label">เมนูหลัก</p>
+            <ul class="sidebar-menu">
+                <!-- Dashboard -->
+                <li>
+                    <a href="{{ route('admin.dashboard') }}" class="admin-nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                        <div class="nav-icon-wrap">
+                            <i class="fas fa-tachometer-alt"></i>
                         </div>
                         <div class="nav-text">
                             <span class="nav-title">Dashboard</span>
-                            <small class="nav-subtitle">ภาพรวมระบบ</small>
+                            <span class="nav-subtitle">ภาพรวมระบบ</span>
                         </div>
                     </a>
                 </li>
                 
-                <li class="nav-item">
-                    <a href="{{ route('admin.user-management') }}" class="nav-link {{ request()->routeIs('admin.user-management*') ? 'active' : '' }}">
-                        <div class="nav-icon">
+                <!-- User Management -->
+                <li>
+                    <a href="{{ route('admin.user-management') }}" class="admin-nav-link {{ request()->routeIs('admin.user-management*') ? 'active' : '' }}">
+                        <div class="nav-icon-wrap">
                             <i class="fas fa-users"></i>
                         </div>
                         <div class="nav-text">
                             <span class="nav-title">จัดการผู้ใช้</span>
-                            <small class="nav-subtitle">User Management</small>
+                            <span class="nav-subtitle">Users & Roles</span>
                         </div>
                     </a>
                 </li>
                 
-                <li class="nav-item">
-                    <a href="{{ route('admin.settings.index') }}" class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
-                        <div class="nav-icon">
+                <!-- Settings -->
+                <li class="has-submenu">
+                    <button type="button" class="admin-nav-link w-full {{ request()->routeIs('admin.settings*') ? 'active' : '' }}" onclick="toggleSubmenu('settings')">
+                        <div class="nav-icon-wrap">
                             <i class="fas fa-cog"></i>
                         </div>
                         <div class="nav-text">
                             <span class="nav-title">ตั้งค่าระบบ</span>
-                            <small class="nav-subtitle">System Settings</small>
+                            <span class="nav-subtitle">System Settings</span>
+                        </div>
+                        <div class="nav-arrow">
+                            <i class="fas fa-chevron-down transition-transform duration-200" id="settings-arrow"></i>
+                        </div>
+                    </button>
+                    
+                    <!-- Settings Submenu -->
+                    <ul class="submenu hidden" id="settings-submenu">
+                        <li>
+                            <a href="{{ route('admin.settings.index') }}#general" class="submenu-link {{ request()->routeIs('admin.settings.index') ? 'active' : '' }}">
+                                <i class="fas fa-cog mr-2"></i>
+                                <span>การตั้งค่าทั่วไป</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('admin.settings.index') }}#email" class="submenu-link">
+                                <i class="fas fa-envelope mr-2"></i>
+                                <span>การตั้งค่าอีเมล</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('admin.settings.index') }}#security" class="submenu-link">
+                                <i class="fas fa-shield-alt mr-2"></i>
+                                <span>การตั้งค่าความปลอดภัย</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('admin.settings.index') }}#backup" class="submenu-link">
+                                <i class="fas fa-database mr-2"></i>
+                                <span>การตั้งค่าสำรองข้อมูล</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('admin.settings.index') }}#performance" class="submenu-link">
+                                <i class="fas fa-tachometer-alt mr-2"></i>
+                                <span>การตั้งค่าประสิทธิภาพ</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('admin.settings.index') }}#system-info" class="submenu-link">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                <span>ข้อมูลระบบ</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                
+                <!-- Reports -->
+                <li>
+                    <a href="{{ route('admin.reports.index') }}" class="admin-nav-link {{ request()->routeIs('admin.reports*') ? 'active' : '' }}">
+                        <div class="nav-icon-wrap">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div class="nav-text">
+                            <span class="nav-title">รายงาน</span>
+                            <span class="nav-subtitle">Reports & Analytics</span>
                         </div>
                     </a>
                 </li>
             </ul>
         </nav>
-        
-        <!-- Sidebar Footer -->
-        <div class="sidebar-footer">
-            <div class="sidebar-info">
-                <i class="fas fa-info-circle"></i>
-                <span>v.{{ config('app.version', '1.0.0') }}-{{ date('dmY') }}</span>
-            </div>
-        </div>
     </aside>
     
-    <!-- Main Content Area -->
+    <!-- Main Wrapper -->
     <div class="main-wrapper" id="mainWrapper">
-        <!-- Top Header -->
+        <!-- Admin Header -->
         <header class="admin-header">
-            <div class="header-left">
-                <button class="sidebar-toggle" id="sidebarToggle">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <div class="page-title">
-                    <h1>@yield('page-title', 'Dashboard')</h1>
-                    <p class="page-subtitle">@yield('page-subtitle', 'ภาพรวมระบบ')</p>
+            <div class="flex items-center justify-between w-full px-6">
+                <!-- Header Left -->
+                <div class="flex items-center gap-6">
+                    <!-- Sidebar Toggle -->
+                    <button class="sidebar-toggle lg:hidden w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-200 hover:text-slate-700 transition-colors" id="sidebarToggle">
+                        <i class="fas fa-bars text-sm"></i>
+                    </button>
+                    
+                    <!-- Page Title -->
+                    <div class="page-title">
+                        <h1 class="text-xl font-semibold text-slate-800 leading-tight">@yield('title', 'Dashboard')</h1>
+                        <p class="text-sm text-slate-600 leading-tight hidden lg:block">@yield('subtitle', 'ภาพรวมระบบ')</p>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="header-right">
-                <div class="header-actions">
+                
+                <!-- Header Center - Search Box -->
+                <div class="flex-1 flex justify-center max-w-md mx-8">
+                    <div class="search-box hidden lg:block relative w-full">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm z-10"></i>
+                        <input type="text" placeholder="ค้นหา..." class="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg bg-slate-50 text-slate-700 text-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-200">
+                    </div>
+                </div>
+                
+                <!-- Header Right -->
+                <div class="flex items-center gap-3">
+                    <!-- Notification Button -->
+                    <button class="notification-btn relative w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-200 hover:text-slate-700 transition-colors">
+                        <i class="fas fa-bell text-sm"></i>
+                        <span class="notification-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs font-semibold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">3</span>
+                    </button>
+                    
+                    <!-- Frontend Link -->
+                    <a href="{{ route('home') }}" class="frontend-link flex items-center gap-2 px-4 py-2.5 bg-slate-600 text-white rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors">
+                        <i class="fas fa-external-link-alt text-xs"></i>
+                        <span class="link-text hidden sm:inline">หน้าแรก</span>
+                    </a>
+                    
                     <!-- User Menu -->
-                    <div class="user-menu">
-                        <div class="user-avatar-small">
-                            <i class="fas fa-user-circle"></i>
-                        </div>
-                        <div class="user-details">
-                            <span class="user-name">{{ getCurrentAdminUserName() }}</span>
-                            <small class="user-role">{{ getCurrentAdminUserRole() }}</small>
-                        </div>
-                        <div class="dropdown-menu">
-                            <a href="{{ route('admin.profile.index') }}" class="dropdown-item">
+                    <div class="user-menu relative" id="userMenu">
+                        <div class="flex items-center gap-3 px-4 py-2.5 bg-slate-100 rounded-lg cursor-pointer hover:bg-slate-200 transition-colors">
+                            <div class="w-8 h-8 bg-slate-200 rounded-md flex items-center justify-center text-slate-700 text-sm">
                                 <i class="fas fa-user"></i>
-                                ข้อมูลส่วนตัว
+                            </div>
+                            <div class="user-details hidden lg:block">
+                                <p class="text-sm font-medium text-slate-800 leading-tight">{{ auth()->user()?->name ?? 'Admin' }}</p>
+                                <p class="text-xs text-slate-600 leading-tight">{{ auth()->user()?->roles?->first()?->name ?? 'Administrator' }}</p>
+                            </div>
+                            <i class="fas fa-chevron-down text-xs text-slate-500"></i>
+                        </div>
+                        
+                        <!-- Dropdown Menu -->
+                        <div class="dropdown-menu absolute top-full right-0 mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-lg opacity-0 invisible transform -translate-y-2 transition-all duration-300 z-50">
+                            <a href="{{ route('admin.profile.index') }}" class="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-50 transition-colors">
+                                <i class="fas fa-user text-sm w-4"></i>
+                                <span class="text-sm">โปรไฟล์</span>
                             </a>
-                            <a href="{{ route('admin.profile.edit') }}" class="dropdown-item">
-                                <i class="fas fa-user-edit"></i>
-                                แก้ไขข้อมูล
-                            </a>
-                            <a href="{{ route('admin.profile.change-password') }}" class="dropdown-item">
-                                <i class="fas fa-key"></i>
-                                เปลี่ยนรหัสผ่าน
-                            </a>
-                            <hr class="dropdown-divider">
-                            <a href="{{ route('logout') }}" class="dropdown-item">
-                                <i class="fas fa-sign-out-alt"></i>
-                                ออกจากระบบ
-                            </a>
+                            <button onclick="openEditModal()" class="w-full flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-50 transition-colors text-left">
+                                <i class="fas fa-edit text-sm w-4"></i>
+                                <span class="text-sm">แก้ไขโปรไฟล์</span>
+                            </button>
+                            <button onclick="openPasswordModal()" class="w-full flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-50 transition-colors text-left">
+                                <i class="fas fa-key text-sm w-4"></i>
+                                <span class="text-sm">เปลี่ยนรหัสผ่าน</span>
+                            </button>
+                            <div class="border-t border-slate-200 my-2"></div>
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit" class="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors">
+                                    <i class="fas fa-sign-out-alt text-sm w-4"></i>
+                                    <span class="text-sm">ออกจากระบบ</span>
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -490,53 +244,34 @@
     </div>
     
     <!-- Logout Form -->
-    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+    <form method="POST" action="{{ route('logout') }}" id="logoutForm" style="display: none;">
         @csrf
     </form>
-    
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- SweetAlert2 Helper -->
-    <script src="{{ asset('js/sweetalert-helper.js') }}"></script>
     
     <!-- Admin Panel JavaScript -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Elements
             const sidebar = document.getElementById('adminSidebar');
+            const mainWrapper = document.getElementById('mainWrapper');
             const sidebarToggle = document.getElementById('sidebarToggle');
             const sidebarClose = document.getElementById('sidebarClose');
             const mobileOverlay = document.getElementById('mobileOverlay');
-            const mainWrapper = document.getElementById('mainWrapper');
-            const userMenu = document.querySelector('.user-menu');
+            const userMenu = document.getElementById('userMenu');
             
-            // Sidebar Toggle Function
+            // Sidebar Toggle
             function toggleSidebar() {
                 sidebar.classList.toggle('active');
                 mainWrapper.classList.toggle('sidebar-active');
                 mobileOverlay.classList.toggle('active');
-                
-                // Save state to localStorage (only for mobile/tablet)
-                if (window.innerWidth < 1024) {
-                    const isActive = sidebar.classList.contains('active');
-                    localStorage.setItem('sidebarActive', isActive);
-                }
+                document.body.classList.toggle('overflow-hidden');
             }
             
-            // Close Sidebar Function
             function closeSidebar() {
                 sidebar.classList.remove('active');
                 mainWrapper.classList.remove('sidebar-active');
                 mobileOverlay.classList.remove('active');
-                
-                // Save state to localStorage (only for mobile/tablet)
-                if (window.innerWidth < 1024) {
-                    localStorage.setItem('sidebarActive', false);
-                }
+                document.body.classList.remove('overflow-hidden');
             }
             
             // Event Listeners
@@ -545,137 +280,146 @@
             mobileOverlay.addEventListener('click', closeSidebar);
             
             // User Menu Toggle
-            if (userMenu) {
                 userMenu.addEventListener('click', function(e) {
-                    e.preventDefault();
                     e.stopPropagation();
+                const dropdown = userMenu.querySelector('.dropdown-menu');
+                dropdown.classList.toggle('opacity-0');
+                dropdown.classList.toggle('invisible');
+                dropdown.classList.toggle('-translate-y-2');
+                dropdown.classList.toggle('translate-y-0');
                     userMenu.classList.toggle('active');
                 });
                 
-                // Close user menu when clicking outside
+            // Close dropdown when clicking outside
                 document.addEventListener('click', function(e) {
                     if (!userMenu.contains(e.target)) {
+                    const dropdown = userMenu.querySelector('.dropdown-menu');
+                    dropdown.classList.add('opacity-0', 'invisible', '-translate-y-2');
+                    dropdown.classList.remove('translate-y-0');
                         userMenu.classList.remove('active');
                     }
                 });
                 
-                // Handle dropdown items
-                const dropdownItems = userMenu.querySelectorAll('.dropdown-item');
-                dropdownItems.forEach(item => {
-                    item.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        if (this.textContent.includes('ออกจากระบบ')) {
-                            userMenu.classList.remove('active');
-                        }
-                    });
+            // Auto-close sidebar on desktop when clicking outside
+            if (window.innerWidth >= 1024) {
+                document.addEventListener('click', function(e) {
+                    if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
+                        closeSidebar();
+                    }
                 });
-            }
-            
-            // Don't restore sidebar state automatically
-            // Sidebar will start hidden on mobile/tablet by default
-            // Only restore if user explicitly opened it before
-            const sidebarState = localStorage.getItem('sidebarActive');
-            if (sidebarState === 'true' && window.innerWidth < 1024) {
-                // Only restore if it was explicitly opened
-                sidebar.classList.add('active');
-                mainWrapper.classList.add('sidebar-active');
             }
             
             // Handle window resize
             window.addEventListener('resize', function() {
                 if (window.innerWidth >= 1024) {
-                    // Desktop: close mobile overlay and reset sidebar state
-                    mobileOverlay.classList.remove('active');
-                    sidebar.classList.remove('active');
-                    mainWrapper.classList.remove('sidebar-active');
-                    // Clear localStorage for desktop
-                    localStorage.removeItem('sidebarActive');
-                } else if (window.innerWidth > 768) {
-                    // Tablet: close mobile overlay
-                    mobileOverlay.classList.remove('active');
-                } else {
-                    // Mobile: close sidebar if open
-                    if (sidebar.classList.contains('active')) {
                         closeSidebar();
-                    }
                 }
             });
             
             // SweetAlert2 Configuration
-            Swal.mixin({
-                customClass: {
-                    confirmButton: 'btn btn-primary me-2',
-                    cancelButton: 'btn btn-secondary',
-                    denyButton: 'btn btn-warning',
-                    input: 'form-control'
-                },
-                buttonsStyling: false,
-                confirmButtonText: 'ตกลง',
-                cancelButtonText: 'ยกเลิก',
-                denyButtonText: 'ไม่',
-                allowOutsideClick: false,
-                allowEscapeKey: false
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
             });
             
-            // Enhanced logout confirmation
-            const logoutLinks = document.querySelectorAll('a[href="{{ route('logout') }}"]');
-            
-            logoutLinks.forEach((link, index) => {
-                link.addEventListener('click', async function(e) {
-                    e.preventDefault();
-                    
-                    try {
-                        // Show confirmation dialog and wait for user response
-                        const result = await Swal.fire({
-                            title: 'ยืนยันการออกจากระบบ',
-                            text: 'คุณต้องการออกจากระบบหรือไม่?',
-                            icon: 'question',
-                            showCancelButton: true,
-                            confirmButtonText: 'ออกจากระบบ',
-                            cancelButtonText: 'ยกเลิก',
-                            confirmButtonColor: '#dc3545',
-                            cancelButtonColor: '#6c757d',
-                            allowOutsideClick: false,
-                            allowEscapeKey: false,
-                            reverseButtons: true
-                        });
-                        
-                        // Only proceed if user clicks "ออกจากระบบ"
-                        if (result.isConfirmed) {
-                            // Close the confirmation dialog first
-                            Swal.close();
-                            
-                            // Submit logout form immediately
-                            
-                            // Create and submit form immediately
-                            const form = document.createElement('form');
-                            form.method = 'POST';
-                            form.action = '{{ route('logout') }}';
-                            
-                            const csrfToken = document.createElement('input');
-                            csrfToken.type = 'hidden';
-                            csrfToken.name = '_token';
-                            csrfToken.value = '{{ csrf_token() }}';
-                            
-                            form.appendChild(csrfToken);
-                            document.body.appendChild(form);
-                            form.submit();
-                        } else {
-                            // User clicked cancel or closed dialog
-                            // Close the dialog
-                            Swal.close();
-                        }
-                    } catch (error) {
-                        // Handle any errors
-                        console.error('SweetAlert error:', error);
-                        // Close any open dialogs
-                        Swal.close();
-                    }
+            // Auto-show success/error messages
+            @if(session('success'))
+                Toast.fire({
+                    icon: 'success',
+                    title: '{{ session('success') }}'
                 });
-            });
+            @endif
+            
+            @if(session('error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด!',
+                    text: '{{ session('error') }}',
+                    confirmButtonText: 'ตกลง',
+                    confirmButtonColor: '#667eea'
+                });
+            @endif
+            
+            @if(session('warning'))
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'คำเตือน!',
+                    text: '{{ session('warning') }}',
+                    confirmButtonText: 'ตกลง',
+                    confirmButtonColor: '#f59e0b'
+                });
+            @endif
+            
+            @if(session('info'))
+                Toast.fire({
+                    icon: 'info',
+                    title: '{{ session('info') }}'
+                });
+            @endif
         });
     </script>
     
+    <!-- Submenu Functions -->
+    <script>
+    function toggleSubmenu(menuId) {
+        const submenu = document.getElementById(menuId + '-submenu');
+        const arrow = document.getElementById(menuId + '-arrow');
+        
+        if (submenu.classList.contains('hidden')) {
+            submenu.classList.remove('hidden');
+            arrow.classList.add('rotate-180');
+        } else {
+            submenu.classList.add('hidden');
+            arrow.classList.remove('rotate-180');
+        }
+    }
+    
+    // Auto-open submenu if current page is in submenu
+    document.addEventListener('DOMContentLoaded', function() {
+        const activeSubmenuLink = document.querySelector('.submenu-link.active');
+        if (activeSubmenuLink) {
+            const submenu = activeSubmenuLink.closest('.submenu');
+            const arrow = submenu.previousElementSibling.querySelector('.nav-arrow i');
+            if (submenu) {
+                submenu.classList.remove('hidden');
+                if (arrow) arrow.classList.add('rotate-180');
+            }
+        }
+        
+        // Handle hash navigation for settings
+        const hash = window.location.hash;
+        if (hash && hash.startsWith('#') && window.location.pathname.includes('/admin/settings')) {
+            // Auto-open settings submenu
+            const settingsSubmenu = document.getElementById('settings-submenu');
+            const settingsArrow = document.getElementById('settings-arrow');
+            if (settingsSubmenu) {
+                settingsSubmenu.classList.remove('hidden');
+                if (settingsArrow) settingsArrow.classList.add('rotate-180');
+            }
+            
+            // Update active submenu link
+            const hashLink = document.querySelector(`a[href="${hash}"]`);
+            if (hashLink) {
+                // Remove active from all submenu links
+                document.querySelectorAll('.submenu-link').forEach(link => {
+                    link.classList.remove('active');
+                });
+                // Add active to current hash link
+                hashLink.classList.add('active');
+            }
+        }
+    });
+    </script>
+    
+    
+
     @stack('scripts')
 </body>
 </html>

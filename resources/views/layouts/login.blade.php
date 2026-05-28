@@ -6,47 +6,34 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'เข้าสู่ระบบ') - {{ \App\Helpers\SettingsHelper::get('site_name', config('app.name')) }}</title>
     
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- Google Fonts - Prompt -->
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Custom CSS -->
-    @vite(['resources/css/app.css'])
+    <!-- Tailwind CSS, Fonts, Font Awesome -->
+    @vite(['resources/css/fonts.css', 'resources/css/app.css', 'resources/js/app.js'])
     
     @stack('styles')
 </head>
 <body class="login-page">
     @yield('content')
     
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- SweetAlert2 Helper -->
-    <script src="{{ asset('js/sweetalert-helper.js') }}"></script>
-    
     <!-- SweetAlert2 Configuration -->
     <script>
-        // Configure SweetAlert2 defaults
-        Swal.mixin({
-            customClass: {
-                confirmButton: 'btn btn-primary',
-                cancelButton: 'btn btn-secondary'
-            },
-            buttonsStyling: false
+        // Configure SweetAlert2 defaults with Tailwind classes
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
         });
         
         // Auto-show success/error messages
         @if(session('success'))
-            Swal.fire({
+            Toast.fire({
                 icon: 'success',
-                title: 'สำเร็จ!',
-                text: '{{ session('success') }}',
-                timer: 3000,
-                timerProgressBar: true,
-                showConfirmButton: false
+                title: '{{ session('success') }}'
             });
         @endif
         
@@ -55,7 +42,8 @@
                 icon: 'error',
                 title: 'เกิดข้อผิดพลาด!',
                 text: '{{ session('error') }}',
-                confirmButtonText: 'ตกลง'
+                confirmButtonText: 'ตกลง',
+                confirmButtonColor: '#667eea'
             });
         @endif
         
@@ -64,18 +52,15 @@
                 icon: 'warning',
                 title: 'คำเตือน!',
                 text: '{{ session('warning') }}',
-                confirmButtonText: 'ตกลง'
+                confirmButtonText: 'ตกลง',
+                confirmButtonColor: '#f59e0b'
             });
         @endif
         
         @if(session('info'))
-            Swal.fire({
+            Toast.fire({
                 icon: 'info',
-                title: 'ข้อมูล!',
-                text: '{{ session('info') }}',
-                timer: 3000,
-                timerProgressBar: true,
-                showConfirmButton: false
+                title: '{{ session('info') }}'
             });
         @endif
     </script>

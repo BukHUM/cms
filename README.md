@@ -58,8 +58,8 @@ Laravel Backend API เป็นระบบ Backend ที่พัฒนาด
 
 1. **Clone Repository**
 ```bash
-git clone https://github.com/BukHUM/corebackend.git
-cd corebackend
+git clone https://github.com/BukHUM/core.git
+cd core
 ```
 
 2. **ติดตั้ง Dependencies**

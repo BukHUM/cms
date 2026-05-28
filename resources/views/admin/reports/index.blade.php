@@ -1,318 +1,206 @@
 @extends('layouts.admin')
 
 @section('title', 'รายงาน')
-@section('page-title', 'รายงาน')
-@section('page-subtitle', 'รายงานและสถิติการใช้งานระบบ')
+@section('subtitle', 'รายงานและสถิติการใช้งานระบบ')
 
 @section('content')
-<!-- Report Filters -->
-<div class="card mb-4">
-    <div class="card-body">
-        <form id="reportFilters">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-3">
-                    <label for="reportType" class="form-label">ประเภทรายงาน</label>
-                    <select class="form-select" id="reportType">
-                        <option value="users">รายงานผู้ใช้</option>
-                        <option value="activity">รายงานกิจกรรม</option>
-                        <option value="performance">รายงานประสิทธิภาพ</option>
-                        <option value="errors">รายงานข้อผิดพลาด</option>
+<div class="space-y-6">
+    <!-- Report Filters -->
+    <div class="bg-white rounded-2xl shadow-lg border border-slate-200">
+        <div class="px-6 py-4 border-b border-slate-200">
+            <h3 class="text-lg font-semibold text-slate-800 flex items-center">
+                <i class="fas fa-filter mr-3 text-primary"></i>
+                ตัวกรองรายงาน
+            </h3>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">วันที่เริ่มต้น</label>
+                    <input type="date" class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-smooth">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">วันที่สิ้นสุด</label>
+                    <input type="date" class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-smooth">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">ประเภทรายงาน</label>
+                    <select class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-smooth">
+                        <option value="all">ทั้งหมด</option>
+                        <option value="users">ผู้ใช้</option>
+                        <option value="activity">กิจกรรม</option>
+                        <option value="system">ระบบ</option>
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <label for="dateFrom" class="form-label">วันที่เริ่มต้น</label>
-                    <input type="date" class="form-control" id="dateFrom" value="{{ date('Y-m-01') }}">
-                </div>
-                <div class="col-md-3">
-                    <label for="dateTo" class="form-label">วันที่สิ้นสุด</label>
-                    <input type="date" class="form-control" id="dateTo" value="{{ date('Y-m-d') }}">
-                </div>
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="fas fa-search me-2"></i>
+                <div class="flex items-end">
+                    <button class="w-full bg-gradient-primary text-white px-4 py-3 rounded-lg font-medium hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
+                        <i class="fas fa-search mr-2"></i>
                         สร้างรายงาน
                     </button>
                 </div>
             </div>
-        </form>
+        </div>
     </div>
-</div>
 
-<!-- Report Charts -->
-<div class="row mb-4">
-    <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">กราฟการใช้งาน</h5>
+    <!-- Report Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Total Users -->
+        <div class="bg-white rounded-2xl p-6 shadow-lg border border-slate-200 hover:shadow-xl transition-all duration-300">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center text-white shadow-lg">
+                    <i class="fas fa-users text-xl"></i>
+                </div>
+                <div class="text-right">
+                    <p class="text-2xl font-bold text-slate-800 mb-1">1,234</p>
+                    <p class="text-sm text-slate-600">ผู้ใช้ทั้งหมด</p>
+                </div>
             </div>
-            <div class="card-body">
-                <canvas id="usageChart" height="100"></canvas>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">สถิติสรุป</h5>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between">
-                        <span>ผู้ใช้ทั้งหมด</span>
-                        <span class="fw-bold text-primary">1,234</span>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between">
-                        <span>ผู้ใช้ใหม่</span>
-                        <span class="fw-bold text-success">45</span>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between">
-                        <span>การเข้าชม</span>
-                        <span class="fw-bold text-info">8,765</span>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between">
-                        <span>ข้อผิดพลาด</span>
-                        <span class="fw-bold text-warning">12</span>
-                    </div>
-                </div>
+            <div class="flex items-center text-sm">
+                <span class="text-green-600 font-medium flex items-center">
+                    <i class="fas fa-arrow-up mr-1"></i>
+                    +12.5%
+                </span>
+                <span class="text-slate-500 ml-2">จากเดือนที่แล้ว</span>
             </div>
         </div>
-    </div>
-</div>
 
-<!-- Detailed Reports -->
-<div class="row">
-    <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">รายงานผู้ใช้</h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>วันที่</th>
-                                <th>ผู้ใช้ใหม่</th>
-                                <th>ผู้ใช้ที่ใช้งาน</th>
-                                <th>ผู้ใช้ที่ไม่ใช้งาน</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>2024-01-25</td>
-                                <td class="text-success">5</td>
-                                <td class="text-primary">1,200</td>
-                                <td class="text-muted">29</td>
-                            </tr>
-                            <tr>
-                                <td>2024-01-24</td>
-                                <td class="text-success">3</td>
-                                <td class="text-primary">1,195</td>
-                                <td class="text-muted">31</td>
-                            </tr>
-                            <tr>
-                                <td>2024-01-23</td>
-                                <td class="text-success">7</td>
-                                <td class="text-primary">1,192</td>
-                                <td class="text-muted">28</td>
-                            </tr>
-                            <tr>
-                                <td>2024-01-22</td>
-                                <td class="text-success">4</td>
-                                <td class="text-primary">1,185</td>
-                                <td class="text-muted">30</td>
-                            </tr>
-                            <tr>
-                                <td>2024-01-21</td>
-                                <td class="text-success">6</td>
-                                <td class="text-primary">1,181</td>
-                                <td class="text-muted">32</td>
-                            </tr>
-                        </tbody>
-                    </table>
+        <!-- Active Sessions -->
+        <div class="bg-white rounded-2xl p-6 shadow-lg border border-slate-200 hover:shadow-xl transition-all duration-300">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-gradient-success rounded-xl flex items-center justify-center text-white shadow-lg">
+                    <i class="fas fa-user-check text-xl"></i>
                 </div>
+                <div class="text-right">
+                    <p class="text-2xl font-bold text-slate-800 mb-1">89</p>
+                    <p class="text-sm text-slate-600">ผู้ใช้ออนไลน์</p>
+                </div>
+            </div>
+            <div class="flex items-center text-sm">
+                <span class="text-green-600 font-medium flex items-center">
+                    <i class="fas fa-arrow-up mr-1"></i>
+                    +5.2%
+                </span>
+                <span class="text-slate-500 ml-2">จากเมื่อวาน</span>
             </div>
         </div>
-    </div>
-    
-    <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">รายงานประสิทธิภาพ</h5>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span>เวลาตอบสนองเฉลี่ย</span>
-                        <span>245ms</span>
-                    </div>
-                    <div class="progress" style="height: 8px;">
-                        <div class="progress-bar bg-success" style="width: 85%"></div>
-                    </div>
-                </div>
-                
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span>อัพไทม์</span>
-                        <span>99.9%</span>
-                    </div>
-                    <div class="progress" style="height: 8px;">
-                        <div class="progress-bar bg-success" style="width: 99%"></div>
-                    </div>
-                </div>
-                
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span>การใช้ CPU</span>
-                        <span>45%</span>
-                    </div>
-                    <div class="progress" style="height: 8px;">
-                        <div class="progress-bar bg-info" style="width: 45%"></div>
-                    </div>
-                </div>
-                
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span>การใช้ RAM</span>
-                        <span>68%</span>
-                    </div>
-                    <div class="progress" style="height: 8px;">
-                        <div class="progress-bar bg-warning" style="width: 68%"></div>
-                    </div>
-                </div>
-                
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span>พื้นที่เก็บข้อมูล</span>
-                        <span>75%</span>
-                    </div>
-                    <div class="progress" style="height: 8px;">
-                        <div class="progress-bar bg-warning" style="width: 75%"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Export Options -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">ส่งออกรายงาน</h5>
+        <!-- System Performance -->
+        <div class="bg-white rounded-2xl p-6 shadow-lg border border-slate-200 hover:shadow-xl transition-all duration-300">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-gradient-info rounded-xl flex items-center justify-center text-white shadow-lg">
+                    <i class="fas fa-tachometer-alt text-xl"></i>
+                </div>
+                <div class="text-right">
+                    <p class="text-2xl font-bold text-slate-800 mb-1">98.5%</p>
+                    <p class="text-sm text-slate-600">ประสิทธิภาพระบบ</p>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <button class="btn btn-success w-100" onclick="exportReport('pdf')">
-                            <i class="fas fa-file-pdf me-2"></i>
-                            ส่งออกเป็น PDF
-                        </button>
-                    </div>
-                    <div class="col-md-3">
-                        <button class="btn btn-primary w-100" onclick="exportReport('excel')">
-                            <i class="fas fa-file-excel me-2"></i>
-                            ส่งออกเป็น Excel
-                        </button>
-                    </div>
-                    <div class="col-md-3">
-                        <button class="btn btn-info w-100" onclick="exportReport('csv')">
-                            <i class="fas fa-file-csv me-2"></i>
-                            ส่งออกเป็น CSV
-                        </button>
-                    </div>
-                    <div class="col-md-3">
-                        <button class="btn btn-warning w-100" onclick="printReport()">
-                            <i class="fas fa-print me-2"></i>
-                            พิมพ์รายงาน
-                        </button>
+            <div class="flex items-center text-sm">
+                <span class="text-green-600 font-medium flex items-center">
+                    <i class="fas fa-arrow-up mr-1"></i>
+                    +2.1%
+                </span>
+                <span class="text-slate-500 ml-2">จากสัปดาห์ที่แล้ว</span>
+            </div>
+        </div>
+
+        <!-- Storage Usage -->
+        <div class="bg-white rounded-2xl p-6 shadow-lg border border-slate-200 hover:shadow-xl transition-all duration-300">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-gradient-warning rounded-xl flex items-center justify-center text-white shadow-lg">
+                    <i class="fas fa-hdd text-xl"></i>
+                </div>
+                <div class="text-right">
+                    <p class="text-2xl font-bold text-slate-800 mb-1">67%</p>
+                    <p class="text-sm text-slate-600">พื้นที่เก็บข้อมูล</p>
+                </div>
+            </div>
+            <div class="flex items-center text-sm">
+                <span class="text-orange-600 font-medium flex items-center">
+                    <i class="fas fa-arrow-up mr-1"></i>
+                    +8.3%
+                </span>
+                <span class="text-slate-500 ml-2">จากเดือนที่แล้ว</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- User Activity Chart -->
+        <div class="bg-white rounded-2xl shadow-lg border border-slate-200">
+            <div class="px-6 py-4 border-b border-slate-200">
+                <h3 class="text-lg font-semibold text-slate-800 flex items-center">
+                    <i class="fas fa-chart-line mr-3 text-primary"></i>
+                    กิจกรรมผู้ใช้
+                </h3>
+            </div>
+            <div class="p-6">
+                <div class="h-64 flex items-center justify-center bg-slate-50 rounded-xl">
+                    <div class="text-center">
+                        <i class="fas fa-chart-line text-4xl text-slate-400 mb-4"></i>
+                        <p class="text-slate-600">กราฟกิจกรรมผู้ใช้</p>
+                        <p class="text-sm text-slate-500">ข้อมูลจะแสดงที่นี่</p>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- System Performance Chart -->
+        <div class="bg-white rounded-2xl shadow-lg border border-slate-200">
+            <div class="px-6 py-4 border-b border-slate-200">
+                <h3 class="text-lg font-semibold text-slate-800 flex items-center">
+                    <i class="fas fa-chart-bar mr-3 text-primary"></i>
+                    ประสิทธิภาพระบบ
+                </h3>
+            </div>
+            <div class="p-6">
+                <div class="h-64 flex items-center justify-center bg-slate-50 rounded-xl">
+                    <div class="text-center">
+                        <i class="fas fa-chart-bar text-4xl text-slate-400 mb-4"></i>
+                        <p class="text-slate-600">กราฟประสิทธิภาพระบบ</p>
+                        <p class="text-sm text-slate-500">ข้อมูลจะแสดงที่นี่</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Options -->
+    <div class="bg-white rounded-2xl shadow-lg border border-slate-200">
+        <div class="px-6 py-4 border-b border-slate-200">
+            <h3 class="text-lg font-semibold text-slate-800 flex items-center">
+                <i class="fas fa-download mr-3 text-primary"></i>
+                ส่งออกรายงาน
+            </h3>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button class="flex items-center justify-center gap-3 p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors border-2 border-transparent hover:border-primary/20">
+                    <i class="fas fa-file-pdf text-red-600 text-xl"></i>
+                    <div class="text-left">
+                        <h4 class="font-semibold text-slate-800">PDF</h4>
+                        <p class="text-sm text-slate-600">ส่งออกเป็น PDF</p>
+                    </div>
+                </button>
+                
+                <button class="flex items-center justify-center gap-3 p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors border-2 border-transparent hover:border-primary/20">
+                    <i class="fas fa-file-excel text-green-600 text-xl"></i>
+                    <div class="text-left">
+                        <h4 class="font-semibold text-slate-800">Excel</h4>
+                        <p class="text-sm text-slate-600">ส่งออกเป็น Excel</p>
+                    </div>
+                </button>
+                
+                <button class="flex items-center justify-center gap-3 p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors border-2 border-transparent hover:border-primary/20">
+                    <i class="fas fa-file-csv text-blue-600 text-xl"></i>
+                    <div class="text-left">
+                        <h4 class="font-semibold text-slate-800">CSV</h4>
+                        <p class="text-sm text-slate-600">ส่งออกเป็น CSV</p>
+                    </div>
+                </button>
             </div>
         </div>
     </div>
 </div>
 @endsection
-
-@push('scripts')
-<script>
-// Usage Chart
-const ctx = document.getElementById('usageChart').getContext('2d');
-const usageChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: ['1/21', '1/22', '1/23', '1/24', '1/25'],
-        datasets: [{
-            label: 'ผู้ใช้ที่ใช้งาน',
-            data: [1181, 1185, 1192, 1195, 1200],
-            borderColor: 'rgb(75, 192, 192)',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            tension: 0.1
-        }, {
-            label: 'ผู้ใช้ใหม่',
-            data: [6, 4, 7, 3, 5],
-            borderColor: 'rgb(255, 99, 132)',
-            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-            tension: 0.1
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            title: {
-                display: true,
-                text: 'สถิติการใช้งานรายวัน'
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true
-            }
-        }
-    }
-});
-
-// Report filters form
-document.getElementById('reportFilters').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const reportType = document.getElementById('reportType').value;
-    const dateFrom = document.getElementById('dateFrom').value;
-    const dateTo = document.getElementById('dateTo').value;
-    
-    console.log('Generating report:', { reportType, dateFrom, dateTo });
-    SwalHelper.loading('กำลังสร้างรายงาน...');
-    
-    // Simulate report generation
-    setTimeout(() => {
-        SwalHelper.close();
-        SwalHelper.success('สร้างรายงานสำเร็จ!');
-    }, 2000);
-});
-
-// Export functions
-function exportReport(format) {
-    console.log('Exporting report as:', format);
-    SwalHelper.loading('กำลังส่งออกรายงานเป็น ' + format.toUpperCase() + '...');
-    
-    // Simulate export process
-    setTimeout(() => {
-        SwalHelper.close();
-        SwalHelper.success('ส่งออกรายงานสำเร็จ!');
-    }, 1500);
-}
-
-function printReport() {
-    console.log('Printing report...');
-    window.print();
-}
-</script>
-@endpush
