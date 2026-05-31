@@ -22,3 +22,7 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Server / panel config (aaPanel, etc.) — not part of the app repo
+/.htaccess
+/.user.ini
