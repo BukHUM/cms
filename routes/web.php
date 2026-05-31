@@ -135,78 +135,7 @@ Route::prefix('backend')->name('backend.')->middleware(['auth'])->group(function
     
     // Add update route for AJAX form submission
     Route::put('settings-performance/{settings_performance}', [SettingsPerformanceController::class, 'update'])->name('settings-performance.update');
-    
-    if ($result['success']) {
-        $user = $result['user'];
-        
-        // Update last login time
-        $user->update(['last_login_at' => now()]);
-        
-        // Log successful login
-        \App\Models\AuditLog::create([
-            'user_id' => $user->id,
-            'action' => 'login',
-            'description' => 'เข้าสู่ระบบ',
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'status' => 'success',
-            'created_at' => now(),
-        ]);
-        
-        // Regenerate session ID for security
-        session()->regenerate();
-        
-        // Set session with user data and security information
-        session([
-            'admin_logged_in' => true, 
-            'admin_user_id' => $user->id,
-            'admin_user_email' => $user->email,
-            'admin_user_name' => $user->name,
-            'admin_user_role' => $user->role,
-            'last_activity' => time(),
-            'user_ip_address' => $request->ip(),
-            'login_time' => time(),
-            'session_fingerprint' => hash('sha256', $request->ip() . $request->userAgent())
-        ]);
-        
-        return redirect()->route('admin.dashboard');
-    }
-    
-    // Backup Settings Routes (moved to middleware group below)
-    
-    // Handle failed login
-    return redirect()->back()->withErrors([
-        'email' => $result['message']
-    ])->withInput();
-})->middleware('throttle:5,1')->name('admin.login');
 
-Route::get('/register', function () {
-    return redirect('/login');
-})->name('register');
-
-Route::post('/logout', function () {
-    $userId = session('admin_user_id');
-    
-    // Log logout activity
-    if ($userId) {
-        \App\Models\AuditLog::create([
-            'user_id' => $userId,
-            'action' => 'logout',
-            'description' => 'ออกจากระบบ',
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
-            'status' => 'success',
-            'created_at' => now(),
-        ]);
-    }
-    
-    \Log::info('User logout', [
-        'user_id' => $userId,
-        'user_email' => session('admin_user_email'),
-        'ip_address' => request()->ip(),
-        'session_duration' => time() - (session('login_time') ?? time())
-    ]);
-    
     // Security Settings Routes
     Route::get('settings-security', [SettingsSecurityController::class, 'index'])->name('settings-security.index');
     Route::put('settings-security', [SettingsSecurityController::class, 'update'])->name('settings-security.update');
@@ -237,6 +166,10 @@ Route::post('/logout', function () {
         Route::get('settings-backup-export', [SettingsBackupController::class, 'export'])->name('settings-backup.export');
     });
 });
+
+Route::get('/register', function () {
+    return redirect('/login');
+})->name('register');
 
 // API Routes for CMS
 Route::prefix('api')->group(function () {
