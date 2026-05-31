@@ -1,0 +1,5 @@
+Prompt font
+Copyright (c) 2015, Cadson Demak (info@cadsondemak.com)
+
+SIL Open Font License 1.1
+Bundled from @fontsource/prompt (Google Fonts) for offline admin use.
