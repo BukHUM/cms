@@ -2,7 +2,9 @@
    FRONTEND CSS - IT Company Website Styles
    ======================================== */
 
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* ========================================
    BASE STYLES & FOCUS STATES

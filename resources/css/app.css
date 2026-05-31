@@ -2,7 +2,9 @@
    ADMIN CSS - Admin Panel Styles Only
    ======================================== */
 
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* ========================================
    BASE STYLES & FOCUS STATES
